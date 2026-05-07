@@ -29,9 +29,9 @@ export const SidebarNav = [
         icon: UsersIcon,
       },
       {
-        label: 'Gestion de roles',
-        to: '/cliente/rol',
-        icon: UsersIcon,
+        label: 'Gestion de socios',
+        to: '/cliente/socios',
+        icon: FolderIcon,
       },
     ],
   },

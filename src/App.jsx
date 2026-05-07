@@ -3,6 +3,8 @@ import HomeLayaout from './layouts/HomeLayaout';
 import ClienteLayaout from './layouts/ClienteLayaout';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
+import SocioPage from './modules/sociosAcciones/pages/socios/SocioPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -11,6 +13,7 @@ function App() {
         <Route path="/" element={<HomeLayaout />} />
         <Route path="cliente" element={<ClienteLayaout />}>
           <Route path="login" element={<LoginPage />} />
+          <Route path="socios" element={<SocioPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
