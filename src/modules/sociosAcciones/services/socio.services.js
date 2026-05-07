@@ -42,7 +42,7 @@ export class SocioServices {
       return toServiceError(e);
     }
   }
-  static async delte(id) {
+  static async delete(id) {
     try {
       const response = await api.delete(`/socios/${id}`);
       return response.data;

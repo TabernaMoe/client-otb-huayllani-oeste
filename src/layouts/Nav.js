@@ -33,6 +33,7 @@ export const SidebarNav = [
         to: '/cliente/socios',
         icon: FolderIcon,
       },
+    
     ],
   },
 ];
