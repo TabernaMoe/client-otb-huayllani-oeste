@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
-
 import { toast } from 'react-toastify';
-
 import { SocioServices as Servs } from '../../services/socio.services';
-
-
 const initialForm = {
   user_id: '',
   ci_socio: '',
