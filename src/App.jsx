@@ -4,6 +4,7 @@ import ClienteLayaout from './layouts/ClienteLayaout';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 import SocioPage from './modules/sociosAcciones/pages/socios/SocioPage';
+import PagoPage from './modules/sociosAcciones/pages/socios/PagoPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="cliente" element={<ClienteLayaout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="socios" element={<SocioPage />} />
+          <Route path="pagos" element={<PagoPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

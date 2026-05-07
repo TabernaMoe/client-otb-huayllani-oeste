@@ -1,82 +1,37 @@
 import { useMemo, useState, useEffect } from 'react';
-
-import {
-  MagnifyingGlassIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
-
+import {MagnifyingGlassIcon, XMarkIcon} from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-
 import DataTable from '../../../../components/DataTable';
-
 import SocioModal from './SocioModal';
-
 import { SocioServices as Servs } from '../../services/socio.services';
-
 export default function SocioPage() {
-  // =========================
-  // STATES
-  // =========================
-
-  // Datos tabla
   const [filas, setFila] = useState([]);
-
-  // Loading
   const [loading, setLoading] = useState(false);
-
-  // Input búsqueda
   const [searchInput, setSearchInput] = useState('');
-
-  // Modal crear/editar
   const [openModal, setOpenModal] = useState(false);
-
-  // Modal eliminar
   const [openDelete, setOpenDelete] = useState(false);
-
-  // Socio seleccionado
   const [selectedSocio, setSelectedSocio] = useState(null);
-
-  // =========================
-  // PAGINACIÓN
-  // =========================
-
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 5,
     totalItems: 0,
     totalPages: 1,
   });
-
-  // =========================
-  // ELIMINAR
-  // =========================
-
   const handleDelete = async () => {
     try {
-      const response = await Servs.delete(
-        selectedSocio.id,
-      );
-
+      const response = await Servs.delete(selectedSocio.id,);
       if (!response.ok) {
         toast.error(
           response.message ||
             'Error al eliminar',
         );
-
         return;
       }
-
       toast.success(
         'Socio eliminado correctamente',
       );
-
-      // cerrar modal
       setOpenDelete(false);
-
-      // limpiar seleccionado
       setSelectedSocio(null);
-
-      // recargar tabla
       fetchFilas();
     } catch (error) {
       toast.error(
@@ -84,45 +39,20 @@ export default function SocioPage() {
       );
     }
   };
-
-  // =========================
-  // COLUMNAS TABLA
-  // =========================
-
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'ci_socio',
-        header: 'CI',
-        cell: (info) =>
-          info.row.original.ci_socio,
-      },
-
+        accessorKey: 'ci_socio', header: 'CI',
+        cell: (info) => info.row.original.ci_socio,},
       {
-        accessorKey:
-          'ci_expedido_socio',
-
-        header: 'Expedido',
-
-        cell: (info) =>
-          info.row.original
-            .ci_expedido_socio,
-      },
-
+        accessorKey:'ci_expedido_socio', header: 'Expedido',
+        cell: (info) => info.row.original.ci_expedido_socio,},
       {
   accessorKey: 'nombre_completo',
-
   header: 'Nombre completo',
-
   cell: (info) => {
-
     const socio = info.row.original;
-
-    return `
-      ${socio.nombres_socio}
-      ${socio.primer_apellido_socio}
-      ${socio.segundo_apellido_socio}
-    `;
+    return `${socio.nombres_socio} ${socio.primer_apellido_socio} ${socio.segundo_apellido_socio}`;
   },
 },
 
@@ -245,61 +175,33 @@ export default function SocioPage() {
     ],
     [],
   );
-
-  // =========================
-  // OBTENER DATOS
-  // =========================
-
   const fetchFilas = async () => {
     try {
       setLoading(true);
-
-      const response =
-        await Servs.getAll(
+      const response = await Servs.getAll(
           pagination.page,
           pagination.limit,
           searchInput,
         );
-
       if (response.ok) {
         setFila(response?.data || []);
-
         setPagination((prev) => ({
           ...prev,
-
-          page:
-            response?.pagination
-              ?.page || prev.page,
-
-          totalItems:
-            response?.pagination
-              ?.totalItems || 0,
-
-          totalPages:
-            response?.pagination
-              ?.totalPages || 1,
+          page:response?.pagination?.page || prev.page,
+          totalItems:response?.pagination?.totalItems || 0,
+          totalPages:response?.pagination?.totalPages || 1,
         }));
       }
 
       if (!response.ok) {
-        toast.error(
-          response.message ||
-            'Error al cargar datos',
-        );
+        toast.error(response.message || 'Error al cargar datos');
       }
     } catch (error) {
-      toast.error(
-        error.message ||
-          'Error al cargar datos',
-      );
+      toast.error(error.message || 'Error al cargar datos');
     } finally {
       setLoading(false);
     }
   };
-
-  // =========================
-  // useEffect
-  // =========================
 
   useEffect(() => {
     fetchFilas();
