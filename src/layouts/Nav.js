@@ -33,9 +33,14 @@ export const SidebarNav = [
         to: '/cliente/socios',
         icon: FolderIcon,
       },
-     {
+      {
         label: 'Pagos',
         to: '/cliente/pagos',
+        icon: CurrencyDollarIcon,
+      },
+      {
+        label: 'Gestion acciones',
+        to: '/cliente/gestion-acciones',
         icon: CurrencyDollarIcon,
       },
     ],

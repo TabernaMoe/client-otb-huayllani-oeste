@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import {MagnifyingGlassIcon, XMarkIcon} from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import DataTable from '../../../../components/DataTable';
 import SocioModal from './SocioModal';
@@ -19,63 +19,54 @@ export default function SocioPage() {
   });
   const handleDelete = async () => {
     try {
-      const response = await Servs.delete(selectedSocio.id,);
+      const response = await Servs.delete(selectedSocio.id);
       if (!response.ok) {
-        toast.error(
-          response.message ||
-            'Error al eliminar',
-        );
+        toast.error(response.message || 'Error al eliminar');
         return;
       }
-      toast.success(
-        'Socio eliminado correctamente',
-      );
+      toast.success('Socio eliminado correctamente');
       setOpenDelete(false);
       setSelectedSocio(null);
       fetchFilas();
     } catch (error) {
-      toast.error(
-        error.message || 'Error inesperado',
-      );
+      toast.error(error.message || 'Error inesperado');
     }
   };
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'ci_socio', header: 'CI',
-        cell: (info) => info.row.original.ci_socio,},
+        accessorKey: 'ci_socio',
+        header: 'CI',
+        cell: (info) => info.row.original.ci_socio,
+      },
       {
-        accessorKey:'ci_expedido_socio', header: 'Expedido',
-        cell: (info) => info.row.original.ci_expedido_socio,},
+        accessorKey: 'ci_expedido_socio',
+        header: 'Expedido',
+        cell: (info) => info.row.original.ci_expedido_socio,
+      },
       {
-  accessorKey: 'nombre_completo',
-  header: 'Nombre completo',
-  cell: (info) => {
-    const socio = info.row.original;
-    return `${socio.nombres_socio} ${socio.primer_apellido_socio} ${socio.segundo_apellido_socio}`;
-  },
-},
-
-      {
-        accessorKey:
-          'numero_celular_socio',
-
-        header: 'Celular',
-
-        cell: (info) =>
-          info.row.original
-            .numero_celular_socio,
+        accessorKey: 'nombre_completo',
+        header: 'Nombre completo',
+        cell: (info) => {
+          const socio = info.row.original;
+          return `${socio.nombres_socio} ${socio.primer_apellido_socio} ${socio.segundo_apellido_socio}`;
+        },
       },
 
       {
-        accessorKey:
-          'numero_telefono_socio',
+        accessorKey: 'numero_celular_socio',
+
+        header: 'Celular',
+
+        cell: (info) => info.row.original.numero_celular_socio,
+      },
+
+      {
+        accessorKey: 'numero_telefono_socio',
 
         header: 'Teléfono',
 
-        cell: (info) =>
-          info.row.original
-            .numero_telefono_socio,
+        cell: (info) => info.row.original.numero_telefono_socio,
       },
 
       {
@@ -83,9 +74,7 @@ export default function SocioPage() {
 
         header: 'Género',
 
-        cell: (info) =>
-          info.row.original
-            .genero_socio,
+        cell: (info) => info.row.original.genero_socio,
       },
 
       {
@@ -93,20 +82,15 @@ export default function SocioPage() {
 
         header: 'Estado',
 
-        cell: (info) =>
-          info.row.original
-            .estado_accion,
+        cell: (info) => info.row.original.estado_accion,
       },
 
       {
-        accessorKey:
-          'direccion_socio',
+        accessorKey: 'direccion_socio',
 
         header: 'Dirección',
 
-        cell: (info) =>
-          info.row.original
-            .direccion_socio,
+        cell: (info) => info.row.original.direccion_socio,
       },
 
       // =========================
@@ -122,7 +106,6 @@ export default function SocioPage() {
 
         cell: ({ row }) => (
           <div className="flex flex-col gap-2">
-
             {/* EDITAR */}
             <button
               type="button"
@@ -134,11 +117,8 @@ export default function SocioPage() {
                 hover:bg-green-900
               "
               onClick={() => {
-
                 // guardar fila seleccionada
-                setSelectedSocio(
-                  row.original,
-                );
+                setSelectedSocio(row.original);
 
                 // abrir modal
                 setOpenModal(true);
@@ -157,17 +137,14 @@ export default function SocioPage() {
                 hover:bg-red-800
               "
               onClick={() => {
-
                 // guardar fila seleccionada
-                setSelectedSocio(
-                  row.original,
-                );
+                setSelectedSocio(row.original);
 
                 // abrir modal eliminar
                 setOpenDelete(true);
               }}
             >
-              Eliminar
+              Deshabilitar
             </button>
           </div>
         ),
@@ -179,17 +156,17 @@ export default function SocioPage() {
     try {
       setLoading(true);
       const response = await Servs.getAll(
-          pagination.page,
-          pagination.limit,
-          searchInput,
-        );
+        pagination.page,
+        pagination.limit,
+        searchInput,
+      );
       if (response.ok) {
         setFila(response?.data || []);
         setPagination((prev) => ({
           ...prev,
-          page:response?.pagination?.page || prev.page,
-          totalItems:response?.pagination?.totalItems || 0,
-          totalPages:response?.pagination?.totalPages || 1,
+          page: response?.pagination?.page || prev.page,
+          totalItems: response?.pagination?.totalItems || 0,
+          totalPages: response?.pagination?.totalPages || 1,
         }));
       }
 
@@ -205,11 +182,7 @@ export default function SocioPage() {
 
   useEffect(() => {
     fetchFilas();
-  }, [
-    pagination.page,
-    pagination.limit,
-    searchInput,
-  ]);
+  }, [pagination.page, pagination.limit, searchInput]);
 
   // =========================
   // RENDER
@@ -219,10 +192,7 @@ export default function SocioPage() {
     <>
       {/* HEADER */}
       <div className="mb-6 flex items-center justify-between">
-
-        <h2 className="text-xl font-semibold">
-          Socios
-        </h2>
+        <h2 className="text-xl font-semibold">Socios</h2>
 
         {/* NUEVO REGISTRO */}
         <button
@@ -234,7 +204,6 @@ export default function SocioPage() {
             hover:bg-emerald-900
           "
           onClick={() => {
-
             // limpiar seleccionado
             setSelectedSocio(null);
 
@@ -258,7 +227,6 @@ export default function SocioPage() {
         "
       >
         <div className="w-full md:max-w-sm">
-
           <label
             className="
               mb-2 block
@@ -270,7 +238,6 @@ export default function SocioPage() {
           </label>
 
           <div className="relative">
-
             <MagnifyingGlassIcon
               className="
                 pointer-events-none
@@ -285,11 +252,7 @@ export default function SocioPage() {
               type="text"
               placeholder="Buscar..."
               value={searchInput}
-              onChange={(e) =>
-                setSearchInput(
-                  e.target.value,
-                )
-              }
+              onChange={(e) => setSearchInput(e.target.value)}
               className="
                 w-full rounded-2xl
                 border border-slate-300
@@ -302,9 +265,7 @@ export default function SocioPage() {
             {searchInput && (
               <button
                 type="button"
-                onClick={() =>
-                  setSearchInput('')
-                }
+                onClick={() => setSearchInput('')}
                 className="
                   absolute right-2 top-1/2
                   -translate-y-1/2
@@ -312,9 +273,7 @@ export default function SocioPage() {
                   p-1
                 "
               >
-                <XMarkIcon
-                  className="h-4 w-4"
-                />
+                <XMarkIcon className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -327,22 +286,15 @@ export default function SocioPage() {
         columns={columns}
         loading={loading}
         page={pagination.page}
-        totalPages={
-          pagination.totalPages
-        }
-        totalItems={
-          pagination.totalItems
-        }
-
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
         onPageChange={(newPage) =>
           setPagination((prev) => ({
             ...prev,
             page: newPage,
           }))
         }
-
         limit={pagination.limit}
-
         onLimitChange={(newLimit) =>
           setPagination((prev) => ({
             ...prev,
@@ -355,12 +307,9 @@ export default function SocioPage() {
       {/* MODAL CREAR/EDITAR */}
       <SocioModal
         open={openModal}
-        onClose={() =>
-          setOpenModal(false)
-        }
+        onClose={() => setOpenModal(false)}
         socio={selectedSocio}
         onSuccess={() => {
-
           // cerrar modal
           setOpenModal(false);
 
@@ -370,80 +319,68 @@ export default function SocioPage() {
       />
 
       {/* MODAL ELIMINAR */}
-      {openDelete &&
-        selectedSocio && (
-          <div
-            className="
+      {openDelete && selectedSocio && (
+        <div
+          className="
               fixed inset-0 z-50
               flex items-center justify-center
               bg-black/40
             "
-          >
-            <div
-              className="
+        >
+          <div
+            className="
                 w-full max-w-md
                 rounded-2xl
                 bg-white
                 p-6
               "
-            >
-              <h2
-                className="
+          >
+            <h2
+              className="
                   text-xl font-bold
                 "
-              >
-                Confirmar eliminación
-              </h2>
+            >
+              Confirmar eliminación
+            </h2>
 
-              <p className="mt-4">
-                ¿Deseas eliminar a:
+            <p className="mt-4">
+              ¿Deseas eliminar a: <strong>{selectedSocio.nombres_socio}</strong>
+              ?
+            </p>
 
-                {' '}
-
-                <strong>
-                  {
-                    selectedSocio.nombres_socio
-                  }
-                </strong>
-
-                ?
-              </p>
-
-              <div
-                className="
+            <div
+              className="
                   mt-6
                   flex justify-end
                   gap-3
                 "
-              >
-                <button
-                  onClick={() =>
-                    setOpenDelete(false)
-                  }
-                  className="
+            >
+              <button
+                onClick={() => setOpenDelete(false)}
+                className="
                     rounded-xl
                     border
                     px-4 py-2
                   "
-                >
-                  Cancelar
-                </button>
+              >
+                Cancelar
+              </button>
 
-                <button
-                  onClick={handleDelete}
-                  className="
+              <button
+                onClick={handleDelete}
+                className="
                     rounded-xl
                     bg-red-700
                     px-4 py-2
                     text-white
                   "
-                >
-                  Eliminar
-                </button>
-              </div>
+              >
+                Eliminar
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </>
   );
 }

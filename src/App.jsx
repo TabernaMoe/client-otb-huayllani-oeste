@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 
 import SocioPage from './modules/sociosAcciones/pages/socios/SocioPage';
 import PagoPage from './modules/sociosAcciones/pages/socios/PagoPage';
+import GestionAcciones from './modules/acciones/pages/Tabs';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="socios" element={<SocioPage />} />
           <Route path="pagos" element={<PagoPage />} />
+          <Route path="gestion-acciones" element={<GestionAcciones />} />
         </Route>
       </Routes>
     </BrowserRouter>

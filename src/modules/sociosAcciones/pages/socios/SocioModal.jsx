@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { SocioServices as Servs } from '../../services/socio.services';
+import Select from '../../../../components/Select';
+import ElegantInput from '../../../../components/ElegantInput';
+import ElegantTextarea from '../../../../components/ElegantTextarea';
+
 const initialForm = {
   user_id: '',
   ci_socio: '',
@@ -19,21 +23,26 @@ const initialForm = {
   direccion_socio: '',
 };
 
-export default function SocioModal({
-  open, 
-  onClose, 
-  socio, 
-  onSuccess, 
-}) {
+const opcionesGenero = [
+  { value: 'MASCULINO', label: 'Masculino' },
+  { value: 'FEMENINO', label: 'Femenino' },
+];
 
+const opcionesDepartamento = [
+  { value: 'CB', label: 'Cochabamba' },
+  { value: 'LP', label: 'La Paz' },
+  { value: 'SC', label: 'Santa Cruz' },
+];
+const opcionesEstadoAccion = [
+  { value: 'PASIVO', label: 'Pasivo' },
+  { value: 'ACTIVO', label: 'Activo' },
+];
+export default function SocioModal({ open, onClose, socio, onSuccess }) {
   const [form, setForm] = useState(initialForm);
-
 
   const [loading, setLoading] = useState(false);
 
-
   useEffect(() => {
-    
     if (socio) {
       setForm({
         user_id: socio.user_id || '',
@@ -59,9 +68,7 @@ export default function SocioModal({
     }
   }, [socio, open]);
 
-
   if (!open) return null;
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,7 +85,6 @@ export default function SocioModal({
     try {
       setLoading(true);
 
-
       const payload = {
         ...form,
 
@@ -86,25 +92,21 @@ export default function SocioModal({
         ci_socio: Number(form.ci_socio),
       };
 
-      
       const response = socio
         ? await Servs.update(socio.id, payload)
         : await Servs.create(payload);
 
-    
       if (!response.ok) {
         toast.error(response.message || 'Error al guardar');
         return;
       }
 
-      
       toast.success(
         socio
           ? 'Socio actualizado correctamente'
           : 'Socio registrado correctamente',
       );
 
-     
       onSuccess();
     } catch (error) {
       toast.error(error.message || 'Error inesperado');
@@ -113,7 +115,6 @@ export default function SocioModal({
     }
   };
 
- 
   return (
     <div
       className="
@@ -153,45 +154,44 @@ export default function SocioModal({
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
- 
-            <input
+            <ElegantInput
               type="text"
+              label="Ingrese nombre del socio"
               name="nombres_socio"
-              placeholder="Nombres"
               value={form.nombres_socio}
               onChange={handleChange}
               className="rounded-xl border p-3"
             />
 
-            <input
+            <ElegantInput
+              label="Ingrese primer apellido"
               type="text"
               name="primer_apellido_socio"
-              placeholder="Primer apellido"
               value={form.primer_apellido_socio}
               onChange={handleChange}
               className="rounded-xl border p-3"
             />
 
-            <input
+            <ElegantInput
+              label="Ingrese segundo apellido"
               type="text"
               name="segundo_apellido_socio"
-              placeholder="Segundo apellido"
               value={form.segundo_apellido_socio}
               onChange={handleChange}
               className="rounded-xl border p-3"
             />
 
-            <select
+            <Select
+              label="Ingrese genero"
               name="genero_socio"
+              placeholder="Seleccione un genero"
               value={form.genero_socio}
+              options={opcionesGenero}
               onChange={handleChange}
-              className="rounded-xl border p-3"
-            >
-              <option value="masculino">Masculino</option>
-              <option value="femenino">Femenino</option>
-            </select>
-        
-            <input
+            />
+
+            <ElegantInput
+              label={'Ingrese cedula de identidad'}
               type="number"
               name="ci_socio"
               placeholder="CI"
@@ -200,24 +200,17 @@ export default function SocioModal({
               className="rounded-xl border p-3"
             />
 
- 
-            <select
+            <Select
+              label="Seleccione un departamento "
               name="ci_expedido_socio"
+              placeholder="Seleccione un genero"
               value={form.ci_expedido_socio}
+              options={opcionesDepartamento}
               onChange={handleChange}
-              className="rounded-xl border p-3"
-            >
-              <option value="LP">La Paz</option>
-              <option value="CB">Cochabamba</option>
-              <option value="SC">Santa Cruz</option>
-              <option value="OR">Oruro</option>
-              <option value="PT">Potosí</option>
-              <option value="CH">Chuquisaca</option>
-              <option value="TJ">Tarija</option>
-              <option value="BN">Beni</option>
-              <option value="PD">Pando</option>
-            </select>
-            <input
+            />
+
+            <ElegantInput
+              label={'Ingreso numero de celular'}
               type="text"
               name="numero_celular_socio"
               placeholder="Celular"
@@ -226,7 +219,8 @@ export default function SocioModal({
               className="rounded-xl border p-3"
             />
 
-            <input
+            <ElegantInput
+              label={'Ingreso numero de telefono'}
               type="text"
               name="numero_telefono_socio"
               placeholder="Teléfono"
@@ -235,17 +229,16 @@ export default function SocioModal({
               className="rounded-xl border p-3"
             />
 
-            <select
+            <Select
+              label="Seleccione estado de la accion "
               name="estado_accion"
+              placeholder="Seleccione un estado"
               value={form.estado_accion}
+              options={opcionesEstadoAccion}
               onChange={handleChange}
-              className="rounded-xl border p-3"
-            >
-              <option value="activo">Activo</option>
-              <option value="pasivo">Pasivo</option>
-            </select>
+            />
 
-            <textarea
+            <ElegantTextarea
               name="direccion_socio"
               placeholder="Dirección"
               value={form.direccion_socio}
@@ -259,7 +252,6 @@ export default function SocioModal({
           </div>
 
           <div className="mt-8 flex justify-end gap-4">
-
             <button
               type="button"
               onClick={onClose}
@@ -285,11 +277,7 @@ export default function SocioModal({
                 disabled:opacity-50
               "
             >
-              {loading
-                ? 'Guardando...'
-                : socio
-                ? 'Actualizar'
-                : 'Registrar'}
+              {loading ? 'Guardando...' : socio ? 'Actualizar' : 'Registrar'}
             </button>
           </div>
         </form>
