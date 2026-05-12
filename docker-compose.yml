@@ -9,6 +9,6 @@ services:
       - '5174:5173'
     volumes:
       - .:/app
-      - node_modules:/app/node_modules
+      - node_modules_otb_frontend:/app/node_modules
 volumes:
-  node_modules:
+  node_modules_otb_frontend:

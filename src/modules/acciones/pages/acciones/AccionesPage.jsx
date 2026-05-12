@@ -165,7 +165,7 @@ export default function AccionesPage() {
         >
           Nuevo registro
         </button>
-      </div>j
+      </div>
 
       {/* BUSCADOR */}
       <div className="rounded-lg border-2 border-slate-200 bg-white p-6 shadow-sm">
