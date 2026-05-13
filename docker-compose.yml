@@ -10,5 +10,7 @@ services:
     volumes:
       - .:/app
       - node_modules_otb_frontend:/app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
 volumes:
   node_modules_otb_frontend:
