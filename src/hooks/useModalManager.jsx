@@ -6,6 +6,7 @@ export const MODALS = {
   EDIT: 'EDIT',
   DELETE: 'DELETE',
   VIEW: 'VIEW',
+  CONFIRM: 'CONFIRM',
 };
 
 export function useModalManager() {

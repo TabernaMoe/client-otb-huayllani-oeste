@@ -2,9 +2,25 @@ import { api } from '../../../services/api.js';
 import { toServiceError } from '../../../services/error.js';
 
 export class SocioServices {
-  static async getAll(page, limit, search = '') {
+  static async getAll(page, limit, search = '', estado = '') {
     try {
       const response = await api.get(`/socios`, {
+        params: {
+          page,
+          limit,
+          search,
+          estado,
+        },
+      });
+      console.log(response);
+      return response.data;
+    } catch (e) {
+      return toServiceError(e);
+    }
+  }
+  static async getAllDeleteds(page, limit, search = '') {
+    try {
+      const response = await api.get(`/socios/deleteds`, {
         params: {
           page,
           limit,
@@ -33,7 +49,6 @@ export class SocioServices {
       return toServiceError(e);
     }
   }
-
   static async update(id, payload) {
     try {
       const response = await api.patch(`/socios/${id}`, payload);
@@ -45,6 +60,22 @@ export class SocioServices {
   static async delete(id) {
     try {
       const response = await api.delete(`/socios/${id}`);
+      return response.data;
+    } catch (e) {
+      return toServiceError(e);
+    }
+  }
+  static async restore(id) {
+    try {
+      const response = await api.patch(`/socios/restore/${id}`);
+      return response.data;
+    } catch (e) {
+      return toServiceError(e);
+    }
+  }
+  static async toggleStatus(id) {
+    try {
+      const response = await api.patch(`/socios/toggle-status/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);
