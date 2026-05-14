@@ -11,6 +11,8 @@ export class AccionServices {
           search,
         },
       });
+
+   
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -35,7 +37,7 @@ export class AccionServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/acciones/acciones/${id}`, payload);
+      const response = await api.put(`/acciones/acciones/${id}`, payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -43,7 +45,7 @@ export class AccionServices {
   }
   static async disable(id) {
     try {
-      const response = await api.patch(`/acciones/acciones/disable/${id}`);
+      const response = await api.put(`/acciones/acciones/disable/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);

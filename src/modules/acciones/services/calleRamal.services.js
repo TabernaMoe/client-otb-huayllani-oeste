@@ -43,7 +43,7 @@ export class CalleRamalServices {
   }
   static async delete(id) {
     try {
-      const response = await api.delete(`/acciones/calle-ramal/${id}`);
+      const response = await api.put(`/acciones/calle-ramal/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);

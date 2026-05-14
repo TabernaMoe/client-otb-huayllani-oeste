@@ -115,7 +115,7 @@ export default function CalleRamalModal({
               <div className="md:col-span-1 lg:col-span-12">
                 <InputField
                   label="Ingrese precio de la accion"
-                  type="text"
+                  type="decimal"
                   name="costo_tipos_acciones"
                   value={form?.costo_tipos_acciones || ''}
                   onChange={handleChange}
