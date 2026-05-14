@@ -1,12 +1,16 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import './index.css';
+
 import { ToastContainer } from 'react-toastify';
-import App from './App.jsx';
+
+import AppRouter from './routes/AppRouter';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AppRouter />
+
     <ToastContainer
       position="bottom-right"
       autoClose={3000}

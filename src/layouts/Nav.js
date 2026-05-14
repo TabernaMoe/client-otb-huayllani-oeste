@@ -25,7 +25,7 @@ export const SidebarNav = [
     items: [
       {
         label: 'Gestion usuarios',
-        to: '/cliente/login',
+        to: '/login',
         icon: UsersIcon,
       },
       {
@@ -37,6 +37,26 @@ export const SidebarNav = [
         label: 'Gestion acciones',
         to: '/cliente/gestion-acciones',
         icon: CurrencyDollarIcon,
+      },
+    ],
+  },
+];
+
+export const AdminNav = [
+  {
+    id: 'admin',
+    title: 'Administración',
+    icon: HomeIcon,
+    items: [
+      {
+        label: 'Gestión de usuarios',
+        to: '/admin/usuarios',
+        icon: UsersIcon,
+      },
+      {
+        label: 'Reportes',
+        to: '/admin/reportes',
+        icon: ChartBarIcon,
       },
     ],
   },

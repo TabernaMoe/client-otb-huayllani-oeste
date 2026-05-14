@@ -1,13 +1,90 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+
 import InputField from '../../../components/InputField';
 import PasswordField from '../../../components/PasswordField';
 import Logo from '/logo-otb.webp';
+import { AuthService } from '../services/auth.services';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+
+  // 1. Aquí guardamos lo que escribe el usuario
+  const [form, setForm] = useState({
+    user: '',
+    password: '',
+  });
+
+  // 2. Estados para controlar carga y errores
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // 3. Captura lo que se escribe en los inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
+
+  // 4. Envía los datos capturados al backend
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // 5. Validamos antes de enviar
+    if (!form.user.trim() || !form.password.trim()) {
+      setError('Debe ingresar usuario y contraseña');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 6. Aquí se envía al service
+      const data = await AuthServices.login({
+        user: form.user,
+        password: form.password,
+      });
+
+      console.log('Respuesta del backend:', data);
+
+      // 7. Si el backend responde error
+      if (!data.ok) {
+        setError(data.message || 'Credenciales incorrectas');
+        return;
+      }
+
+      // 8. Si el usuario está deshabilitado
+      if (data.user?.habilitado === false) {
+        setError('Usuario deshabilitado');
+        return;
+      }
+
+      // 9. Guardar sesión
+      AuthServices.saveSession(data);
+
+      // 10. Redirigir
+      navigate('/cliente/socios');
+    } catch (error) {
+      console.error('Error en login:', error);
+
+      setError(error.response?.data?.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full flex bg-slate-100">
+    <div className="flex min-h-screen w-full bg-slate-100">
       {/* Formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl shadow-slate-200">
+      <div className="flex w-full items-center justify-center px-6 py-10 lg:w-1/2">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl shadow-slate-200"
+        >
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50">
               <img
@@ -26,33 +103,53 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Mensaje de error */}
+          {error && (
+            <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-5">
-            <InputField label="Código de usuario" placeholder="Ej. 102030" />
+            <InputField
+              label="Código de usuario"
+              placeholder="Ej. 123"
+              name="user"
+              value={form.user}
+              onChange={handleChange}
+            />
 
             <PasswordField
               label="Contraseña"
               placeholder="Ingrese su contraseña"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
             />
 
-            <button className="mt-2 w-full rounded-2xl bg-red-800 py-3 font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900 active:scale-[0.98]">
-              Iniciar sesión
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-2xl bg-red-800 py-3 font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-red-400"
+            >
+              {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </button>
           </div>
 
           <p className="mt-6 text-center text-xs text-slate-400">
             Acceso exclusivo para vecinos registrados
           </p>
-        </div>
+        </form>
       </div>
 
       {/* Panel visual */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-linear-to-br from-red-950 via-red-800 to-red-600">
+      <div className="relative hidden items-center justify-center overflow-hidden bg-linear-to-br from-red-950 via-red-800 to-red-600 lg:flex lg:w-1/2">
         <div className="absolute inset-0 bg-black/20" />
 
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-yellow-300/20 blur-3xl" />
 
-        <div className="relative z-10 mx-10 max-w-md rounded-3xl bg-white/10 p-10 text-center text-white shadow-2xl backdrop-blur-md ring-1 ring-white/20">
+        <div className="relative z-10 mx-10 max-w-md rounded-3xl bg-white/10 p-10 text-center text-white shadow-2xl ring-1 ring-white/20 backdrop-blur-md">
           <div className="mx-auto mb-6 flex h-32 w-32 items-center justify-center rounded-3xl bg-white p-4 shadow-xl">
             <img
               src={Logo}
