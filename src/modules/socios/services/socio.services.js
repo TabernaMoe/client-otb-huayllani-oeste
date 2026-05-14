@@ -5,6 +5,7 @@ export class SocioServices {
   static async getAll(page, limit, search = '', estado = '') {
     try {
       const response = await api.get(`/socios`, {
+
         params: {
           page,
           limit,
@@ -12,7 +13,9 @@ export class SocioServices {
           estado,
         },
       });
-      console.log(response);
+      const socio =response.data.data[0];
+      console.log('BACKEND PAGINATION', typeof socio.estado_socio);
+      console.log('baCKEND',response.data);
       return response.data;
     } catch (e) {
       return toServiceError(e);

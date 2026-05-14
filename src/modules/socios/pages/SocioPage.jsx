@@ -7,7 +7,6 @@ import { SocioServices as Servs } from '../services/socio.services';
 import Select from '../../../components/Select';
 import ConfirmModal from '../../../components/ConfirmModal';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
-
 const opcionesEstadoSocio = [
   { value: 'HABILITADO', label: 'Habilitado' },
   { value: 'DESHABILITADO', label: 'Deshabilitado' },
@@ -131,10 +130,12 @@ export default function SocioPage() {
     ],
     [],
   );
+
   const fetchFilas = async () => {
     try {
       setLoading(true);
       const response = await Servs.getAll(
+
         pagination.page,
         pagination.limit,
         searchInput,
