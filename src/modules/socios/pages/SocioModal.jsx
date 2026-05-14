@@ -65,7 +65,7 @@ export default function SocioModal({
     }
   }, [socio, open]);
 
-  if (!open) return null;
+  if (!open) return null; 
 
   const getChangedFields = (original, current) => {
     const changes = {};

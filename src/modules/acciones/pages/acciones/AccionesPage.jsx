@@ -12,7 +12,7 @@ export default function AccionesPage() {
   const [filas, setFila] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  //eliminar
+
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const [pagination, setPagination] = useState({
