@@ -12,7 +12,6 @@ export const reqEstadoSocio = (label = 'Estado', required = true) => {
 
   return schema;
 };
-
 export const reqFecha = (label = 'Fecha', required = true) => {
   let schema = z
     .string({
@@ -132,6 +131,49 @@ export const reqEstadoAccion = (label = 'Estado', required = true) => {
     required_error: `Debe seleccionar ${label.toLowerCase()}`,
     invalid_type_error: `Debe seleccionar ${label.toLowerCase()}`,
   });
+
+  if (!required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+};
+export const reqDecimal = (label = 'Monto', required = true) => {
+  let schema = z.coerce
+    .number({
+      required_error: `Debe ingresar ${label.toLowerCase()}`,
+      invalid_type_error: `${label} debe ser un número`,
+    })
+    .finite(`${label} debe ser un número válido`)
+    .min(1, `${label} debe ser mayor a 0`);
+
+  if (!required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+};
+
+export const reqInteger = (
+  label = 'Número',
+  required = true,
+  min = null,
+  max = null,
+) => {
+  let schema = z.coerce
+    .number({
+      required_error: `Debe ingresar ${label.toLowerCase()}`,
+      invalid_type_error: `${label} debe ser un número`,
+    })
+    .int(`${label} debe ser un número entero`);
+
+  if (min !== null) {
+    schema = schema.min(min, `${label} debe ser mayor o igual a ${min}`);
+  }
+
+  if (max !== null) {
+    schema = schema.max(max, `${label} debe ser menor o igual a ${max}`);
+  }
 
   if (!required) {
     schema = schema.optional();

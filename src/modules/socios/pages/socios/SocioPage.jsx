@@ -1,12 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import DataTable from '../../../components/DataTable';
+import DataTable from '../../../../components/DataTable';
 import SocioModal from './SocioModal';
-import { SocioServices as Servs } from '../services/socio.services';
-import Select from '../../../components/Select';
-import ConfirmModal from '../../../components/ConfirmModal';
-import { MODALS, useModalManager } from '../../../hooks/useModalManager';
+import { SocioServices as Servs } from '../../services/socio.services';
+import Select from '../../../../components/Select';
+import ConfirmModal from '../../../../components/ConfirmModal';
+import { MODALS, useModalManager } from '../../../../hooks/useModalManager';
 
 const opcionesEstadoSocio = [
   { value: 'HABILITADO', label: 'Habilitado' },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Tab from '../../../components/Tab';
-import SocioPage from './SocioPage';
+import SocioPage from './socios/SocioPage';
 import SociosDeleteds from './SociosDeleteds/SociosDeleteds';
 
 const tabs = [

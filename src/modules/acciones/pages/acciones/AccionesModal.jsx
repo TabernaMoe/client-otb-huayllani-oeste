@@ -1,89 +1,185 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+
 import { AccionServices as Servs } from '../../services/acciones.services';
+import { SocioServices as sociosServs } from '../../../socios/services/socio.services';
+import { CalleRamalServices as calleServs } from '../../services/calleRamal.services';
+import { TipoAccionServices as tiposAccionesServs } from '../../services/tipoAccion.services';
+
+import { getChangedFields } from '../../../../helpers/getChangedFields';
+
+import { accionSchema, accionUpdateSchema } from '../../schema/accion.schema';
+
+import { MODALS, useModalManager } from '../../../../hooks/useModalManager';
+
+import AsyncSelect from '../../../../components/AsyncSelect';
 import Select from '../../../../components/Select';
+import MultiSelect from '../../../../components/MultiSelect';
+
 import InputField from '../../../../components/ElegantInput';
+import TextArea from '../../../../components/ElegantTextarea';
 import ConfirmModal from '../../../../components/ConfirmModal';
 
 const initialForm = () => ({
-  nombre_tipos_acciones: '',
-  costo_tipos_acciones: '',
+  socio_id: '',
+  calle_ramal_id: '',
+  acciones: [],
+  codigo_interno_accion: '',
+  nro_medidor_accion: '',
+  direccion_acciones: '',
+  observaciones_acciones: '',
+  nro_accion: '',
+  estado_accion: '',
 });
 
-export default function CalleRamalModal({
+const optioneEstado = [
+  { value: 'ACTIVO', label: 'Activo' },
+  { value: 'PASIVO', label: 'Pasivo' },
+  { value: 'ANULADO', label: 'Anulado' },
+];
+
+export default function AccionesModal({
   open,
   isEdit = false,
+  id,
   onClose,
-  tipoAccion,
   onSuccess,
 }) {
   const [form, setForm] = useState(initialForm());
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
+  const [selectedSocio, setSelectedSocio] = useState(null);
+  const [selectedCalle, setSelectedCalle] = useState(null);
 
-  //upate
-  const [openUpdateConfirm, setOpenUpdateConfirm] = useState(false);
+  const [valores, setValores] = useState(null);
+
+  const [optionAcction, setOptionAcction] = useState([]);
+
+  const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
 
   useEffect(() => {
-    if (open) {
-      if (tipoAccion) {
-        setForm(tipoAccion); // Modo edición
-      } else {
-        setForm(initialForm); // Modo creación
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        if (!open) return;
+        setError({});
+        setForm(initialForm());
+        setSelectedSocio(null);
+        setSelectedCalle(null);
+        const resCalle = await calleServs.getAll();
+        if (!resCalle.ok) {
+          toast.error(resCalle.message || 'No se pudo cargar las calles');
+          return;
+        }
+
+        const calles = resCalle?.data.map((row) => ({
+          value: row.id,
+          label: row.nombre_calle,
+        }));
+        setSelectedCalle(calles);
+
+        const resTipoAcciones = await tiposAccionesServs.getAll();
+        if (!resTipoAcciones.ok) {
+          toast.error(
+            resTipoAcciones.message || 'No se pudo cargar las calles',
+          );
+          return;
+        }
+
+        const accionesTipo = resTipoAcciones?.data?.map((row) => ({
+          value: row.id,
+          label: row.nombre_tipos_acciones,
+        }));
+
+        setOptionAcction(accionesTipo);
+
+        setForm((perv) => ({
+          ...perv,
+          acciones: accionesTipo.map((u) => u.value),
+        }));
+
+        if (!isEdit || !id) return;
+      } catch (e) {
+        console.log(e);
+        toast.error(e.message | 'Algo salio mal, intentelo mas tarde');
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [tipoAccion, open]);
+    };
+
+    loadData();
+  }, [open, isEdit, id]);
 
   if (!open) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
+    setError((prev) => ({ ...prev, [name]: null }));
+  };
+
+  const loadSocios = async (inputValue) => {
+    const res = await sociosServs.getAllSelect(inputValue);
+
+    if (!res.ok) return [];
+
+    return res.data.map((socio) => ({
+      value: socio.id,
+      label: `${socio.nombres_socio} ${socio.primer_apellido_socio} ${socio.segundo_apellido_socio} - CI: ${socio.ci_socio}`,
+    }));
+  };
+
+  const handleSocioChange = (option) => {
+    setSelectedSocio(option ?? null);
+
+    setForm((prev) => ({
+      ...prev,
+      socio_id: option ? option.value : '',
+    }));
+
+    setError((prev) => ({
+      ...prev,
+      socio_id: null,
+    }));
+  };
+
+  //+++
+  const handleValidation = () => {
+    const payload = isEdit ? getChangedFields(form, form) : form;
+
+    if (isEdit && Object.keys(payload).length === 0) {
+      toast.info('No realizaste ningún cambio');
+      return;
+    }
+
+    const result = isEdit
+      ? accionUpdateSchema.safeParse(payload)
+      : accionSchema.safeParse(payload);
+
+    if (!result.success) {
+      setError(result.error.flatten().fieldErrors);
+      toast.error('Datos incorrectos');
+      return;
+    }
+    setValores(result.data);
+
+    openModal(isEdit ? MODALS.EDIT : MODALS.CREATE);
   };
 
   const handleCreate = async () => {
-    try {
-      setLoading(true);
-      const data = await Servs.create(form);
-      if (data.ok) {
-        toast.success(data.message || 'Se guardo correctamente');
-        onSuccess();
-      }
-      if (!data.ok) {
-        toast.error(data.message || 'No se pudo guardar el registro');
-      }
-    } catch (e) {
-      toast.error(e.message || 'Error al guardar registro');
-    } finally {
-      setLoading(false);
-    }
+    console.log('crear');
+    console.log(valores);
   };
 
   const handleUpdate = async () => {
-    try {
-      setLoading(true);
-      const data = await Servs.update(tipoAccion.id, form);
-      if (data.ok) {
-        toast.success(data.message || 'Se guardo correctamente');
-        setOpenUpdateConfirm(false);
-        onSuccess();
-      }
-      if (!data.ok) {
-        toast.error(data.message || 'No se pudo guardar el registro');
-      }
-    } catch (e) {
-      toast.error(e?.message || 'Error al guardar registro');
-    } finally {
-      setLoading(false);
-    }
+    console.log('crear');
+    console.log(valores);
   };
   return (
     <>
-      {' '}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Overlay (fondo) */}
         <div
@@ -91,35 +187,99 @@ export default function CalleRamalModal({
           className="absolute inset-0 bg-black/40"
         />
         <div
-          className="relative z-10 w-3xl max-w-xl rounded-2xl bg-white shadow-xl ring-1 ring-slate-200
+          className="relative z-10 w-7xl  rounded-2xl bg-white shadow-xl ring-1 ring-slate-200
                 max-h-[calc(100vh-2rem)] overflow-y-auto"
         >
           <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
             <h3 className="text-lg font-semibold text-slate-900">
-              {isEdit ? 'Editar registro' : 'Crear nuevo registro'}
+              {isEdit ? 'Editar accion' : 'Crear nuevo accion'}
             </h3>
           </div>
 
           <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-2">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6">
-              <div className="md:col-span-1 lg:col-span-12">
+              <div className="md:col-span-1 lg:col-span-3">
                 <InputField
-                  label="Ingrese nombre de la accion"
-                  type="text"
-                  name="nombre_tipos_acciones"
-                  value={form?.nombre_tipos_acciones || ''}
+                  label="Codigo interno"
+                  name="codigo_interno_accion"
+                  type="number"
+                  value={form.codigo_interno_accion ?? ''}
                   onChange={handleChange}
-                  error={error.nombre_tipos_acciones}
+                  error={error.codigo_interno_accion}
                 />
               </div>
-              <div className="md:col-span-1 lg:col-span-12">
+              <div className="md:col-span-1 lg:col-span-3">
                 <InputField
-                  label="Ingrese precio de la accion"
-                  type="text"
-                  name="costo_tipos_acciones"
-                  value={form?.costo_tipos_acciones || ''}
+                  label="Nro medidor"
+                  name="nro_medidor_accion"
+                  type="number"
+                  value={form.nro_medidor_accion ?? ''}
                   onChange={handleChange}
-                  error={error.costo_tipos_acciones}
+                  error={error.nro_medidor_accion}
+                />
+              </div>
+              <div className="md:col-span-1 lg:col-span-4">
+                <AsyncSelect
+                  label="Seleccione el socio"
+                  name="socio_id"
+                  loadOptions={loadSocios}
+                  value={selectedSocio ?? []}
+                  onChange={handleSocioChange}
+                  error={error.socio_id}
+                />
+              </div>
+
+              <div className="md:col-span-1 lg:col-span-4">
+                <Select
+                  isMultii={true}
+                  label="Seleccione la calle"
+                  name="calle_ramal_id"
+                  options={selectedCalle ?? []}
+                  value={form?.calle_ramal_id ?? ''}
+                  onChange={handleChange}
+                  error={error.calle_ramal_id}
+                />
+              </div>
+
+              <div className="md:col-span-1 lg:col-span-6">
+                <MultiSelect
+                  label="Tipos de acción"
+                  name="acciones"
+                  options={optionAcction}
+                  value={form.acciones ?? []}
+                  onChange={handleChange}
+                  error={error.acciones}
+                />
+              </div>
+
+              <div className="md:col-span-1 lg:col-span-3">
+                <InputField
+                  label="Nro accion"
+                  name="nro_accion"
+                  type="number"
+                  value={form.nro_accion ?? ''}
+                  onChange={handleChange}
+                  error={error.nro_accion}
+                />
+              </div>
+              <div className="md:col-span-1 lg:col-span-4">
+                <TextArea
+                  label="Direccion"
+                  name="direccion_acciones"
+                  type="text"
+                  value={form.direccion_acciones ?? ''}
+                  onChange={handleChange}
+                  error={error.direccion_acciones}
+                />
+              </div>
+              <div className="md:col-span-1 lg:col-span-4">
+                <TextArea
+                  label="Observaciones"
+                  name="observaciones_acciones"
+                  type="text"
+                  value={form.observaciones_acciones ?? ''}
+                  onChange={handleChange}
+                  error={error.observaciones_acciones}
                 />
               </div>
             </div>
@@ -132,26 +292,21 @@ export default function CalleRamalModal({
               Cancelar
             </button>
             <button
-              className="rounded-xl bg-green-800 px-3 py-2 text-white hover:bg-green-900"
-              onClick={
-                isEdit
-                  ? () => {
-                      setOpenUpdateConfirm(true);
-                    }
-                  : handleCreate
-              }
+              className="rounded-xl bg-sky-800 px-3 py-2 text-white hover:bg-sky-900"
+              onClick={handleValidation}
             >
               {isEdit ? 'Editar cambios' : 'Guardar cambios'}
             </button>
           </div>
         </div>
       </div>
+
       <ConfirmModal
-        open={openUpdateConfirm}
-        onClose={() => setOpenUpdateConfirm(false)}
-        onConfirm={handleUpdate}
-        title="¿Esta seguro que desea editarlo?"
+        open={isModalOpen(isEdit ? MODALS.EDIT : MODALS.CREATE)}
+        onClose={closeModal}
         loading={loading}
+        onConfirm={isEdit ? handleUpdate : handleCreate}
+        title={isEdit ? '¿Confirmar edición?' : '¿Confirmar creación?'}
       />
     </>
   );

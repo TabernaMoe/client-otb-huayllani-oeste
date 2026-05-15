@@ -12,7 +12,18 @@ export class SocioServices {
           estado,
         },
       });
-      console.log(response);
+      return response.data;
+    } catch (e) {
+      return toServiceError(e);
+    }
+  }
+  static async getAllSelect(search = '') {
+    try {
+      const response = await api.get(`/socios/select`, {
+        params: {
+          search,
+        },
+      });
       return response.data;
     } catch (e) {
       return toServiceError(e);

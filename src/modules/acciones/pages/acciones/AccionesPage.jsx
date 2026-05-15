@@ -154,7 +154,7 @@ export default function AccionesPage() {
         <button
           className="
             rounded-xl
-            bg-sky-700
+            bg-sky-800
             px-10 py-2
             text-white
             hover:bg-sky-900

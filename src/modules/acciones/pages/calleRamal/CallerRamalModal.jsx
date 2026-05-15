@@ -5,6 +5,10 @@ import Select from '../../../../components/Select';
 import InputField from '../../../../components/ElegantInput';
 import ConfirmModal from '../../../../components/ConfirmModal';
 
+import { getChangedFields } from '../../../../helpers/getChangedFields';
+import { MODALS, useModalManager } from '../../../../hooks/useModalManager';
+import { calleRamalSchema } from '../../schema/calleRamal.schema';
+
 const initialForm = () => ({
   nombre_calle: '',
 });
@@ -19,16 +23,17 @@ export default function CalleRamalModal({
   const [form, setForm] = useState(initialForm());
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
-
-  //upate
-  const [openUpdateConfirm, setOpenUpdateConfirm] = useState(false);
+  const [valores, setValores] = useState(null);
+  const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
 
   useEffect(() => {
     if (open) {
       if (calle) {
         setForm(calle); // Modo edición
+        setError({});
       } else {
         setForm(initialForm); // Modo creación
+        setError({});
       }
     }
   }, [calle, open]);
@@ -42,8 +47,32 @@ export default function CalleRamalModal({
       ...prev,
       [name]: value,
     }));
+
+    setError((prev) => ({
+      ...prev,
+      [name]: null,
+    }));
   };
 
+  const handleValidation = () => {
+    const payload = isEdit ? getChangedFields(calle, form) : form;
+
+    if (isEdit && Object.keys(payload).length === 0) {
+      toast.info('No realizaste ningún cambio');
+      return;
+    }
+
+    const result = calleRamalSchema.safeParse(payload);
+
+    if (!result.success) {
+      setError(result.error.flatten().fieldErrors);
+      toast.error('Datos incorrectos');
+      return;
+    }
+    setValores(result.data);
+
+    openModal(isEdit ? MODALS.EDIT : MODALS.CREATE);
+  };
   const handleCreate = async () => {
     try {
       setLoading(true);
@@ -68,7 +97,7 @@ export default function CalleRamalModal({
       const data = await Servs.update(calle.id, form);
       if (data.ok) {
         toast.success(data.message || 'Se guardo correctamente');
-        setOpenUpdateConfirm(false);
+        closeModal();
         onSuccess();
       }
       if (!data.ok) {
@@ -120,14 +149,8 @@ export default function CalleRamalModal({
               Cancelar
             </button>
             <button
-              className="rounded-xl bg-green-800 px-3 py-2 text-white hover:bg-green-900"
-              onClick={
-                isEdit
-                  ? () => {
-                      setOpenUpdateConfirm(true);
-                    }
-                  : handleCreate
-              }
+              className="rounded-xl bg-sky-800 px-3 py-2 text-white hover:bg-sky-900"
+              onClick={handleValidation}
             >
               {isEdit ? 'Editar cambios' : 'Guardar cambios'}
             </button>
@@ -135,10 +158,10 @@ export default function CalleRamalModal({
         </div>
       </div>
       <ConfirmModal
-        open={openUpdateConfirm}
-        onClose={() => setOpenUpdateConfirm(false)}
-        onConfirm={handleUpdate}
-        title="¿Esta seguro que desea editarlo?"
+        open={isModalOpen(isEdit ? MODALS.EDIT : MODALS.CREATE)}
+        onClose={closeModal}
+        onConfirm={isEdit ? handleUpdate : handleCreate}
+        title={isEdit ? '¿Confirmar edición?' : '¿Confirmar creación?'}
         loading={loading}
       />
     </>

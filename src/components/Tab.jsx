@@ -35,7 +35,7 @@ export default function Tabs({ tabs, onChange }) {
 
               {/* Indicador inferior */}
               {isActive && (
-                <span className="absolute inset-x-2 bottom-0 h-0.75 rounded-full bg-emerald-600" />
+                <span className="absolute inset-x-2 bottom-0 h-0.75 rounded-full bg-sky-800" />
               )}
             </button>
           );

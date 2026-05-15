@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { SocioServices as Servs } from '../services/socio.services';
-import Select from '../../../components/Select';
-import InputField from '../../../components/ElegantInput';
-import Textarea from '../../../components/ElegantTextarea';
-import ConfirmModal from '../../../components/ConfirmModal';
-import { MODALS, useModalManager } from '../../../hooks/useModalManager';
-import { socioSchema, updateSocioSchema } from '../schema/socio.schema';
+import { SocioServices as Servs } from '../../services/socio.services';
+import Select from '../../../../components/Select';
+import InputField from '../../../../components/ElegantInput';
+import Textarea from '../../../../components/ElegantTextarea';
+import ConfirmModal from '../../../../components/ConfirmModal';
+import { MODALS, useModalManager } from '../../../../hooks/useModalManager';
+import { socioSchema, updateSocioSchema } from '../../schema/socio.schema';
 
 const initialForm = () => ({
   ci_socio: '',

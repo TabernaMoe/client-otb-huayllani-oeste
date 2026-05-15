@@ -11,7 +11,7 @@ const tabs = [
 ];
 
 export default function PlanillaAdministracion() {
-  const [tab, setTab] = useState('general');
+  const [tab, setTab] = useState('AccionesPage');
 
   return (
     <div className="space-y-6">

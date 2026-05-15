@@ -1,26 +1,23 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import DataTable from '../../../../components/DataTable';
+import DataTableLocal from '../../../../components/DataTableLocal';
 import TipoAccionModal from './TipoAccionModal';
 import { TipoAccionServices as Servs } from '../../services/tipoAccion.services';
 import ConfirmModal from '../../../../components/ConfirmModal';
 import { MODALS, useModalManager } from '../../../../hooks/useModalManager';
+import { normalize } from '../../../../helpers/funciones';
+
+const datosBusqueda = ['nombre_tipos_acciones'];
 
 export default function TipoAccionPage() {
   const { modalState, openModal, closeModal, isModalOpen } = useModalManager();
-  const [filas, setFila] = useState([]);
+  const [filas, setFilas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   //eliminar
   const [loadingDelete, setLoadingDelete] = useState(false);
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 5,
-    totalItems: 0,
-    totalPages: 1,
-  });
   const handleDelete = async () => {
     try {
       setLoadingDelete(true);
@@ -60,7 +57,7 @@ export default function TipoAccionPage() {
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              className="rounded-xl bg-green-800 px-3 py-2 text-white hover:bg-green-900"
+              className="rounded-xl bg-sky-800 px-3 py-2 text-white hover:bg-sky-900"
               onClick={() => openModal(MODALS.EDIT, row.original)}
             >
               Editar
@@ -78,37 +75,39 @@ export default function TipoAccionPage() {
     ],
     [],
   );
-  const fetchFilas = async () => {
+  const reload = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await Servs.getAll(
-        pagination.page,
-        pagination.limit,
-        searchInput,
+      const res = await Servs.getAll();
+      if (!res.ok) {
+        throw new Error(res.data?.message || 'Error al cargar las regiones');
+      }
+      setFilas(res.data);
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : 'Este es un problema interno, intente nuevamente',
       );
-      if (response.ok) {
-        setFila(response?.data || []);
-        setPagination((prev) => ({
-          ...prev,
-          page: response?.pagination?.page || prev.page,
-          totalItems: response?.pagination?.totalItems || 0,
-          totalPages: response?.pagination?.totalPages || 1,
-        }));
-      }
-
-      if (!response.ok) {
-        toast.error(response.message || 'Error al cargar datos');
-      }
-    } catch (error) {
-      toast.error(error.message || 'Error al cargar datos');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = normalize(searchInput);
+    if (!q) return filas;
+    return filas.filter((r) => {
+      const matchSimple = datosBusqueda.some((k) =>
+        normalize(r?.[k]).includes(q),
+      );
+      return matchSimple;
+    });
+  }, [filas, searchInput, datosBusqueda]);
 
   useEffect(() => {
-    fetchFilas();
-  }, [pagination.page, pagination.limit, searchInput]);
+    reload();
+  }, [reload]);
 
   return (
     <>
@@ -118,10 +117,10 @@ export default function TipoAccionPage() {
         <button
           className="
             rounded-xl
-            bg-emerald-800
+            bg-sky-800
             px-10 py-2
             text-white
-            hover:bg-emerald-900
+            hover:bg-sky-900
           "
           onClick={() => {
             openModal(MODALS.CREATE);
@@ -181,36 +180,14 @@ export default function TipoAccionPage() {
         </div>
       </div>
 
-      {/* TABLA */}
-      <DataTable
-        data={filas}
-        columns={columns}
-        loading={loading}
-        page={pagination.page}
-        totalPages={pagination.totalPages}
-        totalItems={pagination.totalItems}
-        onPageChange={(newPage) =>
-          setPagination((prev) => ({
-            ...prev,
-            page: newPage,
-          }))
-        }
-        limit={pagination.limit}
-        onLimitChange={(newLimit) =>
-          setPagination((prev) => ({
-            ...prev,
-            page: 1,
-            limit: Number(newLimit),
-          }))
-        }
-      />
+      <DataTableLocal columns={columns} data={filtered} loading={loading} />
 
       <TipoAccionModal
         open={isModalOpen(MODALS.CREATE)}
         onClose={closeModal}
         onSuccess={() => {
           closeModal(false);
-          fetchFilas();
+          reload();
         }}
       />
       <TipoAccionModal
@@ -220,7 +197,7 @@ export default function TipoAccionPage() {
         onClose={closeModal}
         onSuccess={() => {
           closeModal(false);
-          fetchFilas();
+          reload();
         }}
       />
       <ConfirmModal
