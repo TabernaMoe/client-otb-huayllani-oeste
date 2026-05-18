@@ -127,10 +127,16 @@ export const reqGenero = (label = 'Género', required = true) => {
   return schema;
 };
 export const reqEstadoAccion = (label = 'Estado', required = true) => {
-  let schema = z.enum(['PASIVO', 'ACTIVO', 'ANULADO'], {
-    required_error: `Debe seleccionar ${label.toLowerCase()}`,
-    invalid_type_error: `Debe seleccionar ${label.toLowerCase()}`,
-  });
+  const valores = ['PASIVO', 'ACTIVO', 'ANULADO'];
+
+  let schema = z
+    .string({
+      required_error: `Debe seleccionar ${label.toLowerCase()}`,
+      invalid_type_error: `Debe seleccionar ${label.toLowerCase()}`,
+    })
+    .refine((value) => valores.includes(value), {
+      message: `Debe seleccionar ${label.toLowerCase()}`,
+    });
 
   if (!required) {
     schema = schema.optional();
@@ -174,6 +180,63 @@ export const reqInteger = (
   if (max !== null) {
     schema = schema.max(max, `${label} debe ser menor o igual a ${max}`);
   }
+
+  if (!required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+};
+
+export const reqIntegerSelect = (
+  label = 'Número',
+  required = true,
+  min = 1,
+  max = null,
+) => {
+  let schema = z
+    .union([z.string(), z.number()])
+    .refine((value) => value !== '' && value !== null && value !== undefined, {
+      message: `Debe ingresar ${label.toLowerCase()}`,
+    })
+    .refine((value) => !isNaN(Number(value)), {
+      message: `Debe ingresar ${label.toLowerCase()}`,
+    })
+    .transform((value) => Number(value))
+    .refine((value) => Number.isInteger(value), {
+      message: `Debe ingresar ${label.toLowerCase()}`,
+    })
+    .refine((value) => value >= min, {
+      message: `${label} no puede ser negativo`,
+    });
+
+  if (max !== null) {
+    schema = schema.refine((value) => value <= max, {
+      message: `${label} debe ser menor o igual a ${max}`,
+    });
+  }
+
+  if (!required) {
+    schema = schema.optional().nullable();
+  }
+
+  return schema;
+};
+
+export const reqArrayInteger = (label = 'opción', required = true) => {
+  let schema = z
+    .array(
+      z
+        .number({
+          invalid_type_error: 'Debe seleccionar una opción válida',
+        })
+        .int('Debe seleccionar una opción válida'),
+      {
+        required_error: `Debe seleccionar al menos una ${label}`,
+        invalid_type_error: `Debe seleccionar al menos una ${label}`,
+      },
+    )
+    .min(1, `Debe seleccionar al menos una ${label}`);
 
   if (!required) {
     schema = schema.optional();

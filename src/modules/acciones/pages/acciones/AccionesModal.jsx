@@ -22,12 +22,12 @@ import ConfirmModal from '../../../../components/ConfirmModal';
 
 const initialForm = () => ({
   socio_id: '',
-  calle_ramal_id: '',
+  calle_id: '',
   acciones: [],
   codigo_interno_accion: '',
   nro_medidor_accion: '',
-  direccion_acciones: '',
-  observaciones_acciones: '',
+  direccion_accion: '',
+  observacion_accion: '',
   nro_accion: '',
   estado_accion: '',
 });
@@ -87,7 +87,7 @@ export default function AccionesModal({
         }
 
         const accionesTipo = resTipoAcciones?.data?.map((row) => ({
-          value: row.id,
+          value: Number(row.id),
           label: row.nombre_tipos_acciones,
         }));
 
@@ -170,13 +170,45 @@ export default function AccionesModal({
   };
 
   const handleCreate = async () => {
-    console.log('crear');
-    console.log(valores);
+    try {
+      console.log(valores);
+      setLoading(true);
+      const response = await Servs.create(valores);
+      if (!response.ok) {
+        throw new Error(response.message || 'No se pude crear la accion');
+      }
+      toast.success(response.message || 'Se creo exitosamente la accion');
+      closeModal();
+      onSuccess();
+    } catch (e) {
+      closeModal();
+      console.error('[CREATE_ACCION_ERROR]', e);
+      const message =
+        e instanceof Error ? e.message : 'Error interno del sistema';
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdate = async () => {
-    console.log('crear');
-    console.log(valores);
+    try {
+      setLoading(true);
+      const response = await Servs.update(id, valores);
+      if (!response.ok) {
+        throw new Error(response.message || 'No se pude crear la accion');
+      }
+      toast.success(response.message || 'Se creo exitosamente la accion');
+    } catch (e) {
+      console.error('[UPDATE_ACCION_ERROR]', e);
+      const message =
+        e instanceof Error ? e.message : 'Error interno del sistema';
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <>
@@ -233,11 +265,11 @@ export default function AccionesModal({
                 <Select
                   isMultii={true}
                   label="Seleccione la calle"
-                  name="calle_ramal_id"
+                  name="calle_id"
                   options={selectedCalle ?? []}
-                  value={form?.calle_ramal_id ?? ''}
+                  value={form?.calle_id ?? ''}
                   onChange={handleChange}
-                  error={error.calle_ramal_id}
+                  error={error.calle_id}
                 />
               </div>
 
@@ -252,7 +284,7 @@ export default function AccionesModal({
                 />
               </div>
 
-              <div className="md:col-span-1 lg:col-span-3">
+              <div className="md:col-span-1 lg:col-span-3 gap-10">
                 <InputField
                   label="Nro accion"
                   name="nro_accion"
@@ -261,25 +293,35 @@ export default function AccionesModal({
                   onChange={handleChange}
                   error={error.nro_accion}
                 />
+                <div className="mt-2">
+                  <Select
+                    label="Seleccion estado de la accion"
+                    options={optioneEstado}
+                    name={'estado_accion'}
+                    value={form.estado_accion ?? ''}
+                    onChange={handleChange}
+                    error={error.estado_accion}
+                  />
+                </div>
               </div>
               <div className="md:col-span-1 lg:col-span-4">
                 <TextArea
                   label="Direccion"
-                  name="direccion_acciones"
+                  name="direccion_accion"
                   type="text"
-                  value={form.direccion_acciones ?? ''}
+                  value={form.direccion_accion ?? ''}
                   onChange={handleChange}
-                  error={error.direccion_acciones}
+                  error={error.direccion_accion}
                 />
               </div>
               <div className="md:col-span-1 lg:col-span-4">
                 <TextArea
                   label="Observaciones"
-                  name="observaciones_acciones"
+                  name="observacion_accion"
                   type="text"
-                  value={form.observaciones_acciones ?? ''}
+                  value={form.observacion_accion ?? ''}
                   onChange={handleChange}
-                  error={error.observaciones_acciones}
+                  error={error.observacion_accion}
                 />
               </div>
             </div>

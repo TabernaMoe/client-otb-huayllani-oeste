@@ -44,48 +44,57 @@ export default function AccionesPage() {
       {
         accessorKey: 'ci_socio',
         header: 'Cedula de entidad',
-        cell: (info) => info.row.original.ci_socio,
       },
       {
         accessorKey: 'primer_apellido_socio',
         header: 'Primer apellido',
-        cell: (info) => info.row.original.primer_apellido_socio,
       },
       {
         accessorKey: 'segundo_apellido_socio',
         header: 'Segundo apellido',
-        cell: (info) => info.row.original.segundo_apellido_socio,
       },
       {
         accessorKey: 'codigo_interno_accion',
         header: 'Codigo interno',
-        cell: (info) => info.row.original.codigo_interno_accion,
       },
       {
         accessorKey: 'nro_medidor_accion',
         header: 'Nro medidor',
-        cell: (info) => info.row.original.nro_medidor_accion,
       },
       {
-        accessorKey: 'direccion_acciones',
+        accessorKey: 'direccion_accion',
         header: 'Direccion',
-        cell: (info) => info.row.original.direccion_acciones,
       },
       {
-        accessorKey: 'observaciones_acciones',
+        accessorKey: 'observacion_accion',
         header: 'Observaciones',
-        cell: (info) => info.row.original.observaciones_acciones,
       },
       {
         accessorKey: 'estado_accion',
         header: 'Estado de la accion',
-        cell: (info) => info.row.original.estado_accion,
       },
 
       {
         accessorKey: 'nombre_calle',
         header: 'Nombre calle',
-        cell: (info) => info.row.original.nombre_calle,
+      },
+
+      {
+        accessorKey: 'accionesTipos',
+        header: 'Acciones compradas',
+
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-1 overflow-y-auto w-40">
+            {row.original.accionesTipos.map((accion) => (
+              <span
+                key={accion.id}
+                className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800"
+              >
+                {accion.nombre_tipos_acciones}
+              </span>
+            ))}
+          </div>
+        ),
       },
 
       {
@@ -122,6 +131,7 @@ export default function AccionesPage() {
         pagination.limit,
         searchInput,
       );
+      console.log(response);
       if (response.ok) {
         setFila(response?.data || []);
         setPagination((prev) => ({
