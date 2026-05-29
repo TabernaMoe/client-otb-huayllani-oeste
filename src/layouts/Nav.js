@@ -25,17 +25,17 @@ export const SidebarNav = [
     items: [
       {
         label: 'Gestion usuarios',
-        to: '/cliente/login',
+        to: '/admin/login',
         icon: UsersIcon,
       },
       {
         label: 'Gestion de socios',
-        to: '/cliente/socios',
+        to: '/admin/socios',
         icon: FolderIcon,
       },
       {
         label: 'Gestion acciones',
-        to: '/cliente/gestion-acciones',
+        to: '/admin/gestion-acciones',
         icon: CurrencyDollarIcon,
       },
     ],

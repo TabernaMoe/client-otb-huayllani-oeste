@@ -1,5 +1,6 @@
 import LoginPage from './modules/auth/pages/LoginPage';
 import HomeLayaout from './layouts/HomeLayaout';
+import AdminLayaout from './layouts/AdminLayaout';
 import ClienteLayaout from './layouts/ClienteLayaout';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
@@ -12,11 +13,13 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<HomeLayaout />} />
-        <Route path="cliente" element={<ClienteLayaout />}>
+        <Route path="admin" element={<AdminLayaout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="socios" element={<TabSocio />} />
           <Route path="gestion-acciones" element={<GestionAcciones />} />
         </Route>
+
+        <Route path="cliente" element={<ClienteLayaout />} />
       </Routes>
     </BrowserRouter>
   );
