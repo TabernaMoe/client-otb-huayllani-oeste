@@ -1,16 +1,11 @@
 import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
 
-export class SocioServices {
+export class TarifasServices {
   static async getAll(page = 1, limit = 5, search = '', estado = true) {
     try {
-      const response = await api.get('/socio', {
-        params: {
-          page,
-          limit,
-          search,
-          estado,
-        },
+      const response = await api.get('/tarifa', {
+        params: { page, limit, search, estado },
       });
 
       return response.data;
@@ -21,7 +16,7 @@ export class SocioServices {
 
   static async getForSelect(search = '') {
     try {
-      const response = await api.get('/socio/select', {
+      const response = await api.get('/tarifa/select', {
         params: { search },
       });
 
@@ -33,7 +28,7 @@ export class SocioServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/socio/${id}`);
+      const response = await api.get(`/tarifa/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -42,7 +37,7 @@ export class SocioServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/socio', payload);
+      const response = await api.post('/tarifa', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -51,7 +46,16 @@ export class SocioServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/socio/${id}`, payload);
+      const response = await api.patch(`/tarifa/${id}`, payload);
+      return response.data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async delete(id) {
+    try {
+      const response = await api.delete(`/tarifa/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -60,7 +64,7 @@ export class SocioServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/socio/toggle-status/${id}`);
+      const response = await api.patch(`/tarifa/toggle-status/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

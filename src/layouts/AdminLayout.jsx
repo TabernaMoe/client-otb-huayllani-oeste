@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import {
   Bars3Icon,
   ChevronDownIcon,
@@ -7,10 +12,11 @@ import {
   ArrowRightOnRectangleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+
 import LogoOtb from '/logo-otb.webp';
-
-
 import { AdminNav } from './Nav';
+import { AuthService } from '../modules/auth/services/auth.services';
+
 function cx(...classes) {
   return classes.filter(Boolean).join(' ');
 }
@@ -19,7 +25,7 @@ const BRAND = {
   name: 'Panel Admin',
   logo: (
     <div className="flex items-center gap-3 px-3 py-4">
-      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center overflow-hidden">
+      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white">
         <img
           src={LogoOtb}
           alt="Logo"
@@ -29,12 +35,29 @@ const BRAND = {
     </div>
   ),
 };
-function findGroupFromPath(pathname) {
-  for (const g of AdminNav) {
-    if (g.items.some((it) => pathname.startsWith(it.to))) return g.id;
-  }
-  return AdminNav[0]?.id || 'general';
+
+function filterSidebarByPermissions(nav) {
+  return nav
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (!item.permission) return true;
+        return AuthService.hasPermission(item.permission);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 }
+
+function findGroupFromPath(pathname, sidebar) {
+  for (const group of sidebar) {
+    if (group.items.some((item) => pathname.startsWith(item.to))) {
+      return group.id;
+    }
+  }
+
+  return sidebar[0]?.id || 'admin';
+}
+
 function SidebarContent({
   sidebarCollapsed,
   openGroup,
@@ -44,10 +67,10 @@ function SidebarContent({
   sidebar,
 }) {
   return (
-    <div className="flex h-full flex-col min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="h-3" />
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-3">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pb-3">
         <nav>
           {sidebar.map((group) => {
             const GroupIcon = group.icon;
@@ -64,7 +87,9 @@ function SidebarContent({
                       return;
                     }
 
-                    setOpenGroup((cur) => (cur === group.id ? '' : group.id));
+                    setOpenGroup((current) =>
+                      current === group.id ? '' : group.id,
+                    );
                   }}
                   className={cx(
                     'group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all',
@@ -109,7 +134,7 @@ function SidebarContent({
                               'mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all',
                               isActive
                                 ? 'bg-red-800 text-white shadow-sm'
-                                : 'text-slate-700 hover:bg-slate-100 hover:text-emerald-700',
+                                : 'text-slate-700 hover:bg-slate-100 hover:text-red-800',
                             )
                           }
                           end
@@ -135,15 +160,21 @@ function SidebarContent({
     </div>
   );
 }
-export default function ClienteLayout() {
+
+export default function AdminLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const location = useLocation();
+  const user = AuthService.getUser();
+
+  const sidebar = useMemo(() => filterSidebarByPermissions(AdminNav), []);
 
   const activeGroup = useMemo(
-    () => findGroupFromPath(location.pathname),
-    [location.pathname],
+    () => findGroupFromPath(location.pathname, sidebar),
+    [location.pathname, sidebar],
   );
 
   const [openGroup, setOpenGroup] = useState(activeGroup);
@@ -158,15 +189,34 @@ export default function ClienteLayout() {
 
   useEffect(() => {
     if (!mobileOpen) return;
-    const prev = document.body.style.overflow;
+
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = previousOverflow;
     };
   }, [mobileOpen]);
 
   const sidebarCollapsed = !sidebarOpen;
+
+  const handleLogout = () => {
+    AuthService.logout();
+    navigate('/login', { replace: true });
+  };
+
+  const displayName =
+    user?.nombre_usuario ||
+    user?.nombre ||
+    user?.name ||
+    user?.user ||
+    'Usuario';
+
+  const displayRole =
+    user?.rol?.nombre_rol ||
+    user?.rol ||
+    user?.role ||
+    'Sin rol';
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 text-slate-900">
@@ -175,16 +225,16 @@ export default function ClienteLayout() {
           <button
             onClick={() => setMobileOpen(true)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 md:hidden"
-            aria-label="Open menu"
+            aria-label="Abrir menú"
             type="button"
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
 
           <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-            aria-label="Toggle sidebar"
+            onClick={() => setSidebarOpen((value) => !value)}
+            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 md:inline-flex"
+            aria-label="Cambiar sidebar"
             type="button"
             title={sidebarOpen ? 'Cerrar sidebar' : 'Abrir sidebar'}
           >
@@ -195,21 +245,24 @@ export default function ClienteLayout() {
             <div className="hidden sm:block">{BRAND.logo}</div>
             <div className="leading-tight">
               <p className="text-sm font-semibold">{BRAND.name}</p>
-              <p className="text-xs text-slate-500">Panel de administración</p>
+              <p className="text-xs text-slate-500">
+                Panel de administración
+              </p>
             </div>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+            <div className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 md:flex">
               <div className="leading-tight">
-                <p className="text-sm font-semibold">Admin</p>
-                <p className="text-xs text-slate-500">admin@cns.bo</p>
+                <p className="text-sm font-semibold">{displayName}</p>
+                <p className="text-xs text-slate-500">{displayRole}</p>
               </div>
             </div>
 
             <button
+              onClick={handleLogout}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-              aria-label="Logout"
+              aria-label="Cerrar sesión"
               type="button"
               title="Cerrar sesión"
             >
@@ -253,7 +306,7 @@ export default function ClienteLayout() {
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
               onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
+              aria-label="Cerrar menú"
               type="button"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -266,12 +319,12 @@ export default function ClienteLayout() {
             setOpenGroup={setOpenGroup}
             setSidebarOpen={setSidebarOpen}
             location={location}
-            sidebar={AdminNav}
+            sidebar={sidebar}
           />
         </aside>
       </div>
 
-      <div className="hidden md:flex h-[calc(100vh-4rem)] min-h-0">
+      <div className="hidden h-[calc(100vh-4rem)] min-h-0 md:flex">
         <aside
           className={cx(
             'border-r border-slate-200/70 bg-white/70 backdrop-blur transition-all duration-300',
@@ -284,16 +337,16 @@ export default function ClienteLayout() {
             setOpenGroup={setOpenGroup}
             setSidebarOpen={setSidebarOpen}
             location={location}
-            sidebar={AdminNav}
+            sidebar={sidebar}
           />
         </aside>
 
-        <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
         </main>
       </div>
 
-      <div className="md:hidden h-[calc(100vh-4rem)] min-h-0">
+      <div className="h-[calc(100vh-4rem)] min-h-0 md:hidden">
         <main className="h-full overflow-y-auto p-4">
           <Outlet />
         </main>

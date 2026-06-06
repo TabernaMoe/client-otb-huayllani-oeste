@@ -1,303 +1,172 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import {
-  Bars3Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ArrowRightOnRectangleIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
-import LogoOtb from '/logo-otb.webp';
+import { useEffect, useState } from 'react';
 
+import InputField from '../../../components/InputField';
+import PasswordField from '../../../components/PasswordField';
+import { RolesServices } from '../../roles/services/roles.services';
+import { validateUsuarioForm } from '../schema/admin.schema';
 
-import { AdminNav } from '../../../layouts/Nav';
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-const BRAND = {
-  name: 'Panel Admin',
-  logo: (
-    <div className="flex items-center gap-3 px-3 py-4">
-      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center overflow-hidden">
-        <img
-          src={LogoOtb}
-          alt="Logo"
-          className="h-full w-full object-contain"
-        />
-      </div>
-    </div>
-  ),
+const initialForm = {
+  nombre_usuario: '',
+  contrasenia_usuario: '',
+  rol_id: '',
 };
-function findGroupFromPath(pathname) {
-  for (const g of AdminNav) {
-    if (g.items.some((it) => pathname.startsWith(it.to))) return g.id;
-  }
-  return AdminNav[0]?.id || 'general';
-}
-function SidebarContent({
-  sidebarCollapsed,
-  openGroup,
-  setOpenGroup,
-  setSidebarOpen,
-  location,
-  sidebar,
+
+export default function AdminForm({
+  user,
+  onSubmit,
+  onCancel,
+  loading = false,
 }) {
-  return (
-    <div className="flex h-full flex-col min-h-0">
-      <div className="h-3" />
+  const isEdit = Boolean(user);
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-3">
-        <nav>
-          {sidebar.map((group) => {
-            const GroupIcon = group.icon;
-            const isOpen = openGroup === group.id;
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+  const [roles, setRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [rolesError, setRolesError] = useState('');
 
-            return (
-              <div key={group.id} className="mb-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (sidebarCollapsed) {
-                      setSidebarOpen(true);
-                      setOpenGroup(group.id);
-                      return;
-                    }
+  const loadRoles = async () => {
+    setLoadingRoles(true);
+    setRolesError('');
 
-                    setOpenGroup((cur) => (cur === group.id ? '' : group.id));
-                  }}
-                  className={cx(
-                    'group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all',
-                    'hover:bg-slate-100',
-                    isOpen ? 'bg-slate-100' : 'bg-transparent',
-                    sidebarCollapsed ? 'justify-center px-2' : '',
-                  )}
-                  title={group.title}
-                >
-                  <GroupIcon className="h-6 w-6 shrink-0 text-slate-700" />
+    const response = await RolesServices.getForSelect();
 
-                  <div className={cx('flex-1', sidebarCollapsed && 'hidden')}>
-                    <p className="text-sm font-semibold">{group.title}</p>
-                  </div>
+    setLoadingRoles(false);
 
-                  <div className={cx(sidebarCollapsed && 'hidden')}>
-                    {isOpen ? (
-                      <ChevronDownIcon className="h-5 w-5 text-slate-500" />
-                    ) : (
-                      <ChevronRightIcon className="h-5 w-5 text-slate-500" />
-                    )}
-                  </div>
-                </button>
+    if (!response.ok) {
+      setRolesError(response.message || 'Error al cargar roles');
+      return;
+    }
 
-                <div
-                  className={cx(
-                    'mt-1 overflow-hidden transition-all duration-300',
-                    isOpen && !sidebarCollapsed ? 'max-h-125' : 'max-h-0',
-                  )}
-                >
-                  <div className="ml-3 border-l border-slate-200 pl-3">
-                    {group.items.map((item) => {
-                      const ItemIcon = item.icon;
-                      const active = location.pathname.startsWith(item.to);
-
-                      return (
-                        <NavLink
-                          key={`${group.id}:${item.to}`}
-                          to={item.to}
-                          className={({ isActive }) =>
-                            cx(
-                              'mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all',
-                              isActive
-                                ? 'bg-red-800 text-white shadow-sm'
-                                : 'text-slate-700 hover:bg-slate-100 hover:text-emerald-700',
-                            )
-                          }
-                          end
-                          title={item.label}
-                        >
-                          <ItemIcon
-                            className={cx(
-                              'h-5 w-5 shrink-0',
-                              active ? 'text-white' : 'text-slate-500',
-                            )}
-                          />
-                          <span className="truncate">{item.label}</span>
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
-  );
-}
-export default function ClienteLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const location = useLocation();
-
-  const activeGroup = useMemo(
-    () => findGroupFromPath(location.pathname),
-    [location.pathname],
-  );
-
-  const [openGroup, setOpenGroup] = useState(activeGroup);
+    setRoles(response.data || response.roles || response.items || []);
+  };
 
   useEffect(() => {
-    setOpenGroup(activeGroup);
-  }, [activeGroup]);
+    loadRoles();
+  }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    if (!user) {
+      setForm(initialForm);
+      return;
+    }
 
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    setForm({
+      nombre_usuario: user.nombre_usuario || '',
+      contrasenia_usuario: '',
+      rol_id: user.rol_id || user.rol?.id || '',
+    });
+  }, [user]);
 
-    return () => {
-      document.body.style.overflow = prev;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: '',
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const validation = validateUsuarioForm(form, isEdit);
+
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+
+    const payload = {
+      nombre_usuario: form.nombre_usuario.trim(),
+      rol_id: Number(form.rol_id),
     };
-  }, [mobileOpen]);
 
-  const sidebarCollapsed = !sidebarOpen;
+    if (form.contrasenia_usuario.trim()) {
+      payload.contrasenia_usuario = form.contrasenia_usuario.trim();
+    }
+
+    onSubmit(payload);
+  };
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
-        <div className="flex h-16 items-center gap-3 px-4">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 md:hidden"
-            aria-label="Open menu"
-            type="button"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <InputField
+        label="Nombre de usuario"
+        name="nombre_usuario"
+        value={form.nombre_usuario}
+        onChange={handleChange}
+        placeholder="Ej. secretaria_01"
+        error={errors.nombre_usuario}
+      />
 
-          <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-            aria-label="Toggle sidebar"
-            type="button"
-            title={sidebarOpen ? 'Cerrar sidebar' : 'Abrir sidebar'}
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+      <PasswordField
+        label={isEdit ? 'Nueva contraseña opcional' : 'Contraseña'}
+        name="contrasenia_usuario"
+        value={form.contrasenia_usuario}
+        onChange={handleChange}
+        placeholder={
+          isEdit
+            ? 'Déjalo vacío si no quieres cambiarla'
+            : 'Ingrese la contraseña'
+        }
+        error={errors.contrasenia_usuario}
+      />
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block">{BRAND.logo}</div>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">{BRAND.name}</p>
-              <p className="text-xs text-slate-500">Panel de administración</p>
-            </div>
-          </div>
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
+          Rol
+        </label>
 
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">Admin</p>
-                <p className="text-xs text-slate-500">admin@cns.bo</p>
-              </div>
-            </div>
+        <select
+          name="rol_id"
+          value={form.rol_id}
+          onChange={handleChange}
+          disabled={loadingRoles}
+          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100 disabled:bg-slate-100"
+        >
+          <option value="">
+            {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
+          </option>
 
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-              aria-label="Logout"
-              type="button"
-              title="Cerrar sesión"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+          {roles.map((rol) => (
+            <option key={rol.id} value={rol.id}>
+              {rol.nombre_rol || rol.nombre || `Rol ${rol.id}`}
+            </option>
+          ))}
+        </select>
 
-      <div
-        className={cx(
-          'fixed inset-0 z-50 md:hidden',
-          mobileOpen ? 'pointer-events-auto' : 'pointer-events-none',
+        {errors.rol_id && (
+          <p className="mt-1 text-sm text-red-600">{errors.rol_id}</p>
         )}
-        aria-hidden={!mobileOpen}
-      >
-        <div
-          className={cx(
-            'absolute inset-0 bg-black/40 transition-opacity',
-            mobileOpen ? 'opacity-100' : 'opacity-0',
-          )}
-          onClick={() => setMobileOpen(false)}
-        />
 
-        <aside
-          className={cx(
-            'absolute left-0 top-0 h-full w-[18rem] border-r border-slate-200/70 bg-white/90 backdrop-blur',
-            'transition-transform duration-300',
-            mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          )}
+        {rolesError && (
+          <p className="mt-1 text-sm text-red-600">{rolesError}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
         >
-          <div className="flex h-16 items-center justify-between border-b border-slate-200/70 px-4">
-            <div className="flex items-center gap-3">
-              {BRAND.logo}
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">{BRAND.name}</p>
-                <p className="text-xs text-slate-500">Menú</p>
-              </div>
-            </div>
+          Cancelar
+        </button>
 
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-              type="button"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
-
-          <SidebarContent
-            sidebarCollapsed={false}
-            openGroup={openGroup}
-            setOpenGroup={setOpenGroup}
-            setSidebarOpen={setSidebarOpen}
-            location={location}
-            sidebar={AdminNav}
-          />
-        </aside>
-      </div>
-
-      <div className="hidden md:flex h-[calc(100vh-4rem)] min-h-0">
-        <aside
-          className={cx(
-            'border-r border-slate-200/70 bg-white/70 backdrop-blur transition-all duration-300',
-            sidebarOpen ? 'w-72' : 'w-20',
-          )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
         >
-          <SidebarContent
-            sidebarCollapsed={sidebarCollapsed}
-            openGroup={openGroup}
-            setOpenGroup={setOpenGroup}
-            setSidebarOpen={setSidebarOpen}
-            location={location}
-            sidebar={AdminNav}
-          />
-        </aside>
-
-        <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
-          <Outlet />
-        </main>
+          {loading ? 'Guardando...' : 'Guardar usuario'}
+        </button>
       </div>
-
-      <div className="md:hidden h-[calc(100vh-4rem)] min-h-0">
-        <main className="h-full overflow-y-auto p-4">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    </form>
   );
 }

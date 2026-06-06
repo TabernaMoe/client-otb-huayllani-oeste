@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 import InputField from '../../../components/InputField';
 import PasswordField from '../../../components/PasswordField';
@@ -9,32 +9,32 @@ import { AuthService } from '../services/auth.services';
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  // 1. Aquí guardamos lo que escribe el usuario
   const [form, setForm] = useState({
     user: '',
     password: '',
   });
 
-  // 2. Estados para controlar carga y errores
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 3. Captura lo que se escribe en los inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm({
-      ...form,
+    setForm((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
+
+    setError('');
   };
 
-  // 4. Envía los datos capturados al backend
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setError('');
 
-    // 5. Validamos antes de enviar
     if (!form.user.trim() || !form.password.trim()) {
       setError('Debe ingresar usuario y contraseña');
       return;
@@ -42,36 +42,73 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-
-      // 6. Aquí se envía al service
-      const data = await AuthServices.login({
-        user: form.user,
-        password: form.password,
+/*
+      const data = await AuthService.login({
+        user: form.user.trim(),
+        password: form.password.trim(),
       });
 
       console.log('Respuesta del backend:', data);
 
-      // 7. Si el backend responde error
       if (!data.ok) {
         setError(data.message || 'Credenciales incorrectas');
         return;
       }
+*/
 
-      // 8. Si el usuario está deshabilitado
-      if (data.user?.habilitado === false) {
+const data = await AuthService.login({
+  user: form.user.trim(),
+  password: form.password.trim(),
+});
+
+console.log('Respuesta del backend:', data);
+
+// MODO DESARROLLO
+if (!data.ok) {
+  if (import.meta.env.DEV && form.user === 'admin') {
+    AuthService.saveSession({
+      token: 'dev-token',
+      user: {
+        id: 1,
+        nombre_usuario: 'admin',
+        estado: true,
+        rol: {
+          id: 1,
+          nombre_rol: 'ADMIN',
+          permisos: [
+            { codigo_permiso: 'USUARIOS_READ' },
+            { codigo_permiso: 'ROLES_READ' },
+            { codigo_permiso: 'GESTIONES_READ' },
+            { codigo_permiso: 'CALLES_READ' },
+            { codigo_permiso: 'TARIFAS_READ' },
+            { codigo_permiso: 'DETALLE_ACCION_READ' },
+            { codigo_permiso: 'SOCIOS_READ' },
+            { codigo_permiso: 'ACCIONES_READ' },
+          ],
+        },
+      },
+    });
+
+    navigate('/admin', { replace: true });
+    return;
+  }
+
+  setError(data.message || 'Credenciales incorrectas');
+  return;
+}
+      const user = data.user || data.usuario;
+
+      if (user?.habilitado === false || user?.estado === false) {
         setError('Usuario deshabilitado');
         return;
       }
 
-      // 9. Guardar sesión
-      AuthServices.saveSession(data);
+      AuthService.saveSession(data);
 
-      // 10. Redirigir
-      navigate('/cliente/socios');
+      navigate('/cliente/socios', { replace: true });
     } catch (error) {
       console.error('Error en login:', error);
-
-      setError(error.response?.data?.message || 'Error al iniciar sesión');
+      setError('Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -79,7 +116,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100">
-      {/* Formulario */}
       <div className="flex w-full items-center justify-center px-6 py-10 lg:w-1/2">
         <form
           onSubmit={handleSubmit}
@@ -103,7 +139,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Mensaje de error */}
           {error && (
             <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {error}
@@ -142,7 +177,6 @@ export default function LoginPage() {
         </form>
       </div>
 
-      {/* Panel visual */}
       <div className="relative hidden items-center justify-center overflow-hidden bg-linear-to-br from-red-950 via-red-800 to-red-600 lg:flex lg:w-1/2">
         <div className="absolute inset-0 bg-black/20" />
 

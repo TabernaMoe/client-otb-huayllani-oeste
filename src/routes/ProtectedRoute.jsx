@@ -5,7 +5,7 @@ export default function ProtectedRoute() {
   const token = AuthService.getToken();
 
   if (!token) {
-    return <Navigate to="login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

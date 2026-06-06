@@ -5,36 +5,24 @@ import {
   CalendarDaysIcon,
   BuildingOffice2Icon,
   ClipboardDocumentListIcon,
-  ChartBarIcon,
-  BellIcon,
-  WrenchScrewdriverIcon,
-  DocumentTextIcon,
   FolderIcon,
   UserGroupIcon,
-  BeakerIcon,
   CurrencyDollarIcon,
-  BriefcaseIcon,
-  HeartIcon,
 } from '@heroicons/react/24/outline';
 
 export const SidebarNav = [
   {
-    id: 'general',
-    title: 'Admin',
+    id: 'cliente',
+    title: 'Cliente',
     icon: HomeIcon,
     items: [
       {
-        label: 'Gestion usuarios',
-        to: '/login',
-        icon: UsersIcon,
-      },
-      {
-        label: 'Gestion de socios',
+        label: 'Gestión de socios',
         to: '/cliente/socios',
         icon: FolderIcon,
       },
       {
-        label: 'Gestion acciones',
+        label: 'Gestión acciones',
         to: '/cliente/gestion-acciones',
         icon: CurrencyDollarIcon,
       },
@@ -52,11 +40,58 @@ export const AdminNav = [
         label: 'Gestión de usuarios',
         to: '/admin/usuarios',
         icon: UsersIcon,
+        permission: 'USUARIOS_READ',
       },
       {
-        label: 'Reportes',
-        to: '/admin/reportes',
-        icon: ChartBarIcon,
+        label: 'Roles y permisos',
+        to: '/admin/roles',
+        icon: UserGroupIcon,
+        permission: 'ROLES_READ',
+      },
+      {
+        label: 'Gestiones',
+        to: '/admin/gestiones',
+        icon: CalendarDaysIcon,
+        permission: 'GESTIONES_READ',
+      },
+    ],
+  },
+  {
+    id: 'configuracion',
+    title: 'Configuración',
+    icon: Cog6ToothIcon,
+    items: [
+      {
+        label: 'Calles',
+        to: '/admin/calles',
+        icon: BuildingOffice2Icon,
+        permission: 'CALLES_READ',
+      },
+      {
+        label: 'Tarifas',
+        to: '/admin/tarifas',
+        icon: CurrencyDollarIcon,
+        permission: 'TARIFAS_READ',
+      },
+      {
+        label: 'Detalle pago acción',
+        to: '/admin/detalle-pago-accion',
+        icon: ClipboardDocumentListIcon,
+        permission: 'DETALLE_ACCION_READ',
+      },
+      
+    ],
+  },
+  {
+    id: 'socios',
+    title: 'Socios',
+    icon: FolderIcon,
+    items: [
+      {
+        label: 'Socios',
+        to: '/admin/socios',
+        icon: UsersIcon,
+        permission: 'SOCIOS_READ',
       },
     ],
   },
