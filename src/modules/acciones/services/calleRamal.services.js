@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error.js';
 export class CalleRamalServices {
   static async getAll(page, limit, search = '') {
     try {
-      const response = await api.get(`/acciones/calle-ramal`, {
+      const response = await api.get(`admin/acciones/calle-ramal`, {
         params: {
           page,
           limit,
@@ -18,7 +18,7 @@ export class CalleRamalServices {
   }
   static async getId(id) {
     try {
-      const response = await api.get(`/acciones/calle-ramal/${id}`);
+      const response = await api.get(`admin/acciones/calle-ramal/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -26,7 +26,7 @@ export class CalleRamalServices {
   }
   static async create(payload) {
     try {
-      const response = await api.post('/acciones/calle-ramal', payload);
+      const response = await api.post('admin/acciones/calle-ramal', payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -35,7 +35,7 @@ export class CalleRamalServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.put(`/acciones/calle-ramal/${id}`, payload);
+      const response = await api.put(`admin/acciones/calle-ramal/${id}`, payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -43,7 +43,7 @@ export class CalleRamalServices {
   }
   static async delete(id) {
     try {
-      const response = await api.put(`/acciones/calle-ramal/${id}`);
+      const response = await api.put(`admin/acciones/calle-ramal/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);

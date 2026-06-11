@@ -166,7 +166,7 @@ export default function SocioPage() {
               className={`rounded-full px-3 py-1 text-xs font-semibold ${
                 estado
                   ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
+                  : 'bg-sky-100 text-sky-700'
               }`}
             >
               {estado ? 'Activo' : 'Inactivo'}

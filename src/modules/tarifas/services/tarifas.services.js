@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error';
 export class TarifasServices {
   static async getAll(page = 1, limit = 5, search = '', estado = true) {
     try {
-      const response = await api.get('/tarifa', {
+      const response = await api.get('/admin/tarifa', {
         params: { page, limit, search, estado },
       });
 
@@ -16,7 +16,7 @@ export class TarifasServices {
 
   static async getForSelect(search = '') {
     try {
-      const response = await api.get('/tarifa/select', {
+      const response = await api.get('/admin/tarifa/select', {
         params: { search },
       });
 
@@ -28,7 +28,7 @@ export class TarifasServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/tarifa/${id}`);
+      const response = await api.get(`/admin/tarifa/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -37,7 +37,7 @@ export class TarifasServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/tarifa', payload);
+      const response = await api.post('/admin/tarifa', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -46,7 +46,7 @@ export class TarifasServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/tarifa/${id}`, payload);
+      const response = await api.patch(`/admin/tarifa/${id}`, payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -55,7 +55,7 @@ export class TarifasServices {
 
   static async delete(id) {
     try {
-      const response = await api.delete(`/tarifa/${id}`);
+      const response = await api.delete(`/admin/tarifa/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -64,7 +64,7 @@ export class TarifasServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/tarifa/toggle-status/${id}`);
+      const response = await api.patch(`/admin/tarifa/toggle-status/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

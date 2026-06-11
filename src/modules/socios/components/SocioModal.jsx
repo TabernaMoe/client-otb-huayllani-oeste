@@ -278,7 +278,7 @@ export default function SocioModal({
             <button
               type="button"
               disabled={loading}
-              className="rounded-xl bg-red-800 px-3 py-2 text-white hover:bg-red-900 disabled:opacity-60"
+              className="rounded-xl bg-sky-800 px-3 py-2 text-white hover:bg-sky-900 disabled:opacity-60"
               onClick={onClose}
             >
               Cancelar

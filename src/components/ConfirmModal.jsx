@@ -62,9 +62,9 @@ export default function ConfirmModal({
                 className={[
                   'rounded-xl px-4 py-2 text-white disabled:opacity-60',
                   danger
-                    ? 'bg-red-800 hover:bg-red-900'
+                    ? 'bg-sky-800 hover:bg-sky-900'
                     : 'bg-sky-800 hover:bg-sky-900',
-                ].join(' ')}
+                ].join(' ')}  
               >
                 {loading ? 'Procesando...' : confirmText}
               </button>

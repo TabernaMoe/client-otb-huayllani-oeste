@@ -82,18 +82,18 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#comite" className="hover:text-red-800">
+            <a href="#comite" className="hover:text-sky-800">
               Comité
             </a>
-            <a href="#noticias" className="hover:text-red-800">
+            <a href="#noticias" className="hover:text-sky-800">
               Noticias
             </a>
-            <a href="#comunicados" className="hover:text-red-800">
+            <a href="#comunicados" className="hover:text-sky-800">
               Comunicados
             </a>
             <a
               href="/login"
-              className="rounded-xl bg-red-800 px-5 py-2 text-white hover:bg-red-900"
+              className="rounded-xl bg-sky-800 px-5 py-2 text-white hover:bg-sky-900"
               onClick={goLogin}
             >
               Ingresar
@@ -103,7 +103,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-linear-to-br from-red-950 via-red-800 to-red-600">
+      <section className="relative overflow-hidden bg-linear-to-br from-red-950 via-sky-800 to-red-600">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-yellow-300/20 blur-3xl" />
 
@@ -121,7 +121,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <a
                 href="/login"
-                className="rounded-2xl bg-white px-6 py-3 text-center font-semibold text-red-900 shadow-lg hover:bg-slate-100"
+                className="rounded-2xl bg-white px-6 py-3 text-center font-semibold text-sky-900 shadow-lg hover:bg-slate-100"
               >
                 Ingresar al sistema
               </a>
@@ -152,7 +152,7 @@ export default function HomePage() {
       {/* Comité */}
       <section id="comite" className="mx-auto max-w-7xl px-6 py-20">
         <div className="mb-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-red-800">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-800">
             Representantes
           </p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">
@@ -169,7 +169,7 @@ export default function HomePage() {
               key={member.name}
               className="rounded-3xl bg-white p-6 shadow-lg shadow-slate-200 transition hover:-translate-y-1 hover:shadow-xl"
             >
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-2xl font-bold text-red-800">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-50 text-2xl font-bold text-sky-800">
                 {member.name.charAt(0)}
               </div>
 
@@ -177,7 +177,7 @@ export default function HomePage() {
                 {member.name}
               </h3>
 
-              <p className="mt-1 font-medium text-red-800">{member.role}</p>
+              <p className="mt-1 font-medium text-sky-800">{member.role}</p>
 
               <p className="mt-4 text-sm text-slate-500">
                 Contacto: {member.phone}
@@ -192,7 +192,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-red-800">
+              <p className="text-sm font-semibold uppercase tracking-wide text-sky-800">
                 Actualidad
               </p>
               <h2 className="mt-2 text-3xl font-bold text-slate-900">
@@ -202,7 +202,7 @@ export default function HomePage() {
 
             <a
               href="#"
-              className="font-semibold text-red-800 hover:text-red-900"
+              className="font-semibold text-sky-800 hover:text-sky-900"
             >
               Ver todas →
             </a>
@@ -214,10 +214,10 @@ export default function HomePage() {
                 key={item.title}
                 className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="h-40 bg-linear-to-br from-red-900 to-red-600" />
+                <div className="h-40 bg-linear-to-br from-sky-900 to-red-600" />
 
                 <div className="p-6">
-                  <p className="text-sm font-medium text-red-800">
+                  <p className="text-sm font-medium text-sky-800">
                     {item.date}
                   </p>
 
@@ -251,7 +251,7 @@ export default function HomePage() {
                 key={item}
                 className="rounded-2xl bg-white/10 p-5 ring-1 ring-white/10"
               >
-                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-red-700 font-bold">
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-700 font-bold">
                   {index + 1}
                 </span>
 

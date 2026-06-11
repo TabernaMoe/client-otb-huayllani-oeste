@@ -9,7 +9,7 @@ const normalizeRolePayload = (payload) => ({
 export class RolesServices {
   static async getAll(page = 1, limit = 5, search = '') {
     try {
-      const response = await api.get('/auth/roles/pagination', {
+      const response = await api.get('/admin/auth/roles/pagination', {
         params: { page, limit, search },
       });
 
@@ -21,7 +21,7 @@ export class RolesServices {
 
   static async getForSelect() {
     try {
-      const response = await api.get('/auth/roles');
+      const response = await api.get('/admin/auth/roles');
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -30,7 +30,7 @@ export class RolesServices {
 
   static async getPermissions() {
     try {
-      const response = await api.get('/auth/roles/permisos');
+      const response = await api.get('/admin/auth/roles/permisos');
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -39,7 +39,7 @@ export class RolesServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/auth/roles/${id}`);
+      const response = await api.get(`/admin/auth/roles/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -53,7 +53,7 @@ export class RolesServices {
       console.log('ENVIANDO CREATE ROL:', cleanPayload);
       console.log('TIPOS:', cleanPayload.permisos.map((id) => typeof id));
 
-      const response = await api.post('/auth/roles', cleanPayload);
+      const response = await api.post('/admin/auth/roles', cleanPayload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -67,16 +67,18 @@ export class RolesServices {
       console.log('ENVIANDO UPDATE ROL:', cleanPayload);
       console.log('TIPOS:', cleanPayload.permisos.map((id) => typeof id));
 
-      const response = await api.patch(`/auth/roles/${id}`, cleanPayload);
+      const response = await api.patch(`/admin/auth/roles/${id}`, cleanPayload);
       return response.data;
     } catch (error) {
+          console.log('ERROR AXIOS =>', error?.response?.data);
+
       return toServiceError(error);
     }
   }
 
   static async delete(id) {
     try {
-      const response = await api.delete(`/auth/roles/${id}`);
+      const response = await api.delete(`/admin/auth/roles/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

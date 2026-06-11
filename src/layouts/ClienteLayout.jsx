@@ -1,301 +1,234 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
-  Bars3Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
+  HomeIcon,
+  BeakerIcon,
+  DocumentTextIcon,
+  CreditCardIcon,
+  BellIcon,
+  UserIcon,
   ArrowRightOnRectangleIcon,
+  Bars3Icon,
   XMarkIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
+
 import LogoOtb from '/logo-otb.webp';
+import { AuthService } from '../modules/auth/services/auth.services';
 
-import { SidebarNav } from './Nav';
+const menuItems = [
+  {
+    label: 'Inicio',
+    to: '/cliente/dashboard',
+    icon: HomeIcon,
+  },
+  {
+    label: 'Mi consumo',
+    to: '/cliente/consumo',
+    icon: BeakerIcon,
+  },
+  {
+    label: 'Pagos',
+    to: '/cliente/pagos',
+    icon: CreditCardIcon,
+  },
+  {
+    label: 'Recibos',
+    to: '/cliente/recibos',
+    icon: DocumentTextIcon,
+  },
+  {
+    label: 'Avisos',
+    to: '/cliente/avisos',
+    icon: BellIcon,
+  },
+  {
+    label: 'Perfil',
+    to: '/cliente/perfil',
+    icon: UserIcon,
+  },
+];
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
+function getInitials(name = '') {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 }
 
-const BRAND = {
-  name: 'Panel Admin',
-  logo: (
-    <div className="flex items-center gap-3 px-3 py-4">
-      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center overflow-hidden">
-        <img
-          src={LogoOtb}
-          alt="Logo"
-          className="h-full w-full object-contain"
-        />
-      </div>
-    </div>
-  ),
-};
-function findGroupFromPath(pathname) {
-  for (const g of SidebarNav) {
-    if (g.items.some((it) => pathname.startsWith(it.to))) return g.id;
-  }
-  return SidebarNav[0]?.id || 'general';
-}
-function SidebarContent({
-  sidebarCollapsed,
-  openGroup,
-  setOpenGroup,
-  setSidebarOpen,
-  location,
-  sidebar,
-}) {
+function Sidebar({ open, onClose, onLogout }) {
   return (
-    <div className="flex h-full flex-col min-h-0">
-      <div className="h-3" />
+    <>
+      <div
+        className={`fixed inset-0 z-30 bg-slate-950/50 transition-opacity lg:hidden ${
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={onClose}
+      />
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-3">
-        <nav>
-          {sidebar.map((group) => {
-            const GroupIcon = group.icon;
-            const isOpen = openGroup === group.id;
+      <aside
+        className={`fixed left-0 top-0 z-40 flex h-full w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0 ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+              <img
+                src={LogoOtb}
+                alt="Logo OTB"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-slate-900">
+                OTB Agua
+              </h1>
+              <p className="text-sm text-slate-500">Portal del socio</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="rounded-xl p-2 hover:bg-slate-100 lg:hidden"
+            onClick={onClose}
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 px-4">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
 
             return (
-              <div key={group.id} className="mb-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (sidebarCollapsed) {
-                      setSidebarOpen(true);
-                      setOpenGroup(group.id);
-                      return;
-                    }
-
-                    setOpenGroup((cur) => (cur === group.id ? '' : group.id));
-                  }}
-                  className={cx(
-                    'group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all',
-                    'hover:bg-slate-100',
-                    isOpen ? 'bg-slate-100' : 'bg-transparent',
-                    sidebarCollapsed ? 'justify-center px-2' : '',
-                  )}
-                  title={group.title}
-                >
-                  <GroupIcon className="h-6 w-6 shrink-0 text-slate-700" />
-
-                  <div className={cx('flex-1', sidebarCollapsed && 'hidden')}>
-                    <p className="text-sm font-semibold">{group.title}</p>
-                  </div>
-
-                  <div className={cx(sidebarCollapsed && 'hidden')}>
-                    {isOpen ? (
-                      <ChevronDownIcon className="h-5 w-5 text-slate-500" />
-                    ) : (
-                      <ChevronRightIcon className="h-5 w-5 text-slate-500" />
-                    )}
-                  </div>
-                </button>
-
-                <div
-                  className={cx(
-                    'mt-1 overflow-hidden transition-all duration-300',
-                    isOpen && !sidebarCollapsed ? 'max-h-125' : 'max-h-0',
-                  )}
-                >
-                  <div className="ml-3 border-l border-slate-200 pl-3">
-                    {group.items.map((item) => {
-                      const ItemIcon = item.icon;
-                      const active = location.pathname.startsWith(item.to);
-
-                      return (
-                        <NavLink
-                          key={`${group.id}:${item.to}`}
-                          to={item.to}
-                          className={({ isActive }) =>
-                            cx(
-                              'mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all',
-                              isActive
-                                ? 'bg-sky-800 text-white shadow-sm'
-                                : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700',
-                            )
-                          }
-                          end
-                          title={item.label}
-                        >
-                          <ItemIcon
-                            className={cx(
-                              'h-5 w-5 shrink-0',
-                              active ? 'text-white' : 'text-slate-500',
-                            )}
-                          />
-                          <span className="truncate">{item.label}</span>
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-cyan-50 text-cyan-700'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`
+                }
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </NavLink>
             );
           })}
         </nav>
-      </div>
-    </div>
+
+        <div className="border-t border-slate-200 p-4">
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+          >
+            <Cog6ToothIcon className="h-5 w-5" />
+            Configuración
+          </button>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            className="mt-1 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 hover:bg-sky-50"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
+
 export default function ClienteLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const location = useLocation();
+  const user = AuthService.getUser();
 
-  const activeGroup = useMemo(
-    () => findGroupFromPath(location.pathname),
-    [location.pathname],
-  );
+  const displayName =
+    user?.nombre_usuario ||
+    user?.nombre ||
+    user?.name ||
+    'Usuario';
 
-  const [openGroup, setOpenGroup] = useState(activeGroup);
+  const displayRole =
+    user?.rol?.nombre_rol ||
+    user?.rol ||
+    user?.role ||
+    'Usuario normal';
 
-  useEffect(() => {
-    setOpenGroup(activeGroup);
-  }, [activeGroup]);
+  const initials = getInitials(displayName);
 
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileOpen]);
-
-  const sidebarCollapsed = !sidebarOpen;
+  const handleLogout = () => {
+    AuthService.logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
-        <div className="flex h-16 items-center gap-3 px-4">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 md:hidden"
-            aria-label="Open menu"
-            type="button"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-
-          <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-            aria-label="Toggle sidebar"
-            type="button"
-            title={sidebarOpen ? 'Cerrar sidebar' : 'Abrir sidebar'}
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block">{BRAND.logo}</div>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">{BRAND.name}</p>
-              <p className="text-xs text-slate-500">Panel de administración</p>
-            </div>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">Admin</p>
-                <p className="text-xs text-slate-500">admin@cns.bo</p>
-              </div>
-            </div>
-
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-              aria-label="Logout"
-              type="button"
-              title="Cerrar sesión"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div
-        className={cx(
-          'fixed inset-0 z-50 md:hidden',
-          mobileOpen ? 'pointer-events-auto' : 'pointer-events-none',
-        )}
-        aria-hidden={!mobileOpen}
-      >
-        <div
-          className={cx(
-            'absolute inset-0 bg-black/40 transition-opacity',
-            mobileOpen ? 'opacity-100' : 'opacity-0',
-          )}
-          onClick={() => setMobileOpen(false)}
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="flex min-h-screen">
+        <Sidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onLogout={handleLogout}
         />
 
-        <aside
-          className={cx(
-            'absolute left-0 top-0 h-full w-[18rem] border-r border-slate-200/70 bg-white/90 backdrop-blur',
-            'transition-transform duration-300',
-            mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          )}
-        >
-          <div className="flex h-16 items-center justify-between border-b border-slate-200/70 px-4">
-            <div className="flex items-center gap-3">
-              {BRAND.logo}
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">{BRAND.name}</p>
-                <p className="text-xs text-slate-500">Menú</p>
+        <main className="min-w-0 flex-1">
+          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+            <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-2xl border border-slate-200 p-2 lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Bars3Icon className="h-6 w-6" />
+                </button>
+
+                <div>
+                  <p className="text-sm font-semibold text-cyan-700">
+                    Bienvenido, {displayName}
+                  </p>
+                  <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+                    Panel del socio
+                  </h2>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="relative rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 hover:bg-slate-50"
+                >
+                  <BellIcon className="h-5 w-5" />
+                  <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-white" />
+                </button>
+
+                <div className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 sm:flex">
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-100 font-black text-cyan-700">
+                    {initials}
+                  </div>
+
+                  <div className="leading-tight">
+                    <p className="text-sm font-black">{displayName}</p>
+                    <p className="text-xs text-slate-500">{displayRole}</p>
+                  </div>
+                </div>
               </div>
             </div>
+          </header>
 
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-              type="button"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
+          <div className="px-4 py-6 sm:px-6 lg:px-8">
+            <Outlet />
           </div>
-
-          <SidebarContent
-            sidebarCollapsed={false}
-            openGroup={openGroup}
-            setOpenGroup={setOpenGroup}
-            setSidebarOpen={setSidebarOpen}
-            location={location}
-            sidebar={SidebarNav}
-          />
-        </aside>
-      </div>
-
-      <div className="hidden md:flex h-[calc(100vh-4rem)] min-h-0">
-        <aside
-          className={cx(
-            'border-r border-slate-200/70 bg-white/70 backdrop-blur transition-all duration-300',
-            sidebarOpen ? 'w-72' : 'w-20',
-          )}
-        >
-          <SidebarContent
-            sidebarCollapsed={sidebarCollapsed}
-            openGroup={openGroup}
-            setOpenGroup={setOpenGroup}
-            setSidebarOpen={setSidebarOpen}
-            location={location}
-            sidebar={SidebarNav}
-          />
-        </aside>
-
-        <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
-          <Outlet />
-        </main>
-      </div>
-
-      <div className="md:hidden h-[calc(100vh-4rem)] min-h-0">
-        <main className="h-full overflow-y-auto p-4">
-          <Outlet />
         </main>
       </div>
     </div>

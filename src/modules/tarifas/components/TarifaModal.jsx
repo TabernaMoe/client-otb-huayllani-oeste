@@ -172,7 +172,7 @@ export default function TarifaModal({
         </div>
 
         {message && (
-          <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-5 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-medium text-sky-700">
             {message}
           </div>
         )}
@@ -189,7 +189,7 @@ export default function TarifaModal({
               value={form.nombre_tarifa}
               onChange={handleChange}
               placeholder="Ej. Domiciliaria, Empresa, Social"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
             />
 
             {errors.nombre_tarifa && (
@@ -247,7 +247,7 @@ export default function TarifaModal({
                         )
                       }
                       placeholder="0"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-red-700 focus:ring-4 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
                     />
                     {errors[`consumo_minimo_${index}`] && (
                       <p className="mt-1 text-xs text-red-600">
@@ -271,7 +271,7 @@ export default function TarifaModal({
                         )
                       }
                       placeholder="10"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-red-700 focus:ring-4 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
                     />
                     {errors[`consumo_maximo_${index}`] && (
                       <p className="mt-1 text-xs text-red-600">
@@ -295,7 +295,7 @@ export default function TarifaModal({
                         )
                       }
                       placeholder="10"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-red-700 focus:ring-4 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
                     />
                     {errors[`precio_${index}`] && (
                       <p className="mt-1 text-xs text-red-600">
@@ -309,7 +309,7 @@ export default function TarifaModal({
                       type="button"
                       onClick={() => removeRango(index)}
                       disabled={form.rangosTarifa.length === 1}
-                      className="rounded-xl border border-red-200 p-2 text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-xl border border-blue-200 p-2 text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                       title="Eliminar rango"
                     >
                       <TrashIcon className="h-5 w-5" />
@@ -333,7 +333,7 @@ export default function TarifaModal({
             <button
               type="submit"
               disabled={loading}
-              className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+              className="rounded-2xl bg-blue-800 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-60"
             >
               {loading ? 'Guardando...' : 'Guardar tarifa'}
             </button>

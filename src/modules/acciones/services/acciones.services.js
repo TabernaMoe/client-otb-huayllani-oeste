@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error.js';
 export class AccionServices {
   static async getAll(page, limit, search = '') {
     try {
-      const response = await api.get(`/acciones/acciones`, {
+      const response = await api.get(`admin/acciones/acciones`, {
         params: {
           page,
           limit,
@@ -20,7 +20,7 @@ export class AccionServices {
   }
   static async getId(id) {
     try {
-      const response = await api.get(`/acciones/acciones/${id}`);
+      const response = await api.get(`admin/acciones/acciones/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -28,7 +28,7 @@ export class AccionServices {
   }
   static async create(payload) {
     try {
-      const response = await api.post('/acciones/acciones', payload);
+      const response = await api.post('admin/acciones/acciones', payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -37,7 +37,7 @@ export class AccionServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.put(`/acciones/acciones/${id}`, payload);
+      const response = await api.put(`admin/acciones/acciones/${id}`, payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -45,7 +45,7 @@ export class AccionServices {
   }
   static async disable(id) {
     try {
-      const response = await api.put(`/acciones/acciones/disable/${id}`);
+      const response = await api.put(`admin/acciones/acciones/disable/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);

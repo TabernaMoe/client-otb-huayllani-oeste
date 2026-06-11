@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error';
 export class CallesServices {
   static async getAll(page = 1, limit = 5, search = '', estado = true) {
     try {
-      const response = await api.get('/calle', {
+      const response = await api.get('/admin/calle', {
         params: {
           page,
           limit,
@@ -21,7 +21,7 @@ export class CallesServices {
 
   static async getForSelect(search = '') {
     try {
-      const response = await api.get('/calle/select', {
+      const response = await api.get('/admin/calle/select', {
         params: { search },
       });
 
@@ -33,7 +33,7 @@ export class CallesServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/calle/${id}`);
+      const response = await api.get(`/admin/calle/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -42,7 +42,7 @@ export class CallesServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/calle', payload);
+      const response = await api.post('/admin/calle', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -51,7 +51,7 @@ export class CallesServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/calle/${id}`, payload);
+      const response = await api.patch(`/admin/calle/${id}`, payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -60,7 +60,7 @@ export class CallesServices {
 
   static async delete(id) {
     try {
-      const response = await api.delete(`/calle/${id}`);
+      const response = await api.delete(`/admin/calle/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -69,7 +69,7 @@ export class CallesServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/calle/toggle-status/${id}`);
+      const response = await api.patch(`/admin/calle/toggle-status/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

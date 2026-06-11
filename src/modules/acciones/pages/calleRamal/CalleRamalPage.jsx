@@ -65,7 +65,7 @@ export default function SocioPage() {
             </button>
 
             <button
-              className="rounded-xl bg-red-700 px-3 py-2 text-white hover:bg-red-800"
+              className="rounded-xl bg-blue-700 px-3 py-2 text-white hover:bg-blue-800"
               onClick={() => openModal(MODALS.DELETE, row.original.id)}
             >
               Eliminar

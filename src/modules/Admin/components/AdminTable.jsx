@@ -70,7 +70,7 @@ export default function AdminTable({
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       usuario.estado
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
+                        : 'bg-sky-100 text-sky-700'
                     }`}
                   >
                     {usuario.estado ? 'Activo' : 'Inactivo'}
@@ -93,7 +93,7 @@ export default function AdminTable({
                       onClick={() => onToggleStatus(usuario)}
                       className={`rounded-xl border p-2 transition ${
                         usuario.estado
-                          ? 'border-red-200 text-red-700 hover:bg-red-50'
+                          ? 'border-red-200 text-sky-700 hover:bg-sky-50'
                           : 'border-green-200 text-green-700 hover:bg-green-50'
                       }`}
                       title={

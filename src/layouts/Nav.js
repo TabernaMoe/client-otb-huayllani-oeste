@@ -1,4 +1,4 @@
-import {
+/*import {
   HomeIcon,
   UsersIcon,
   Cog6ToothIcon,
@@ -13,18 +13,18 @@ import {
 export const SidebarNav = [
   {
     id: 'cliente',
-    title: 'Cliente',
+    title: 'Usuario',
     icon: HomeIcon,
     items: [
       {
-        label: 'Gestión de socios',
-        to: '/cliente/socios',
-        icon: FolderIcon,
+        label: 'Inicio',
+        to: '/cliente/dashboard',
+        icon: HomeIcon,
       },
       {
-        label: 'Gestión acciones',
-        to: '/cliente/gestion-acciones',
-        icon: CurrencyDollarIcon,
+        label: 'Mi información',
+        to: '/cliente/perfil',
+        icon: UsersIcon,
       },
     ],
   },
@@ -92,6 +92,115 @@ export const AdminNav = [
         to: '/admin/socios',
         icon: UsersIcon,
         permission: 'SOCIOS_READ',
+      },
+    ],
+  },
+];*/
+
+import {
+  HomeIcon,
+  UsersIcon,
+  Cog6ToothIcon,
+  CalendarDaysIcon,
+  BuildingOffice2Icon,
+  ClipboardDocumentListIcon,
+  FolderIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon,
+} from '@heroicons/react/24/outline';
+
+export const SidebarNav = [
+  {
+    id: 'cliente',
+    title: 'Usuario',
+    icon: HomeIcon,
+    items: [
+      {
+        label: 'Inicio',
+        to: '/cliente/dashboard',
+        icon: HomeIcon,
+      },
+      {
+        label: 'Mi información',
+        to: '/cliente/perfil',
+        icon: UsersIcon,
+      },
+    ],
+  },
+];
+
+export const AdminNav = [
+  {
+    id: 'admin',
+    title: 'Administración',
+    icon: HomeIcon,
+    items: [
+      {
+        label: 'Gestión de usuarios',
+        to: '/admin/usuarios',
+        icon: UsersIcon,
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+      },
+      {
+        label: 'Roles y permisos',
+        to: '/admin/roles',
+        icon: UserGroupIcon,
+        permission: ['rol.ver', 'roles.ver', 'auth.rol.ver'],
+      },
+      {
+        label: 'Gestiones',
+        to: '/admin/gestiones',
+        icon: CalendarDaysIcon,
+        permission: ['gestion.ver', 'gestiones.ver'],
+      },
+      {
+  label: 'Periodos',
+  to: '/admin/periodos',
+  icon: CalendarDaysIcon,
+  permission: 'GESTIONES_READ',
+},
+    ],
+  },
+  {
+    id: 'configuracion',
+    title: 'Configuración',
+    icon: Cog6ToothIcon,
+    items: [
+      {
+        label: 'Calles',
+        to: '/admin/calles',
+        icon: BuildingOffice2Icon,
+        permission: ['calle.ver', 'calles.ver', 'acciones.calles.ver'],
+      },
+      {
+        label: 'Tarifas',
+        to: '/admin/tarifas',
+        icon: CurrencyDollarIcon,
+        permission: ['tarifa.ver', 'tarifas.ver'],
+      },
+      {
+        label: 'Detalle pago acción',
+        to: '/admin/detalle-pago-accion',
+        icon: ClipboardDocumentListIcon,
+        permission: [
+          'detalle_accion.ver',
+          'detalle_pago_accion.ver',
+          'acciones.detalles.ver',
+        ],
+      },
+      
+    ],
+  },
+  {
+    id: 'socios',
+    title: 'Socios',
+    icon: FolderIcon,
+    items: [
+      {
+        label: 'Socios',
+        to: '/admin/socios',
+        icon: UsersIcon,
+        permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
     ],
   },

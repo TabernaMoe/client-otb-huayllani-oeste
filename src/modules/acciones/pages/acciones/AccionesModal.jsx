@@ -126,7 +126,7 @@ export default function CalleRamalModal({
           </div>
           <div className="flex justify-end gap-2 p-5">
             <button
-              className="rounded-xl bg-red-800 px-3 py-2 text-white hover:bg-red-900"
+              className="rounded-xl bg-sky-800 px-3 py-2 text-white hover:bg-sky-900"
               onClick={onClose}
             >
               Cancelar

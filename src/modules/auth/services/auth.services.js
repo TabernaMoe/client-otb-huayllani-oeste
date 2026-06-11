@@ -4,9 +4,9 @@ import { toServiceError } from '../../../services/error';
 export const AuthService = {
   async login({ user, password }) {
     try {
-      const { data } = await api.post('/auth/login', {
-        user,
-        password,
+      const { data } = await api.post('/login', {
+        nombre_usuario: user,
+        contrasenia_usuario: password,
       });
 
       return data;
@@ -16,11 +16,30 @@ export const AuthService = {
   },
 
   saveSession(data) {
-    const token = data?.token;
-    const user = data?.user || data?.usuario;
+    const token = data?.token || data?.data?.token || null;
 
-    if (token) localStorage.setItem('token', token);
-    if (user) localStorage.setItem('user', JSON.stringify(user));
+    const user =
+      data?.user ||
+      data?.usuario ||
+      data?.data?.user ||
+      data?.data?.usuario ||
+      data?.dataUser ||
+      data?.data ||
+      {
+        id: data?.id || null,
+        nombre_usuario: data?.nombre_usuario || 'Usuario',
+        rol: data?.rol || null,
+        estado: data?.estado ?? true,
+        permisos: data?.permisos || data?.permissions || [],
+      };
+
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
   },
 
   logout() {
@@ -34,49 +53,67 @@ export const AuthService = {
 
   getUser() {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+
+    try {
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
   },
 
- getRole() {
-  const user = this.getUser();
-
-  return (
-    user?.rol?.nombre_rol ||
-    user?.rol ||
-    user?.role ||
-    null
-  );
-},
-getPermissions() {
-  const user = this.getUser();
-
-  return (
-    user?.permisos ||
-    user?.permissions ||
-    user?.rol?.permisos ||
-    user?.rol?.permissions ||
-    []
-  );
-},
-
-hasPermission(permissionCode) {
-  const permissions = this.getPermissions();
-
-  return permissions.some((permission) => {
-    if (typeof permission === 'string') {
-      return permission === permissionCode;
-    }
+  getRole() {
+    const user = this.getUser();
 
     return (
-      permission?.codigo_permiso === permissionCode ||
-      permission?.code === permissionCode ||
-      permission?.nombre_permiso === permissionCode
+      user?.rol?.nombre_rol ||
+      user?.rol?.nombre ||
+      user?.nombre_rol ||
+      user?.rol ||
+      user?.role ||
+      null
     );
-  });
-},
+  },
 
-isAuthenticated() {
-  return Boolean(this.getToken());
-},
+  getPermissions() {
+    const user = this.getUser();
 
+    return (
+      user?.permisos ||
+      user?.permissions ||
+      user?.rol?.permisos ||
+      user?.rol?.permissions ||
+      user?.rol?.auth_permisos ||
+      []
+    );
+  },
+
+  hasPermission(permissionCode) {
+    const role = this.getRole();
+
+    if (role === 'super_admin') {
+      return true;
+    }
+
+    const requiredPermissions = Array.isArray(permissionCode)
+      ? permissionCode
+      : [permissionCode];
+
+    const permissions = this.getPermissions();
+
+    return permissions.some((permission) => {
+      const code =
+        typeof permission === 'string'
+          ? permission
+          : permission?.codigo_permiso ||
+            permission?.code ||
+            permission?.nombre_permiso ||
+            permission?.codigo;
+
+      return requiredPermissions.includes(code);
+    });
+  },
+
+  isAuthenticated() {
+    return Boolean(this.getToken());
+  },
 };

@@ -21,7 +21,7 @@ export default function ElegantTextarea({
         >
           {label}
 
-          {required && <span className="ml-1 text-red-500">*</span>}
+          {required && <span className="ml-1 text-sky-500">*</span>}
         </label>
       )}
 
@@ -40,7 +40,7 @@ export default function ElegantTextarea({
             'placeholder:text-slate-400',
             'focus:ring-4',
             error
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-100'
+              ? 'border-red-400 focus:border-sky-500 focus:ring-sky-100'
               : 'border-slate-300 focus:border-blue-500 focus:ring-blue-100',
             disabled && 'cursor-not-allowed bg-slate-100 text-slate-400',
           )}
@@ -49,7 +49,7 @@ export default function ElegantTextarea({
 
       <div className="mt-2 flex items-center justify-between">
         {error ? (
-          <p className="text-sm font-medium text-red-500">{error}</p>
+          <p className="text-sm font-medium text-sky-500">{error}</p>
         ) : (
           <span />
         )}

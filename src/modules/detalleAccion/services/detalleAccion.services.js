@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error';
 export class DetalleAccionServices {
   static async getAll(page = 1, limit = 5, search = '', estado = true) {
     try {
-      const response = await api.get('/accion/detalle', {
+      const response = await api.get('/admin/accion/detalle', {
         params: {
           page,
           limit,
@@ -21,7 +21,7 @@ export class DetalleAccionServices {
 
   static async getForSelect(search = '') {
     try {
-      const response = await api.get('/accion/detalle/select', {
+      const response = await api.get('/admin/accion/detalle/select', {
         params: { search },
       });
 
@@ -33,7 +33,7 @@ export class DetalleAccionServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/accion/detalle/${id}`);
+      const response = await api.get(`/admin/accion/detalle/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -42,7 +42,7 @@ export class DetalleAccionServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/accion/detalle', payload);
+      const response = await api.post('/admin/accion/detalle', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -51,7 +51,7 @@ export class DetalleAccionServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/accion/detalle/${id}`, payload);
+      const response = await api.patch(`/admin/accion/detalle/${id}`, payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -60,7 +60,7 @@ export class DetalleAccionServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/accion/detalle/toggle-status/${id}`);
+      const response = await api.patch(`/admin/accion/detalle/toggle-status/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -69,7 +69,7 @@ export class DetalleAccionServices {
 
   static async delete(id) {
     try {
-      const response = await api.delete(`/accion/detalle/${id}`);
+      const response = await api.delete(`/admin/accion/detalle/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

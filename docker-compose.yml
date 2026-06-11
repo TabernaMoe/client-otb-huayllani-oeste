@@ -3,7 +3,7 @@ services:
     build:
       context: .
       target: development
-    container_name: 'cliente_otb'
+    container_name: cliente_otb
     restart: unless-stopped
     ports:
       - '5174:5173'
@@ -12,5 +12,9 @@ services:
       - node_modules_otb_frontend:/app/node_modules
     environment:
       - VITE_API_URL=http://localhost:3000/api
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: npm run dev -- --host 0.0.0.0
+
 volumes:
   node_modules_otb_frontend:

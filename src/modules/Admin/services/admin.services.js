@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error';
 export class AdminServices {
   static async getAll(page = 1, limit = 5, search = '', estado = true) {
     try {
-      const response = await api.get('/auth/usuarios', {
+      const response = await api.get('/admin/auth/usuarios', {
         params: {
           page,
           limit,
@@ -21,7 +21,7 @@ export class AdminServices {
 
   static async getById(id) {
     try {
-      const response = await api.get(`/auth/usuarios/${id}`);
+      const response = await api.get(`/admin/auth/usuarios/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -30,7 +30,7 @@ export class AdminServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/auth/usuarios', payload);
+      const response = await api.post('/admin/auth/usuarios', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -39,7 +39,7 @@ export class AdminServices {
 
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/auth/usuarios/${id}`, payload);
+      const response = await api.patch(`/admin/auth/usuarios/${id}`, payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -48,7 +48,7 @@ export class AdminServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/auth/usuarios/toggle-status/${id}`);
+      const response = await api.patch(`/admin/auth/usuarios/toggle-status/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

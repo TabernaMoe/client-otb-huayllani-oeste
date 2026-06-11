@@ -127,7 +127,7 @@ export default function GestionesPage() {
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center">
         <div className="flex items-start gap-4">
-          <div className="rounded-2xl bg-red-50 p-3 text-red-800">
+          <div className="rounded-2xl bg-sky-50 p-3 text-sky-800">
             <CalendarDaysIcon className="h-7 w-7" />
           </div>
 
@@ -144,7 +144,7 @@ export default function GestionesPage() {
         <button
           type="button"
           onClick={openModal}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900"
         >
           <PlusIcon className="h-5 w-5" />
           Nueva gestión
@@ -214,7 +214,7 @@ export default function GestionesPage() {
                           <button
                             type="button"
                             onClick={() => handleDelete(gestion)}
-                            className="rounded-xl border border-red-200 p-2 text-red-700 transition hover:bg-red-50"
+                            className="rounded-xl border border-red-200 p-2 text-sky-700 transition hover:bg-sky-50"
                             title="Eliminar gestión"
                           >
                             <TrashIcon className="h-5 w-5" />
@@ -254,7 +254,7 @@ export default function GestionesPage() {
                   value={form.anio}
                   onChange={handleChange}
                   placeholder="Ej. 2026"
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
                 />
 
                 {errors.anio && (
@@ -276,7 +276,7 @@ export default function GestionesPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+                  className="rounded-2xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
                 >
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>

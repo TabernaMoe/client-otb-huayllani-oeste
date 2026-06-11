@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error.js';
 export class TipoAccionServices {
   static async getAll(page, limit, search = '') {
   try {
-    const response = await api.get(`/acciones/tipo-accion`, {
+    const response = await api.get(`admin/acciones/tipo-accion`, {
       params: {
         page,
         limit,
@@ -21,7 +21,7 @@ export class TipoAccionServices {
 }
   static async getId(id) {
     try {
-      const response = await api.get(`/acciones/tipo-accion/${id}`);
+      const response = await api.get(`admin/acciones/tipo-accion/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -29,7 +29,7 @@ export class TipoAccionServices {
   }
   static async create(payload) {
     try {
-      const response = await api.post('/acciones/tipo-accion', payload);
+      const response = await api.post('admin/acciones/tipo-accion', payload);
       return response.data;
     } catch (e) {
       return toServiceError(e);
@@ -39,7 +39,7 @@ export class TipoAccionServices {
   static async update(id, payload) {
    
     try {
-      const response = await api.put(`/acciones/tipo-accion/${id}`, payload);
+      const response = await api.put(`admin/acciones/tipo-accion/${id}`, payload);
 
       return response.data;
     } catch (e) {
@@ -52,7 +52,7 @@ export class TipoAccionServices {
   static async delete(id) {
     console.log(id);
     try {
-      const response = await api.delete(`/acciones/tipo-accion/${id}`);
+      const response = await api.delete(`admin/acciones/tipo-accion/${id}`);
       return response.data;
     } catch (e) {
       return toServiceError(e);

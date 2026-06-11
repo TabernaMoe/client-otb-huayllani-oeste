@@ -21,7 +21,7 @@ export default function ElegantInput({
           className="mb-2 block text-sm font-semibold text-slate-700"
         >
           {label}
-          {required && <span className="ml-1 text-red-500">*</span>}
+          {required && <span className="ml-1 text-sky-500">*</span>}
         </label>
       )}
 
@@ -47,7 +47,7 @@ export default function ElegantInput({
             'focus:ring-4',
             icon ? 'pl-12' : 'pl-4',
             error
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-100'
+              ? 'border-red-400 focus:border-sky-500 focus:ring-sky-100'
               : 'border-slate-300 focus:border-blue-500 focus:ring-blue-100',
             disabled && 'cursor-not-allowed bg-slate-100 text-slate-400',
           )}
@@ -55,7 +55,7 @@ export default function ElegantInput({
       </div>
 
       {error && (
-        <p className="mt-2 text-sm font-medium text-red-500">{error}</p>
+        <p className="mt-2 text-sm font-medium text-sky-500">{error}</p>
       )}
     </div>
   );

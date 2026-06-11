@@ -112,7 +112,7 @@ export default function DetalleAccionModal({
         </div>
 
         {message && (
-          <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-5 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-medium text-sky-700">
             {message}
           </div>
         )}
@@ -128,8 +128,8 @@ export default function DetalleAccionModal({
               name="nombre_accion"
               value={form.nombre_accion}
               onChange={handleChange}
-              placeholder="Ej. Carnet socio"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+              placeholder="Ej. Nombre del detalle de acción"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
             />
 
             {errors.nombre_accion && (
@@ -150,7 +150,7 @@ export default function DetalleAccionModal({
               value={form.precio_accion}
               onChange={handleChange}
               placeholder="Ej. 100"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
             />
 
             {errors.precio_accion && (
@@ -169,7 +169,7 @@ export default function DetalleAccionModal({
               name="tipo_cobro"
               value={form.tipo_cobro}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
             >
               <option value="">Seleccione tipo de cobro</option>
               <option value="UNICO">Único</option>
@@ -196,7 +196,7 @@ export default function DetalleAccionModal({
             <button
               type="submit"
               disabled={loading}
-              className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+              className="rounded-2xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
             >
               {loading ? 'Guardando...' : 'Guardar detalle'}
             </button>

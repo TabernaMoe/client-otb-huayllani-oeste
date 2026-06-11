@@ -135,7 +135,7 @@ export default function CallesPage() {
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center">
         <div className="flex items-start gap-4">
-          <div className="rounded-2xl bg-red-50 p-3 text-red-800">
+          <div className="rounded-2xl bg-sky-50 p-3 text-sky-800">
             <BuildingOffice2Icon className="h-7 w-7" />
           </div>
 
@@ -152,7 +152,7 @@ export default function CallesPage() {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900"
         >
           <PlusIcon className="h-5 w-5" />
           Nueva calle
@@ -178,7 +178,7 @@ export default function CallesPage() {
                 setSearch(e.target.value);
               }}
               placeholder="Buscar calle..."
-              className="w-full rounded-2xl border border-slate-200 py-3 pl-10 pr-10 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+              className="w-full rounded-2xl border border-slate-200 py-3 pl-10 pr-10 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
             />
 
             {search && (
@@ -198,7 +198,7 @@ export default function CallesPage() {
               setPage(1);
               setEstado(e.target.value === 'true');
             }}
-            className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+            className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
           >
             <option value="true">Activas</option>
             <option value="false">Inactivas</option>
@@ -246,7 +246,7 @@ export default function CallesPage() {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           calle.estado
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            : 'bg-sky-100 text-sky-700'
                         }`}
                       >
                         {calle.estado ? 'Activa' : 'Inactiva'}
@@ -269,7 +269,7 @@ export default function CallesPage() {
                           onClick={() => handleToggleStatus(calle)}
                           className={`rounded-xl border p-2 transition ${
                             calle.estado
-                              ? 'border-red-200 text-red-700 hover:bg-red-50'
+                              ? 'border-red-200 text-sky-700 hover:bg-sky-50'
                               : 'border-green-200 text-green-700 hover:bg-green-50'
                           }`}
                           title={
@@ -284,7 +284,7 @@ export default function CallesPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(calle)}
-                          className="rounded-xl border border-red-200 p-2 text-red-700 transition hover:bg-red-50"
+                          className="rounded-xl border border-red-200 p-2 text-sky-700 transition hover:bg-sky-50"
                           title="Eliminar"
                         >
                           <TrashIcon className="h-5 w-5" />

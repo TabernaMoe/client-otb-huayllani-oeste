@@ -128,7 +128,7 @@ export default function AdminForm({
           value={form.rol_id}
           onChange={handleChange}
           disabled={loadingRoles}
-          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100 disabled:bg-slate-100"
+          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-100"
         >
           <option value="">
             {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
@@ -162,7 +162,7 @@ export default function AdminForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+          className="rounded-2xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
         >
           {loading ? 'Guardando...' : 'Guardar usuario'}
         </button>

@@ -136,7 +136,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900"
         >
           <PlusIcon className="h-5 w-5" />
           Nuevo usuario
@@ -159,7 +159,7 @@ export default function AdminPage() {
               setSearch(e.target.value);
             }}
             placeholder="Buscar usuario..."
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100 md:max-w-sm"
+            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100 md:max-w-sm"
           />
 
           <select
@@ -168,7 +168,7 @@ export default function AdminPage() {
               setPage(1);
               setEstado(e.target.value === 'true');
             }}
-            className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+            className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
           >
             <option value="true">Activos</option>
             <option value="false">Inactivos</option>

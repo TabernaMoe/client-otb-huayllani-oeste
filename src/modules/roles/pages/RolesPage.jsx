@@ -200,13 +200,25 @@ export default function RolesPage() {
       : await RolesServices.create(payload);
 
     setSaving(false);
-
+/*
     if (!response.ok) {
       console.log('ERRORES BACKEND =>', response.payload?.errors);
       setMessage(response.message || 'Error al guardar el rol');
       return;
     }
+*/
+if (!response.ok) {
+  console.log('ERROR COMPLETO =>', response);
+  console.log('ERRORES BACKEND =>', response.errors);
 
+  setMessage(
+    response.errors?.[0]?.message ||
+      response.message ||
+      'Error al guardar el rol',
+  );
+
+  return;
+}
     setMessage(
       selectedRole
         ? 'Rol actualizado correctamente'
@@ -251,7 +263,7 @@ export default function RolesPage() {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-900"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-800 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900"
         >
           <PlusIcon className="h-5 w-5" />
           Nuevo rol
@@ -274,7 +286,7 @@ export default function RolesPage() {
               setSearch(e.target.value);
             }}
             placeholder="Buscar rol..."
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100 md:max-w-sm"
+            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100 md:max-w-sm"
           />
         </div>
 
@@ -370,7 +382,7 @@ export default function RolesPage() {
                           <button
                             type="button"
                             onClick={() => handleDelete(role)}
-                            className="rounded-xl border border-red-200 p-2 text-red-700 hover:bg-red-50"
+                            className="rounded-xl border border-red-200 p-2 text-sky-700 hover:bg-sky-50"
                             title="Eliminar"
                           >
                             <TrashIcon className="h-5 w-5" />
@@ -442,7 +454,7 @@ export default function RolesPage() {
                   value={form.nombre_rol}
                   onChange={handleChange}
                   placeholder="Ej. Secretaria, Tesorero, Auxiliar"
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-red-700 focus:ring-4 focus:ring-red-100"
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100"
                 />
 
                 {errors.nombre_rol && (
@@ -473,7 +485,7 @@ export default function RolesPage() {
                         key={permission.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
                           checked
-                            ? 'border-red-700 bg-red-50'
+                            ? 'border-sky-700 bg-sky-50'
                             : 'border-slate-200 hover:bg-slate-50'
                         }`}
                       >
@@ -482,7 +494,7 @@ export default function RolesPage() {
                           checked={checked}
                           value={permissionId}
                           onChange={() => handlePermissionChange(permissionId)}
-                          className="mt-1 h-4 w-4 accent-red-800"
+                          className="mt-1 h-4 w-4 accent-sky-800"
                         />
 
                         <div>
@@ -515,7 +527,7 @@ export default function RolesPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+                  className="rounded-2xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
                 >
                   {saving ? 'Guardando...' : 'Guardar rol'}
                 </button>

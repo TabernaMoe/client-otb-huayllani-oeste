@@ -4,7 +4,7 @@ import { toServiceError } from '../../../services/error';
 export class GestionesServices {
   static async getAll(search = '') {
     try {
-      const response = await api.get('/gestion', {
+      const response = await api.get('/admin/gestion', {
         params: {
           search,
         },
@@ -18,7 +18,7 @@ export class GestionesServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/gestion', payload);
+      const response = await api.post('/admin/gestion', payload);
       return response.data;
     } catch (error) {
       return toServiceError(error);
@@ -27,7 +27,7 @@ export class GestionesServices {
 
   static async delete(id) {
     try {
-      const response = await api.delete(`/gestion/${id}`);
+      const response = await api.delete(`/admin/gestion/${id}`);
       return response.data;
     } catch (error) {
       return toServiceError(error);

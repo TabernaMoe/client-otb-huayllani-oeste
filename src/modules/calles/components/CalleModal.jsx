@@ -111,7 +111,7 @@ export default function CalleModal({
         </div>
 
         {message && (
-          <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-5 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-medium text-sky-700">
             {message}
           </div>
         )}
@@ -140,7 +140,7 @@ export default function CalleModal({
             <button
               type="submit"
               disabled={loading}
-              className="rounded-2xl bg-red-800 px-5 py-3 text-sm font-semibold text-white hover:bg-red-900 disabled:opacity-60"
+              className="rounded-2xl bg-sky-800 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </button>
