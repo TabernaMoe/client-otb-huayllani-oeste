@@ -32,8 +32,7 @@ export const socioSchema = z.object({
 
   numero_celular: z
     .string()
-    .min(7, 'El celular debe tener mínimo 7 dígitos')
-    .max(8, 'El celular debe tener máximo 8 dígitos')
+    .min(8, 'El celular debe tener mínimo 8 dígitos')
     .regex(/^\d+$/, 'El celular solo debe contener números'),
 
   genero: z.string().min(1, 'Debe seleccionar el género'),

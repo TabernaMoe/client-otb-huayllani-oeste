@@ -153,11 +153,11 @@ export const AdminNav = [
         icon: CalendarDaysIcon,
         permission: ['gestion.ver', 'gestiones.ver'],
       },
-      {
+     {
   label: 'Periodos',
   to: '/admin/periodos',
   icon: CalendarDaysIcon,
-  permission: 'GESTIONES_READ',
+  permission: ['gestion.ver', 'gestiones.ver'],
 },
     ],
   },

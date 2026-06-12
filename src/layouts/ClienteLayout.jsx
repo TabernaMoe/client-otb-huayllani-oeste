@@ -11,6 +11,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   Cog6ToothIcon,
+  BuildingOffice2Icon,
 } from '@heroicons/react/24/outline';
 
 import LogoOtb from '/logo-otb.webp';
@@ -47,6 +48,11 @@ const menuItems = [
     to: '/cliente/perfil',
     icon: UserIcon,
   },
+  {
+  label: 'Mis acciones',
+  to: '/cliente/acciones',
+  icon: BuildingOffice2Icon,
+},
 ];
 
 function getInitials(name = '') {
@@ -85,7 +91,7 @@ function Sidebar({ open, onClose, onLogout }) {
 
             <div>
               <h1 className="text-xl font-black tracking-tight text-slate-900">
-                OTB Agua
+                OTB Huayllani Oeste
               </h1>
               <p className="text-sm text-slate-500">Portal del socio</p>
             </div>
@@ -125,13 +131,7 @@ function Sidebar({ open, onClose, onLogout }) {
         </nav>
 
         <div className="border-t border-slate-200 p-4">
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-          >
-            <Cog6ToothIcon className="h-5 w-5" />
-            Configuración
-          </button>
+          
 
           <button
             type="button"
