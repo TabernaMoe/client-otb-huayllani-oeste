@@ -48,9 +48,7 @@ export default function ClientePerfilPage() {
               {user?.nombre_completo || 'Usuario'}
             </h1>
 
-            <p className="mt-2 text-sm text-cyan-50">
-              Rol: {user?.rol || 'usuario_normal'}
-            </p>
+           
           </div>
         </div>
       </div>

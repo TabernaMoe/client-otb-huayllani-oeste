@@ -11,7 +11,7 @@ import ClienteLayout from '../layouts/ClienteLayout';
 import AdminPage from '../modules/Admin/pages/AdminPage';
 import ReportesPage from '../modules/Admin/pages/ReportesPage';
 import SocioPage from '../modules/socios/pages/SocioPage';
-import GestionAcciones from '../modules/acciones/pages/Tabs';
+//import GestionAcciones from '../modules/acciones/pages/Tabs';
 import RolesPage from '../modules/roles/pages/RolesPage';
 import GestionesPage from '../modules/gestiones/pages/GestionesPage';
 import CallesPage from '../modules/calles/pages/CallesPage';
@@ -49,15 +49,7 @@ export const privateRoutes = (
           <Route path="socios" element={<SocioPage />} />
         </Route>
 
-        <Route
-          element={
-            <PermissionRoute
-              permission={['acciones.accion.ver', 'accion.ver', 'acciones.ver']}
-            />
-          }
-        >
-          <Route path="gestion-acciones" element={<GestionAcciones />} />
-        </Route>
+      
 
         <Route
           element={

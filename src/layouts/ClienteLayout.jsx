@@ -194,11 +194,11 @@ export default function ClienteLayout() {
                 </button>
 
                 <div>
-                  <p className="text-sm font-semibold text-cyan-700">
-                    Bienvenido, {displayName}
+                  <p className="text-xl font-semibold text-cyan-700">
+                    Bienvenido
                   </p>
                   <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                    Panel del socio
+                    Vista del socio 
                   </h2>
                 </div>
               </div>
