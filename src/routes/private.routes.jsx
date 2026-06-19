@@ -18,6 +18,8 @@ import CallesPage from '../modules/calles/pages/CallesPage';
 import TarifasPage from '../modules/tarifas/pages/TarifasPage';
 import DetalleAccionPage from '../modules/detalleAccion/pages/DetalleAccionPage';
 import PeriodosPage from '../modules/periodo/pages/PeriodosPage';
+import AccionesPage from '../modules/acciones/pages/AccionesPage';
+import CobrosPage from '../modules/cobros/pages/CobrosPage';
 
 import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
 import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
@@ -102,6 +104,9 @@ export const privateRoutes = (
         >
           <Route path="reportes" element={<ReportesPage />} />
         </Route>
+        <Route element={<PermissionRoute permission={['cobro.ver', 'cobros.ver']} />}>
+  <Route path="cobros" element={<CobrosPage />} />
+</Route>
 
         <Route
           element={
@@ -114,6 +119,15 @@ export const privateRoutes = (
             />
           }
         >
+          <Route
+  element={
+    <PermissionRoute
+      permission={['acciones.ver', 'accion.ver', 'acciones.accion.ver']}
+    />
+  }
+>
+  <Route path="acciones" element={<AccionesPage />} />
+</Route>
           <Route path="detalle-pago-accion" element={<DetalleAccionPage />} />
         </Route>
       </Route>

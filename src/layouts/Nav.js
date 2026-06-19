@@ -107,6 +107,7 @@ import {
   FolderIcon,
   UserGroupIcon,
   CurrencyDollarIcon,
+  BanknotesIcon, 
 } from '@heroicons/react/24/outline';
 
 export const SidebarNav = [
@@ -152,6 +153,16 @@ export const AdminNav = [
         to: '/admin/gestiones',
         icon: CalendarDaysIcon,
         permission: ['gestion.ver', 'gestiones.ver'],
+      },
+       {
+        label: 'Acciones',
+        to: '/admin/acciones',
+        icon: ClipboardDocumentListIcon,
+        permission: [
+          'acciones.ver',
+          'accion.ver',
+          'acciones.accion.ver',
+        ],
       },
      {
   label: 'Periodos',
@@ -202,6 +213,17 @@ export const AdminNav = [
         icon: UsersIcon,
         permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
+      {
+  label: 'Cobros',
+  to: '/admin/cobros',
+  icon: BanknotesIcon,
+  permission: [
+    'cobro.ver',
+    'cobros.ver',
+    'pagos.ver',
+  ],
+},
     ],
   },
+  
 ];
