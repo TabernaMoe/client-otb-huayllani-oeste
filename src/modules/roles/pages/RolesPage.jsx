@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   PencilSquareIcon,
   PlusIcon,
@@ -22,6 +22,7 @@ export default function RolesPage() {
 
   const [selectedRole, setSelectedRole] = useState(null);
   const [search, setSearch] = useState('');
+  const [searchPerms, setSearchPerms] = useState('');
 
   const [page, setPage] = useState(1);
   const [limit] = useState(5);
@@ -35,8 +36,9 @@ export default function RolesPage() {
 
   const normalizePermissionId = (permission) => {
     if (typeof permission === 'number') return permission;
+    if (typeof permission === 'string') return Number(permission);
 
-    const id = Number(permission?.id || permission?.permiso_id);
+    const id = Number(permission?.id || permission?.permiso_id || permission?.id_permiso);
 
     return Number.isNaN(id) ? null : id;
   };
@@ -48,8 +50,6 @@ export default function RolesPage() {
     const response = await RolesServices.getAll(page, limit, search);
 
     setLoading(false);
-
-    console.log('ROLES =>', response);
 
     if (!response.ok) {
       setMessage(response.message || 'Error al cargar roles');
@@ -63,20 +63,12 @@ export default function RolesPage() {
   const fetchPermissions = async () => {
     const response = await RolesServices.getPermissions();
 
-    console.log('PERMISOS =>', response);
-    console.log('PERMISOS RAW =>', response.data);
-
     if (!response.ok) {
       setMessage(response.message || 'Error al cargar permisos');
       return;
     }
 
-    setPermissions(
-      response.data ||
-        response.permisos ||
-        response.permissions ||
-        [],
-    );
+    setPermissions(response.data || response.permisos || response.permissions || []);
   };
 
   useEffect(() => {
@@ -92,32 +84,39 @@ export default function RolesPage() {
     setForm(initialForm);
     setErrors({});
     setMessage('');
+    setSearchPerms('');
     setModalOpen(true);
   };
 
   const openEditModal = async (role) => {
     setMessage('');
     setErrors({});
+    setSearchPerms('');
 
     const response = await RolesServices.getById(role.id);
 
-    const roleData = response.ok
-      ? response.dato || response.data || role
-      : role;
+    if (!response.ok) {
+      setMessage(response.message || 'Error al obtener el rol');
+      return;
+    }
 
-    const rolePermissions =
+    const roleData = response.data || response.dato || role;
+
+    const rawPermissions =
       roleData.permisos ||
       roleData.permissions ||
       roleData.auth_permisos ||
       [];
 
+    const permissionIds = rawPermissions
+      .map((permission) => normalizePermissionId(permission))
+      .filter((id) => id !== null);
+
     setSelectedRole(roleData);
 
     setForm({
       nombre_rol: roleData.nombre_rol || roleData.nombre || '',
-      permisos: rolePermissions
-        .map((permission) => normalizePermissionId(permission))
-        .filter((id) => id !== null),
+      permisos: permissionIds,
     });
 
     setModalOpen(true);
@@ -128,6 +127,7 @@ export default function RolesPage() {
     setSelectedRole(null);
     setForm(initialForm);
     setErrors({});
+    setSearchPerms('');
   };
 
   const handleChange = (e) => {
@@ -187,12 +187,6 @@ export default function RolesPage() {
 
     const payload = buildPayload();
 
-    console.log('PAYLOAD FINAL =>', payload);
-    console.log(
-      'TIPOS =>',
-      payload.permisos.map((id) => typeof id),
-    );
-
     setSaving(true);
 
     const response = selectedRole
@@ -200,25 +194,16 @@ export default function RolesPage() {
       : await RolesServices.create(payload);
 
     setSaving(false);
-/*
+
     if (!response.ok) {
-      console.log('ERRORES BACKEND =>', response.payload?.errors);
-      setMessage(response.message || 'Error al guardar el rol');
+      setMessage(
+        response.errors?.[0]?.message ||
+          response.message ||
+          'Error al guardar el rol',
+      );
       return;
     }
-*/
-if (!response.ok) {
-  console.log('ERROR COMPLETO =>', response);
-  console.log('ERRORES BACKEND =>', response.errors);
 
-  setMessage(
-    response.errors?.[0]?.message ||
-      response.message ||
-      'Error al guardar el rol',
-  );
-
-  return;
-}
     setMessage(
       selectedRole
         ? 'Rol actualizado correctamente'
@@ -246,6 +231,27 @@ if (!response.ok) {
     setMessage('Rol eliminado correctamente');
     fetchRoles();
   };
+
+  const filteredPermissions = useMemo(() => {
+    const text = searchPerms.trim().toLowerCase();
+
+    if (!text) return permissions;
+
+    return permissions.filter((permission) => {
+      const codigo = String(permission.codigo_permiso || '').toLowerCase();
+      const nombre = String(permission.nombre_permiso || '').toLowerCase();
+
+      return codigo.includes(text) || nombre.includes(text);
+    });
+  }, [permissions, searchPerms]);
+
+  const assignedPermissions = filteredPermissions.filter((permission) =>
+    form.permisos.includes(Number(permission.id)),
+  );
+
+  const availablePermissions = filteredPermissions.filter(
+    (permission) => !form.permisos.includes(Number(permission.id)),
+  );
 
   return (
     <section className="space-y-6">
@@ -338,22 +344,17 @@ if (!response.ok) {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           {rolePermissions.length > 0 ? (
-                            rolePermissions
-                              .slice(0, 4)
-                              .map((permission, index) => (
-                                <span
-                                  key={
-                                    permission.id ||
-                                    permission.codigo_permiso ||
-                                    index
-                                  }
-                                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
-                                >
-                                  {permission.codigo_permiso ||
-                                    permission.nombre_permiso ||
-                                    permission.nombre}
-                                </span>
-                              ))
+                            rolePermissions.slice(0, 4).map((permission, index) => (
+                              <span
+                                key={permission.id || permission.codigo_permiso || index}
+                                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
+                              >
+                                {permission.codigo_permiso ||
+                                  permission.nombre_permiso ||
+                                  permission.nombre ||
+                                  `Permiso ${permission}`}
+                              </span>
+                            ))
                           ) : (
                             <span className="text-slate-400">
                               Sin permisos
@@ -431,8 +432,8 @@ if (!response.ok) {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="mb-5">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+            <div className="border-b border-slate-100 p-6">
               <h2 className="text-xl font-bold text-slate-800">
                 {selectedRole ? 'Editar rol' : 'Nuevo rol'}
               </h2>
@@ -442,7 +443,7 @@ if (!response.ok) {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5 p-6">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Nombre del rol
@@ -465,9 +466,25 @@ if (!response.ok) {
               </div>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-slate-700">
-                  Permisos
-                </p>
+                <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700">
+                      Permisos del sistema
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Los permisos asignados aparecen marcados en azul. Los
+                      disponibles están vacíos.
+                    </p>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={searchPerms}
+                    onChange={(e) => setSearchPerms(e.target.value)}
+                    placeholder="Buscar permiso..."
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm outline-none transition focus:border-sky-700 focus:ring-4 focus:ring-sky-100 md:max-w-sm"
+                  />
+                </div>
 
                 {errors.permisos && (
                   <p className="mb-3 text-sm text-red-600">
@@ -475,43 +492,100 @@ if (!response.ok) {
                   </p>
                 )}
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {permissions.map((permission) => {
-                    const permissionId = Number(permission.id);
-                    const checked = form.permisos.includes(permissionId);
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-sky-900">
+                        Permisos asignados
+                      </h3>
 
-                    return (
-                      <label
-                        key={permission.id}
-                        className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
-                          checked
-                            ? 'border-sky-700 bg-sky-50'
-                            : 'border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          value={permissionId}
-                          onChange={() => handlePermissionChange(permissionId)}
-                          className="mt-1 h-4 w-4 accent-sky-800"
-                        />
+                      <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                        {assignedPermissions.length}
+                      </span>
+                    </div>
 
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">
-                            {permission.codigo_permiso ||
-                              permission.nombre_permiso}
-                          </p>
-
-                          <p className="mt-1 text-xs text-slate-500">
-                            {permission.nombre_permiso ||
-                              permission.descripcion ||
-                              'Permiso del sistema'}
-                          </p>
+                    <div className="grid max-h-[360px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                      {assignedPermissions.length === 0 ? (
+                        <div className="col-span-full rounded-2xl border border-dashed border-sky-200 bg-white p-6 text-center text-sm text-slate-400">
+                          Este rol aún no tiene permisos asignados.
                         </div>
-                      </label>
-                    );
-                  })}
+                      ) : (
+                        assignedPermissions.map((permission) => (
+                          <label
+                            key={permission.id}
+                            className="group relative cursor-pointer rounded-2xl border border-sky-700 bg-sky-100 p-3 shadow-sm transition hover:bg-sky-200"
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked
+                                onChange={() =>
+                                  handlePermissionChange(Number(permission.id))
+                                }
+                                className="mt-1 h-4 w-4 accent-sky-800"
+                              />
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-bold text-slate-800">
+                                  {permission.nombre_permiso}
+                                </p>
+                                <p className="truncate text-xs text-sky-800">
+                                  {permission.codigo_permiso}
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-slate-700">
+                        Permisos disponibles
+                      </h3>
+
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                        {availablePermissions.length}
+                      </span>
+                    </div>
+
+                    <div className="grid max-h-[360px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                      {availablePermissions.length === 0 ? (
+                        <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400">
+                          No hay permisos disponibles.
+                        </div>
+                      ) : (
+                        availablePermissions.map((permission) => (
+                          <label
+                            key={permission.id}
+                            className="group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-sky-300 hover:bg-slate-50"
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={false}
+                                onChange={() =>
+                                  handlePermissionChange(Number(permission.id))
+                                }
+                                className="mt-1 h-4 w-4 accent-sky-800"
+                              />
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-slate-800">
+                                  {permission.nombre_permiso}
+                                </p>
+                                <p className="truncate text-xs text-slate-500">
+                                  {permission.codigo_permiso}
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

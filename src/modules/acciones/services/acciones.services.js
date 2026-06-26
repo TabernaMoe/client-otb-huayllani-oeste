@@ -14,12 +14,7 @@ export class AccionesServices {
   static async getAll(page = 1, limit = 10, search = '', estado = 'ACTIVO') {
     try {
       const { data } = await api.get('/admin/accion', {
-        params: {
-          page,
-          limit,
-          search,
-          estado,
-        },
+        params: { page, limit, search, estado },
       });
 
       return data;
@@ -67,12 +62,15 @@ export class AccionesServices {
       const cleanPayload = {
         calle_id: Number(payload.calle_id),
         tarifa_id: Number(payload.tarifa_id),
-        nro_medidor: String(payload.nro_medidor || '').trim(),
         direccion: String(payload.direccion || '').trim(),
         observacion: String(payload.observacion || '').trim(),
         estado: String(payload.estado || 'ACTIVO').trim().toUpperCase(),
         detallesAccion: (payload.detallesAccion || []).map(Number),
       };
+
+      if (payload.nro_medidor !== undefined && payload.nro_medidor !== null) {
+        cleanPayload.nro_medidor = String(payload.nro_medidor || '').trim();
+      }
 
       const { data } = await api.patch(`/admin/accion/${id}`, cleanPayload);
       return data;
@@ -116,10 +114,7 @@ export class AccionesServices {
   static async getTarifasSelect(search = '') {
     try {
       const { data } = await api.get('/admin/tarifa', {
-        params: {
-          estado: true,
-          search,
-        },
+        params: { estado: true, search },
       });
 
       return {

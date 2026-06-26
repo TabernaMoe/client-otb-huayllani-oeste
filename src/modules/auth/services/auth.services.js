@@ -87,31 +87,40 @@ export const AuthService = {
     );
   },
 
-  hasPermission(permissionCode) {
-    const role = this.getRole();
+ hasPermission(permissionCode) {
+  const role = this.getRole();
 
-    if (role === 'super_admin') {
-      return true;
-    }
+  if (role === 'super_admin') {
+    return true;
+  }
 
-    const requiredPermissions = Array.isArray(permissionCode)
-      ? permissionCode
-      : [permissionCode];
+  const requiredPermissions = Array.isArray(permissionCode)
+    ? permissionCode
+    : [permissionCode];
 
-    const permissions = this.getPermissions();
+  const permissions = this.getPermissions();
 
-    return permissions.some((permission) => {
-      const code =
-        typeof permission === 'string'
-          ? permission
-          : permission?.codigo_permiso ||
-            permission?.code ||
-            permission?.nombre_permiso ||
-            permission?.codigo;
+  const userPermissions = permissions
+    .map((permission) => {
+      if (typeof permission === 'string') {
+        return permission;
+      }
 
-      return requiredPermissions.includes(code);
-    });
-  },
+      return (
+        permission?.codigo_permiso ||
+        permission?.code ||
+        permission?.nombre_permiso ||
+        permission?.codigo ||
+        null
+      );
+    })
+    .filter(Boolean); // elimina null/undefined
+
+  // 🔥 Comparación final
+  return requiredPermissions.some((required) =>
+    userPermissions.includes(required)
+  );
+},
 
   isAuthenticated() {
     return Boolean(this.getToken());

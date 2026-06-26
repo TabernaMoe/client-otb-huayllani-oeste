@@ -163,32 +163,43 @@ setForm({
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const validation = validateAccionForm(form);
+  const validation = validateAccionForm(form);
 
-    if (!validation.isValid) {
-      setErrors(validation.errors);
-      return;
+  if (!validation.isValid) {
+    setErrors(validation.errors);
+    return;
+  }
+
+  setSaving(true);
+  setMessage('');
+
+  let payload = { ...validation.data };
+
+  if (selected) {
+    const medidorActual = String(selected.nro_medidor || '').trim();
+    const medidorFormulario = String(payload.nro_medidor || '').trim();
+
+    if (medidorActual === medidorFormulario) {
+      delete payload.nro_medidor;
     }
+  }
 
-    setSaving(true);
-    setMessage('');
+  const response = selected
+    ? await AccionesServices.update(selected.id, payload)
+    : await AccionesServices.create(payload);
 
-    const response = selected
-      ? await AccionesServices.update(selected.id, validation.data)
-      : await AccionesServices.create(validation.data);
+  setSaving(false);
 
-    setSaving(false);
+  if (!response.ok) {
+    setMessage(response.message || 'Error al guardar la acción');
+    return;
+  }
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al guardar la acción');
-      return;
-    }
-
-    onSaved();
-  };
+  onSaved();
+};
 
   if (!open) return null;
 

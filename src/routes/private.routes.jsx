@@ -11,7 +11,6 @@ import ClienteLayout from '../layouts/ClienteLayout';
 import AdminPage from '../modules/Admin/pages/AdminPage';
 import ReportesPage from '../modules/Admin/pages/ReportesPage';
 import SocioPage from '../modules/socios/pages/SocioPage';
-//import GestionAcciones from '../modules/acciones/pages/Tabs';
 import RolesPage from '../modules/roles/pages/RolesPage';
 import GestionesPage from '../modules/gestiones/pages/GestionesPage';
 import CallesPage from '../modules/calles/pages/CallesPage';
@@ -29,7 +28,8 @@ export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
     <Route element={<AdminRoute />}>
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="usuarios" replace />} />
+        {/* IMPORTANTE: no mandar siempre a usuarios */}
+        <Route index element={<Navigate to="acciones" replace />} />
 
         <Route
           element={
@@ -40,18 +40,6 @@ export const privateRoutes = (
         >
           <Route path="usuarios" element={<AdminPage />} />
         </Route>
-
-        <Route
-          element={
-            <PermissionRoute
-              permission={['socio.ver', 'socios.ver', 'socios.socio.ver']}
-            />
-          }
-        >
-          <Route path="socios" element={<SocioPage />} />
-        </Route>
-
-      
 
         <Route
           element={
@@ -69,14 +57,31 @@ export const privateRoutes = (
           }
         >
           <Route path="gestiones" element={<GestionesPage />} />
+          <Route path="periodos" element={<PeriodosPage />} />
         </Route>
 
         <Route
           element={
-            <PermissionRoute permission={['gestion.ver', 'gestiones.ver']} />
+            <PermissionRoute
+              permission={['acciones.accion.ver', 'accion.ver', 'acciones.ver']}
+            />
           }
         >
-          <Route path="periodos" element={<PeriodosPage />} />
+          <Route path="acciones" element={<AccionesPage />} />
+        </Route>
+
+        <Route
+          element={
+            <PermissionRoute
+              permission={[
+                'socio.ver',
+                'socios.ver',
+                'socios.socio.ver',
+              ]}
+            />
+          }
+        >
+          <Route path="socios" element={<SocioPage />} />
         </Route>
 
         <Route
@@ -99,36 +104,35 @@ export const privateRoutes = (
 
         <Route
           element={
-            <PermissionRoute permission={['reporte.ver', 'reportes.ver']} />
-          }
-        >
-          <Route path="reportes" element={<ReportesPage />} />
-        </Route>
-        <Route element={<PermissionRoute permission={['cobro.ver', 'cobros.ver']} />}>
-  <Route path="cobros" element={<CobrosPage />} />
-</Route>
-
-        <Route
-          element={
             <PermissionRoute
               permission={[
+                'acciones.detalle.ver',
+                'acciones.detalles.ver',
                 'detalle_accion.ver',
                 'detalle_pago_accion.ver',
-                'acciones.detalles.ver',
               ]}
             />
           }
         >
-          <Route
-  element={
-    <PermissionRoute
-      permission={['acciones.ver', 'accion.ver', 'acciones.accion.ver']}
-    />
-  }
->
-  <Route path="acciones" element={<AccionesPage />} />
-</Route>
           <Route path="detalle-pago-accion" element={<DetalleAccionPage />} />
+        </Route>
+
+        <Route
+          element={
+            <PermissionRoute
+              permission={['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver']}
+            />
+          }
+        >
+          <Route path="cobros" element={<CobrosPage />} />
+        </Route>
+
+        <Route
+          element={
+            <PermissionRoute permission={['reporte.ver', 'reportes.ver']} />
+          }
+        >
+          <Route path="reportes" element={<ReportesPage />} />
         </Route>
       </Route>
     </Route>
