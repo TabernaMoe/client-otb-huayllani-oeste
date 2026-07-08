@@ -62,7 +62,9 @@ const getDetalleLabel = (detalle) =>
 export default function AccionModal({ open, selected, onClose, onSaved }) {
   const [form, setForm] = useState(initialForm);
 
-  const [socios, setSocios] = useState([]);
+const [socios, setSocios] = useState([]);
+const [socioSearch, setSocioSearch] = useState('');
+const [showSocios, setShowSocios] = useState(false);
   const [calles, setCalles] = useState([]);
   const [tarifas, setTarifas] = useState([]);
   const [detalles, setDetalles] = useState([]);
@@ -96,12 +98,14 @@ export default function AccionModal({ open, selected, onClose, onSaved }) {
   };
 
   useEffect(() => {
-    if (!open) return;
+  if (!open) return;
 
-    loadSelects();
-    setMessage('');
-    setErrors({});
-  }, [open]);
+  loadSelects();
+  setMessage('');
+  setErrors({});
+  setSocioSearch('');
+  setShowSocios(false);
+}, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -207,7 +211,14 @@ setForm({
     const id = getOptionId(detalle);
     return form.detallesAccion.includes(id);
   });
+const sociosFiltrados = socios.filter((socio) => {
+  const texto = socioSearch.toLowerCase().trim();
 
+  const label = getSocioLabel(socio).toLowerCase();
+  const ci = String(socio?.ci_socio || socio?.ci || '').toLowerCase();
+
+  return label.includes(texto) || ci.includes(texto);
+});
   const detallesDisponibles = detalles.filter((detalle) => {
     const id = getOptionId(detalle);
     return !form.detallesAccion.includes(id);
@@ -249,32 +260,71 @@ setForm({
           )}
 
           <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Socio
-              </label>
-              <select
-                name="socio_id"
-                value={form.socio_id}
-                onChange={handleChange}
-                disabled={Boolean(selected)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-100"
-              >
-                <option value="">Seleccionar socio</option>
-                {socios.map((socio) => {
-                  const id = getOptionId(socio);
+         <div className="relative">
+  <label className="mb-2 block text-sm font-semibold text-slate-700">
+    Socio
+  </label>
 
-                  return (
-                    <option key={id} value={id}>
-                      {getSocioLabel(socio)}
-                    </option>
-                  );
-                })}
-              </select>
-              {errors.socio_id && (
-                <p className="mt-1 text-sm text-red-600">{errors.socio_id}</p>
-              )}
-            </div>
+  <input
+    type="text"
+    value={socioSearch}
+    disabled={Boolean(selected)}
+    placeholder="Buscar socio por nombre o CI"
+    onFocus={() => setShowSocios(true)}
+    onChange={(e) => {
+      setSocioSearch(e.target.value);
+      setShowSocios(true);
+
+      setForm((prev) => ({
+        ...prev,
+        socio_id: '',
+      }));
+    }}
+    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-100"
+  />
+
+  {showSocios && !selected && socioSearch.trim() !== '' && (
+    <div className="absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg">
+      {sociosFiltrados.length === 0 ? (
+        <div className="px-4 py-3 text-sm text-slate-400">
+          No se encontraron socios
+        </div>
+      ) : (
+        sociosFiltrados.map((socio) => {
+          const id = getOptionId(socio);
+
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setForm((prev) => ({
+                  ...prev,
+                  socio_id: id,
+                }));
+
+                setSocioSearch(getSocioLabel(socio));
+                setShowSocios(false);
+
+                setErrors((prev) => ({
+                  ...prev,
+                  socio_id: '',
+                }));
+              }}
+              className="block w-full px-4 py-3 text-left text-sm hover:bg-blue-50"
+            >
+              {getSocioLabel(socio)}
+            </button>
+          );
+        })
+      )}
+    </div>
+  )}
+
+  {errors.socio_id && (
+    <p className="mt-1 text-sm text-red-600">{errors.socio_id}</p>
+  )}
+</div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">

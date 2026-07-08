@@ -5,9 +5,7 @@ export class GestionesServices {
   static async getAll(search = '') {
     try {
       const response = await api.get('/admin/gestion', {
-        params: {
-          search,
-        },
+        params: { search },
       });
 
       return response.data;

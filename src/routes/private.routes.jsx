@@ -19,6 +19,8 @@ import DetalleAccionPage from '../modules/detalleAccion/pages/DetalleAccionPage'
 import PeriodosPage from '../modules/periodo/pages/PeriodosPage';
 import AccionesPage from '../modules/acciones/pages/AccionesPage';
 import CobrosPage from '../modules/cobros/pages/CobrosPage';
+import LecturasPage from '../modules/lecturas/pages/LecturasPage';
+
 
 import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
 import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
@@ -30,7 +32,15 @@ export const privateRoutes = (
       <Route path="/admin" element={<AdminLayout />}>
         {/* IMPORTANTE: no mandar siempre a usuarios */}
         <Route index element={<Navigate to="acciones" replace />} />
-
+<Route
+  element={
+    <PermissionRoute
+      permission={['lectura.ver', 'lecturas.ver', 'agua.lectura.ver']}
+    />
+  }
+>
+  <Route path="lecturas" element={<LecturasPage />} />
+</Route>
         <Route
           element={
             <PermissionRoute

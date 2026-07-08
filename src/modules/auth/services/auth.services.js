@@ -1,6 +1,22 @@
 import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
 
+const normalizePermission = (permission) => {
+  if (!permission) return null;
+
+  if (typeof permission === 'string') {
+    return permission.toLowerCase().trim();
+  }
+
+  return (
+    permission?.codigo_permiso ||
+    permission?.code ||
+    permission?.nombre_permiso ||
+    permission?.codigo ||
+    null
+  )?.toLowerCase?.().trim();
+};
+
 export const AuthService = {
   async login({ user, password }) {
     try {
@@ -87,40 +103,29 @@ export const AuthService = {
     );
   },
 
- hasPermission(permissionCode) {
-  const role = this.getRole();
+  hasPermission(permissionCode) {
+    const role = String(this.getRole() || '').toLowerCase().trim();
 
-  if (role === 'super_admin') {
-    return true;
-  }
+    if (role === 'super_admin') {
+      return true;
+    }
 
-  const requiredPermissions = Array.isArray(permissionCode)
-    ? permissionCode
-    : [permissionCode];
+    const requiredPermissions = Array.isArray(permissionCode)
+      ? permissionCode
+      : [permissionCode];
 
-  const permissions = this.getPermissions();
+    const requiredNormalized = requiredPermissions
+      .map((permission) => String(permission || '').toLowerCase().trim())
+      .filter(Boolean);
 
-  const userPermissions = permissions
-    .map((permission) => {
-      if (typeof permission === 'string') {
-        return permission;
-      }
+    const userPermissions = this.getPermissions()
+      .map(normalizePermission)
+      .filter(Boolean);
 
-      return (
-        permission?.codigo_permiso ||
-        permission?.code ||
-        permission?.nombre_permiso ||
-        permission?.codigo ||
-        null
-      );
-    })
-    .filter(Boolean); // elimina null/undefined
-
-  // 🔥 Comparación final
-  return requiredPermissions.some((required) =>
-    userPermissions.includes(required)
-  );
-},
+    return requiredNormalized.some((required) =>
+      userPermissions.includes(required),
+    );
+  },
 
   isAuthenticated() {
     return Boolean(this.getToken());

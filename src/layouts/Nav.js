@@ -107,6 +107,8 @@ import {
   UserGroupIcon,
   CurrencyDollarIcon,
   BanknotesIcon,
+    DocumentTextIcon, // <-- agregar
+
 } from '@heroicons/react/24/outline';
 
 export const SidebarNav = [
@@ -139,19 +141,25 @@ export const AdminNav = [
         label: 'Gestión de usuarios',
         to: '/admin/usuarios',
         icon: UsersIcon,
-        permission: ['usuario.ver'],
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
       },
       {
         label: 'Roles y permisos',
         to: '/admin/roles',
         icon: UserGroupIcon,
-        permission: ['rol.ver'],
+        permission: ['rol.ver', 'roles.ver', 'auth.rol.ver'],
       },
       {
         label: 'Gestiones',
         to: '/admin/gestiones',
         icon: CalendarDaysIcon,
-        permission: ['gestion.ver'],
+        permission: ['gestion.ver', 'gestiones.ver'],
+      },
+      {
+        label: 'Periodos',
+        to: '/admin/periodos',
+        icon: CalendarDaysIcon,
+        permission: ['periodo.ver', 'periodos.ver', 'gestion.ver'],
       },
       {
         label: 'Acciones',
@@ -160,11 +168,11 @@ export const AdminNav = [
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       {
-        label: 'Periodos',
-        to: '/admin/periodos',
-        icon: CalendarDaysIcon,
-        permission: ['gestion.ver', 'periodo.ver'],
-      },
+  label: 'Lecturas',
+  to: '/admin/lecturas',
+  icon: DocumentTextIcon,
+  permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+},
     ],
   },
   {
@@ -176,19 +184,24 @@ export const AdminNav = [
         label: 'Calles',
         to: '/admin/calles',
         icon: BuildingOffice2Icon,
-        permission: ['calle.ver'],
+        permission: ['calle.ver', 'calles.ver', 'acciones.calles.ver'],
       },
       {
         label: 'Tarifas',
         to: '/admin/tarifas',
         icon: CurrencyDollarIcon,
-        permission: ['tarifa.ver'],
+        permission: ['tarifa.ver', 'tarifas.ver'],
       },
       {
         label: 'Detalle pago acción',
         to: '/admin/detalle-pago-accion',
         icon: ClipboardDocumentListIcon,
-        permission: ['acciones.detalle.ver', 'acciones.detalles.ver', 'detalle_accion.ver','detalle_pago_accion.ver'],
+        permission: [
+          'acciones.detalle.ver',
+          'acciones.detalles.ver',
+          'detalle_accion.ver',
+          'detalle_pago_accion.ver',
+        ],
       },
     ],
   },
@@ -201,13 +214,26 @@ export const AdminNav = [
         label: 'Socios',
         to: '/admin/socios',
         icon: UsersIcon,
-        permission: ['socio.ver'],
+        permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
       {
         label: 'Cobros',
         to: '/admin/cobros',
         icon: BanknotesIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
+    ],
+  },
+  {
+    id: 'reportes',
+    title: 'Reportes',
+    icon: ClipboardDocumentListIcon,
+    items: [
+      {
+        label: 'Reportes',
+        to: '/admin/reportes',
+        icon: ClipboardDocumentListIcon,
+        permission: ['reporte.ver', 'reportes.ver'],
       },
     ],
   },
