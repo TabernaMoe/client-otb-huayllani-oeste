@@ -20,6 +20,9 @@ import PeriodosPage from '../modules/periodo/pages/PeriodosPage';
 import AccionesPage from '../modules/acciones/pages/AccionesPage';
 import CobrosPage from '../modules/cobros/pages/CobrosPage';
 import LecturasPage from '../modules/lecturas/pages/LecturasPage';
+import CobrosAguaPage from '../modules/cobrosAgua/pages/CobrosAguaPage';
+import AsambleasPage from '../modules/asambleas/pages/AsambleasPage';
+
 
 
 import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
@@ -60,7 +63,35 @@ export const privateRoutes = (
         >
           <Route path="roles" element={<RolesPage />} />
         </Route>
-
+<Route
+  element={
+    <PermissionRoute
+      permission={[
+        'pago_agua.ver',
+        'pago-agua.ver',
+        'cobro_agua.ver',
+        'cobros_agua.ver',
+        'agua.cobro.ver',
+      ]}
+    />
+  }
+>
+  <Route path="cobros-agua" element={<CobrosAguaPage />} />
+</Route>
+<Route
+  element={
+    <PermissionRoute
+      permission={[
+        'asamblea.ver',
+        'asambleas.ver',
+        'reunion.ver',
+        'reuniones.ver',
+      ]}
+    />
+  }
+>
+  <Route path="asambleas" element={<AsambleasPage />} />
+</Route>
         <Route
           element={
             <PermissionRoute permission={['gestion.ver', 'gestiones.ver']} />

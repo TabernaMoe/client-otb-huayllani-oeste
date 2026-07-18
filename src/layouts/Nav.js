@@ -217,11 +217,23 @@ export const AdminNav = [
         permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
       {
-        label: 'Cobros',
+        label: 'Cobros de Accion',
         to: '/admin/cobros',
         icon: BanknotesIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
+      {
+  label: 'Cobros de agua',
+  to: '/admin/cobros-agua',
+  icon: CurrencyDollarIcon,
+  permission: [
+    'pago_agua.ver',
+    'pago-agua.ver',
+    'cobro_agua.ver',
+    'cobros_agua.ver',
+    'agua.cobro.ver',
+  ],
+},
     ],
   },
   {
@@ -237,4 +249,22 @@ export const AdminNav = [
       },
     ],
   },
+  {
+  id: 'asambleas',
+  title: 'Asambleas',
+  icon: UserGroupIcon,
+  items: [
+    {
+      label: 'Reuniones',
+      to: '/admin/asambleas',
+      icon: CalendarDaysIcon,
+      permission: [
+        'asamblea.ver',
+        'asambleas.ver',
+        'reunion.ver',
+        'reuniones.ver',
+      ],
+    },
+  ],
+},
 ];

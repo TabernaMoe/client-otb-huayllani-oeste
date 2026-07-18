@@ -5,7 +5,9 @@ export class CobrosServices {
   static async getSocios(search = '') {
     try {
       const { data } = await api.get('/admin/cobro', {
-        params: { search },
+        params: {
+          search: String(search || '').trim(),
+        },
       });
 
       return data;
@@ -17,6 +19,7 @@ export class CobrosServices {
   static async getSocioCobros(socioId) {
     try {
       const { data } = await api.get(`/admin/cobro/${socioId}`);
+
       return data;
     } catch (error) {
       return toServiceError(error);
@@ -29,10 +32,13 @@ export class CobrosServices {
         socio_id: String(payload.socio_id),
         monto: String(payload.monto),
         cobros: payload.cobros.map((id) => Number(id)),
-        metodo_pago: payload.metodo_pago,
+        metodo_pago: String(payload.metodo_pago)
+          .trim()
+          .toUpperCase(),
       };
 
       const { data } = await api.post('/admin/cobro', cleanPayload);
+
       return data;
     } catch (error) {
       return toServiceError(error);

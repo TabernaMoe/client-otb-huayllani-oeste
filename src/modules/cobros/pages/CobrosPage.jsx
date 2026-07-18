@@ -17,25 +17,166 @@ const formatMoney = (value) =>
     currency: 'BOB',
   }).format(Number(value || 0));
 
-const getSocioId = (socio) => socio?.id || socio?.socio_id;
+/**
+ * Obtiene el ID real del socio.
+ */
+const getSocioId = (socio) => {
+  const socioId =
+    socio?.socio_id ??
+    socio?.id_socio ??
+    socio?.socio?.id ??
+    socio?.id;
 
+  return socioId ? Number(socioId) : 0;
+};
+
+/**
+ * Obtiene el nombre completo del socio.
+ */
 const getSocioName = (socio) =>
   socio?.nombre_completo ||
-  [socio?.nombres, socio?.primer_apellido, socio?.segundo_apellido]
+  [
+    socio?.nombres,
+    socio?.primer_apellido,
+    socio?.segundo_apellido,
+  ]
     .filter(Boolean)
     .join(' ') ||
   'Sin nombre';
 
-const getCobroId = (cobro) => Number(cobro?.id);
+/**
+ * El listado de socios devuelve las acciones así:
+ *
+ * {
+ *   codigo_interno: 1,
+ *   nro_medidor: "12345",
+ *   estado: "ACTIVO"
+ * }
+ *
+ * Por eso codigo_interno debe tener prioridad.
+ */
+const getAccionIdentifier = (accion) => {
+  const identifier =
+    accion?.codigo_interno ??
+    accion?.accion_id ??
+    accion?.id_accion ??
+    accion?.id;
 
-const getCobroSaldo = (cobro) => Number(cobro?.saldo || 0);
+  if (
+    identifier === undefined ||
+    identifier === null ||
+    identifier === ''
+  ) {
+    return null;
+  }
 
+  return identifier;
+};
+
+/**
+ * Obtiene el ID del cobro que se enviará en el arreglo cobros.
+ */
+const getCobroId = (cobro) => {
+  const cobroId =
+    cobro?.cobro_id ??
+    cobro?.detalle_pago_accion_id ??
+    cobro?.detalle_id ??
+    cobro?.id;
+
+  return cobroId ? Number(cobroId) : 0;
+};
+
+/**
+ * Obtiene el saldo pendiente.
+ */
+const getCobroSaldo = (cobro) =>
+  Number(
+    cobro?.saldo ??
+      cobro?.saldo_pendiente ??
+      cobro?.monto_pendiente ??
+      0,
+  );
+
+/**
+ * Obtiene el código de acción para agrupar los cobros.
+ */
 const getCodigoAccion = (cobro) => {
-  const texto = cobro?.descripcion || '';
-  const match = texto.match(/codigo\s+(\d+)/i);
+  const codigo =
+    cobro?.codigo_accion ??
+    cobro?.codigo_interno ??
+    cobro?.accion_codigo ??
+    cobro?.accion_id;
+
+  if (
+    codigo !== undefined &&
+    codigo !== null &&
+    codigo !== ''
+  ) {
+    return String(codigo);
+  }
+
+  const texto = String(cobro?.descripcion || '');
+  const match = texto.match(/c[oó]digo\s+(\d+)/i);
+
   return match?.[1] || 'Sin código';
 };
 
+/**
+ * Extrae la lista de socios independientemente de si el backend
+ * devuelve data como arreglo o dentro de otra propiedad.
+ */
+const getSociosFromResponse = (response) => {
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  if (Array.isArray(response?.data?.socios)) {
+    return response.data.socios;
+  }
+
+  if (Array.isArray(response?.socios)) {
+    return response.socios;
+  }
+
+  if (Array.isArray(response?.rows)) {
+    return response.rows;
+  }
+
+  return [];
+};
+
+/**
+ * Extrae los cobros de la respuesta del detalle.
+ */
+const getCobrosFromResponse = (response) => {
+  const data = response?.data || {};
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.cobrosSocio)) {
+    return data.cobrosSocio;
+  }
+
+  if (Array.isArray(data?.cobrosAccion)) {
+    return data.cobrosAccion;
+  }
+
+  if (Array.isArray(data?.cobros)) {
+    return data.cobros;
+  }
+
+  if (Array.isArray(data?.detalles)) {
+    return data.detalles;
+  }
+
+  return [];
+};
+
+/**
+ * Agrupa los cobros por código de acción.
+ */
 const groupCobrosByAccion = (cobros = []) => {
   const groups = {};
 
@@ -45,7 +186,10 @@ const groupCobrosByAccion = (cobros = []) => {
     if (!groups[codigo]) {
       groups[codigo] = {
         codigo,
-        titulo: `Acción código ${codigo}`,
+        titulo:
+          codigo === 'Sin código'
+            ? 'Acción sin código'
+            : `Acción código ${codigo}`,
         cobros: [],
         total: 0,
       };
@@ -64,10 +208,15 @@ export default function CobrosPage() {
   const [cobros, setCobros] = useState([]);
 
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] =
+    useState('');
+
   const [openGroups, setOpenGroups] = useState({});
 
-  const [loadingSocios, setLoadingSocios] = useState(false);
-  const [loadingCobros, setLoadingCobros] = useState(false);
+  const [loadingSocios, setLoadingSocios] =
+    useState(false);
+  const [loadingCobros, setLoadingCobros] =
+    useState(false);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -79,111 +228,185 @@ export default function CobrosPage() {
 
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] =
+    useState('success');
 
+  /**
+   * Evita realizar una petición en cada tecla.
+   */
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  /**
+   * Obtiene la lista inicial de socios.
+   */
   const fetchSocios = async () => {
     setLoadingSocios(true);
 
-    const res = await CobrosServices.getSocios(search);
+    const response =
+      await CobrosServices.getSocios(debouncedSearch);
 
     setLoadingSocios(false);
 
-    if (!res.ok) {
-      setMessage(res.message || 'Error al cargar socios');
+    if (!response?.ok) {
+      setMessage(
+        response?.message || 'Error al cargar socios',
+      );
+      setMessageType('error');
       setSocios([]);
       return;
     }
 
-    setSocios(res.data || []);
+    setSocios(getSociosFromResponse(response));
   };
 
   useEffect(() => {
     fetchSocios();
-  }, [search]);
+  }, [debouncedSearch]);
 
+  /**
+   * Selecciona un socio y consulta los cobros de cada acción.
+   */
   const openSocio = async (socio) => {
-    const socioId = getSocioId(socio);
+  const socioId = getSocioId(socio);
 
-    setSelectedSocio(socio);
-    setCobros([]);
-    setErrors({});
-    setMessage('');
-    setOpenGroups({});
+  setSelectedSocio(socio);
+  setCobros([]);
+  setErrors({});
+  setMessage('');
+  setOpenGroups({});
 
-    setForm({
-      socio_id: socioId,
-      monto: '',
-      cobros: [],
-      metodo_pago: 'QR',
-    });
+  setForm({
+    socio_id: socioId,
+    monto: '',
+    cobros: [],
+    metodo_pago: 'QR',
+  });
 
-    setLoadingCobros(true);
+  if (!socioId) {
+    setMessage(
+      'El socio seleccionado no tiene un ID válido',
+    );
+    setMessageType('error');
+    return;
+  }
 
-    const res = await CobrosServices.getSocioCobros(socioId);
+  setLoadingCobros(true);
 
-    setLoadingCobros(false);
+  const response =
+    await CobrosServices.getSocioCobros(socioId);
 
-    if (!res.ok) {
-      setMessage(res.message || 'Error al cargar cobros');
-      return;
-    }
+  setLoadingCobros(false);
 
-    const data = res.data || {};
-    const cobrosSocio = data.cobrosSocio || [];
+  if (!response?.ok) {
+    setMessage(
+      response?.message ||
+        'No se pudieron cargar los cobros del socio',
+    );
+    setMessageType('error');
+    return;
+  }
 
-    setSelectedSocio({
-      ...socio,
-      ...data,
-      id: socioId,
-    });
+  const data = response?.data || {};
 
-    setCobros(cobrosSocio);
+  const cobrosSocio =
+    data?.cobrosSocio ??
+    data?.cobros ??
+    data?.detalles ??
+    [];
 
-    const grouped = groupCobrosByAccion(cobrosSocio);
-    const initialOpen = {};
+  setSelectedSocio({
+    ...socio,
+    ...data,
+    socio_id: socioId,
+  });
 
-    grouped.forEach((group) => {
-      initialOpen[group.codigo] = true;
-    });
+  setCobros(
+    Array.isArray(cobrosSocio)
+      ? cobrosSocio
+      : [],
+  );
 
-    setOpenGroups(initialOpen);
-  };
+  const grouped =
+    groupCobrosByAccion(cobrosSocio);
 
-  const cobrosAgrupados = useMemo(() => {
-    return groupCobrosByAccion(cobros);
-  }, [cobros]);
+  const initialOpen = {};
 
-  const selectedCobros = useMemo(() => {
-    return cobros.filter((cobro) => form.cobros.includes(getCobroId(cobro)));
-  }, [cobros, form.cobros]);
+  grouped.forEach((group) => {
+    initialOpen[group.codigo] = true;
+  });
 
-  const totalSeleccionado = useMemo(() => {
-    return selectedCobros.reduce((sum, cobro) => sum + getCobroSaldo(cobro), 0);
-  }, [selectedCobros]);
+  setOpenGroups(initialOpen);
+};
+
+  const cobrosAgrupados = useMemo(
+    () => groupCobrosByAccion(cobros),
+    [cobros],
+  );
+
+  const selectedCobros = useMemo(
+    () =>
+      cobros.filter((cobro) =>
+        form.cobros.includes(getCobroId(cobro)),
+      ),
+    [cobros, form.cobros],
+  );
+
+  const totalSeleccionado = useMemo(
+    () =>
+      selectedCobros.reduce(
+        (sum, cobro) =>
+          sum + getCobroSaldo(cobro),
+        0,
+      ),
+    [selectedCobros],
+  );
 
   const toggleGroup = (codigo) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [codigo]: !prev[codigo],
+    setOpenGroups((previous) => ({
+      ...previous,
+      [codigo]: !previous[codigo],
     }));
   };
 
   const toggleCobro = (cobro) => {
-    const id = getCobroId(cobro);
-    if (!id) return;
+    const cobroId = getCobroId(cobro);
 
-    setForm((prev) => {
-      const exists = prev.cobros.includes(id);
+    if (!cobroId) {
+      setMessage(
+        'El cobro seleccionado no tiene un ID válido',
+      );
+      setMessageType('error');
+      return;
+    }
+
+    setForm((previous) => {
+      const exists =
+        previous.cobros.includes(cobroId);
 
       const newCobros = exists
-        ? prev.cobros.filter((item) => item !== id)
-        : [...prev.cobros, id];
+        ? previous.cobros.filter(
+            (item) => item !== cobroId,
+          )
+        : [...previous.cobros, cobroId];
 
       const total = cobros
-        .filter((item) => newCobros.includes(getCobroId(item)))
-        .reduce((sum, item) => sum + getCobroSaldo(item), 0);
+        .filter((item) =>
+          newCobros.includes(getCobroId(item)),
+        )
+        .reduce(
+          (sum, item) =>
+            sum + getCobroSaldo(item),
+          0,
+        );
 
       return {
-        ...prev,
+        ...previous,
         cobros: newCobros,
         monto: String(total),
       };
@@ -194,20 +417,43 @@ export default function CobrosPage() {
   };
 
   const toggleCobrosAccion = (group) => {
-    const ids = group.cobros.map((cobro) => getCobroId(cobro));
-    const allSelected = ids.every((id) => form.cobros.includes(id));
+    const ids = group.cobros
+      .map((cobro) => getCobroId(cobro))
+      .filter(Boolean);
 
-    setForm((prev) => {
+    if (ids.length === 0) {
+      setMessage(
+        'Los cobros de esta acción no tienen IDs válidos',
+      );
+      setMessageType('error');
+      return;
+    }
+
+    const allSelected = ids.every((id) =>
+      form.cobros.includes(id),
+    );
+
+    setForm((previous) => {
       const newCobros = allSelected
-        ? prev.cobros.filter((id) => !ids.includes(id))
-        : Array.from(new Set([...prev.cobros, ...ids]));
+        ? previous.cobros.filter(
+            (id) => !ids.includes(id),
+          )
+        : Array.from(
+            new Set([...previous.cobros, ...ids]),
+          );
 
       const total = cobros
-        .filter((item) => newCobros.includes(getCobroId(item)))
-        .reduce((sum, item) => sum + getCobroSaldo(item), 0);
+        .filter((item) =>
+          newCobros.includes(getCobroId(item)),
+        )
+        .reduce(
+          (sum, item) =>
+            sum + getCobroSaldo(item),
+          0,
+        );
 
       return {
-        ...prev,
+        ...previous,
         cobros: newCobros,
         monto: String(total),
       };
@@ -217,24 +463,24 @@ export default function CobrosPage() {
     setMessage('');
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-    setForm((prev) => ({
-      ...prev,
+    setForm((previous) => ({
+      ...previous,
       [name]: value,
     }));
 
-    setErrors((prev) => ({
-      ...prev,
+    setErrors((previous) => ({
+      ...previous,
       [name]: '',
     }));
 
     setMessage('');
   };
 
-  const handlePagar = async (e) => {
-    e.preventDefault();
+  const handlePagar = async (event) => {
+    event.preventDefault();
 
     const validation = validatePagoCobro({
       ...form,
@@ -247,29 +493,57 @@ export default function CobrosPage() {
     }
 
     const confirmPay = window.confirm(
-      `¿Confirmar pago por ${formatMoney(totalSeleccionado)}?`,
+      `¿Confirmar pago por ${formatMoney(
+        totalSeleccionado,
+      )}?`,
     );
 
-    if (!confirmPay) return;
-
-    setSaving(true);
-
-    const res = await CobrosServices.pagar(validation.data);
-
-    setSaving(false);
-
-    if (!res.ok) {
-      setMessage(res.message || 'Error al registrar pago');
+    if (!confirmPay) {
       return;
     }
 
-    setMessage(res.message || 'Pago registrado correctamente');
+    setSaving(true);
 
-    if (selectedSocio) {
-      openSocio(selectedSocio);
+    const response = await CobrosServices.pagar(
+      validation.data,
+    );
+
+    setSaving(false);
+
+    if (!response?.ok) {
+      setMessage(
+        response?.message ||
+          'Error al registrar el pago',
+      );
+      setMessageType('error');
+      return;
     }
 
-    fetchSocios();
+    setMessage(
+      response?.message ||
+        'Pago registrado correctamente',
+    );
+    setMessageType('success');
+
+    setErrors({});
+
+    if (selectedSocio) {
+      await openSocio(selectedSocio);
+    }
+
+    await fetchSocios();
+  };
+
+  const getMessageClasses = () => {
+    if (messageType === 'error') {
+      return 'bg-red-50 text-red-700';
+    }
+
+    if (messageType === 'warning') {
+      return 'bg-amber-50 text-amber-700';
+    }
+
+    return 'bg-emerald-50 text-emerald-700';
   };
 
   return (
@@ -281,17 +555,22 @@ export default function CobrosPage() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Cobros</h1>
+            <h1 className="text-2xl font-bold text-slate-800">
+              Cobros
+            </h1>
+
             <p className="mt-1 text-sm text-slate-500">
-              Selecciona un socio, despliega sus acciones y registra el pago de
-              sus detalles pendientes.
+              Selecciona un socio, revisa sus acciones y
+              registra el pago de sus detalles pendientes.
             </p>
           </div>
         </div>
       </div>
 
       {message && (
-        <div className="rounded-2xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+        <div
+          className={`rounded-2xl px-4 py-3 text-sm font-semibold ${getMessageClasses()}`}
+        >
           {message}
         </div>
       )}
@@ -302,8 +581,11 @@ export default function CobrosPage() {
             <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
             <input
+              type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
               placeholder="Buscar por nombre o CI..."
               className="w-full rounded-2xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
             />
@@ -321,8 +603,11 @@ export default function CobrosPage() {
             ) : (
               socios.map((socio) => {
                 const socioId = getSocioId(socio);
+
                 const active =
-                  String(getSocioId(selectedSocio)) === String(socioId);
+                  String(
+                    getSocioId(selectedSocio),
+                  ) === String(socioId);
 
                 return (
                   <button
@@ -344,8 +629,21 @@ export default function CobrosPage() {
                         <p className="font-bold text-slate-800">
                           {getSocioName(socio)}
                         </p>
+
                         <p className="mt-1 text-xs text-slate-500">
-                          CI: {socio.ci_socio || socio.ci || '-'}
+                          CI:{' '}
+                          {socio.ci_socio ||
+                            socio.ci ||
+                            '-'}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Acciones:{' '}
+                          {Array.isArray(
+                            socio.acciones,
+                          )
+                            ? socio.acciones.length
+                            : 0}
                         </p>
                       </div>
                     </div>
@@ -360,18 +658,26 @@ export default function CobrosPage() {
           {!selectedSocio ? (
             <div className="flex min-h-96 items-center justify-center rounded-3xl border border-dashed border-slate-200">
               <p className="text-sm text-slate-500">
-                Selecciona un socio para ver sus acciones pendientes.
+                Selecciona un socio para ver sus acciones
+                pendientes.
               </p>
             </div>
           ) : (
-            <form onSubmit={handlePagar} className="space-y-5">
+            <form
+              onSubmit={handlePagar}
+              className="space-y-5"
+            >
               <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center">
                 <div>
                   <h2 className="text-xl font-bold text-slate-800">
                     {getSocioName(selectedSocio)}
                   </h2>
+
                   <p className="mt-1 text-sm text-slate-500">
-                    CI: {selectedSocio.ci_socio || selectedSocio.ci || '-'}
+                    CI:{' '}
+                    {selectedSocio.ci_socio ||
+                      selectedSocio.ci ||
+                      '-'}
                   </p>
                 </div>
 
@@ -379,6 +685,7 @@ export default function CobrosPage() {
                   <p className="text-xs font-bold text-blue-700">
                     Total seleccionado
                   </p>
+
                   <p className="text-xl font-black text-blue-900">
                     {formatMoney(totalSeleccionado)}
                   </p>
@@ -396,10 +703,18 @@ export default function CobrosPage() {
               ) : (
                 <div className="space-y-4">
                   {cobrosAgrupados.map((group) => {
-                    const isOpen = openGroups[group.codigo];
-                    const ids = group.cobros.map((cobro) => getCobroId(cobro));
-                    const selectedCount = ids.filter((id) =>
-                      form.cobros.includes(id),
+                    const isOpen =
+                      openGroups[group.codigo];
+
+                    const ids = group.cobros
+                      .map((cobro) =>
+                        getCobroId(cobro),
+                      )
+                      .filter(Boolean);
+
+                    const selectedCount = ids.filter(
+                      (id) =>
+                        form.cobros.includes(id),
                     ).length;
 
                     return (
@@ -410,7 +725,11 @@ export default function CobrosPage() {
                         <div className="flex items-center justify-between gap-3 bg-slate-50 p-4">
                           <button
                             type="button"
-                            onClick={() => toggleGroup(group.codigo)}
+                            onClick={() =>
+                              toggleGroup(
+                                group.codigo,
+                              )
+                            }
                             className="flex items-center gap-2 text-left"
                           >
                             {isOpen ? (
@@ -423,26 +742,38 @@ export default function CobrosPage() {
                               <p className="font-bold text-slate-800">
                                 {group.titulo}
                               </p>
+
                               <p className="text-xs text-slate-500">
-                                {group.cobros.length} detalles pendientes
+                                {group.cobros.length}{' '}
+                                detalles pendientes
                               </p>
                             </div>
                           </button>
 
                           <div className="flex items-center gap-3">
                             <div className="text-right">
-                              <p className="text-xs text-slate-500">Total</p>
+                              <p className="text-xs text-slate-500">
+                                Total
+                              </p>
+
                               <p className="font-black text-slate-900">
-                                {formatMoney(group.total)}
+                                {formatMoney(
+                                  group.total,
+                                )}
                               </p>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() => toggleCobrosAccion(group)}
+                              onClick={() =>
+                                toggleCobrosAccion(
+                                  group,
+                                )
+                              }
                               className="rounded-2xl border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50"
                             >
-                              {selectedCount === group.cobros.length
+                              {selectedCount ===
+                              ids.length
                                 ? 'Quitar todos'
                                 : 'Seleccionar acción'}
                             </button>
@@ -451,46 +782,85 @@ export default function CobrosPage() {
 
                         {isOpen && (
                           <div className="grid gap-3 p-4 md:grid-cols-2">
-                            {group.cobros.map((cobro) => {
-                              const id = getCobroId(cobro);
-                              const checked = form.cobros.includes(id);
+                            {group.cobros.map(
+                              (cobro, index) => {
+                                const id =
+                                  getCobroId(cobro);
 
-                              return (
-                                <label
-                                  key={id}
-                                  className={`cursor-pointer rounded-2xl border p-4 transition ${
-                                    checked
-                                      ? 'border-blue-700 bg-blue-50'
-                                      : 'border-slate-200 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={() => toggleCobro(cobro)}
-                                      className="mt-1 h-4 w-4 accent-blue-800"
-                                    />
+                                const checked =
+                                  form.cobros.includes(
+                                    id,
+                                  );
 
-                                    <div>
-                                      <p className="font-bold text-slate-800">
-                                        {cobro.concepto}
-                                      </p>
-                                      <p className="mt-1 text-xs text-slate-500">
-                                        {cobro.descripcion}
-                                      </p>
-                                      <p className="mt-2 text-sm text-slate-500">
-                                        Pagado:{' '}
-                                        {formatMoney(cobro.monto_pagado)}
-                                      </p>
-                                      <p className="mt-2 text-lg font-black text-slate-900">
-                                        Saldo: {formatMoney(cobro.saldo)}
-                                      </p>
+                                return (
+                                  <label
+                                    key={
+                                      id ||
+                                      `${group.codigo}-${index}`
+                                    }
+                                    className={`cursor-pointer rounded-2xl border p-4 transition ${
+                                      checked
+                                        ? 'border-blue-700 bg-blue-50'
+                                        : 'border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={
+                                          checked
+                                        }
+                                        disabled={!id}
+                                        onChange={() =>
+                                          toggleCobro(
+                                            cobro,
+                                          )
+                                        }
+                                        className="mt-1 h-4 w-4 accent-blue-800"
+                                      />
+
+                                      <div>
+                                        <p className="font-bold text-slate-800">
+                                          {cobro.concepto ||
+                                            cobro.nombre ||
+                                            'Cobro pendiente'}
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-slate-500">
+                                          {cobro.descripcion ||
+                                            'Sin descripción'}
+                                        </p>
+
+                                        {cobro.nro_medidor && (
+                                          <p className="mt-1 text-xs text-slate-500">
+                                            Medidor:{' '}
+                                            {
+                                              cobro.nro_medidor
+                                            }
+                                          </p>
+                                        )}
+
+                                        <p className="mt-2 text-sm text-slate-500">
+                                          Pagado:{' '}
+                                          {formatMoney(
+                                            cobro.monto_pagado,
+                                          )}
+                                        </p>
+
+                                        <p className="mt-2 text-lg font-black text-slate-900">
+                                          Saldo:{' '}
+                                          {formatMoney(
+                                            getCobroSaldo(
+                                              cobro,
+                                            ),
+                                          )}
+                                        </p>
+                                      </div>
                                     </div>
-                                  </div>
-                                </label>
-                              );
-                            })}
+                                  </label>
+                                );
+                              },
+                            )}
                           </div>
                         )}
                       </div>
@@ -500,7 +870,9 @@ export default function CobrosPage() {
               )}
 
               {errors.cobros && (
-                <p className="text-sm text-red-600">{errors.cobros}</p>
+                <p className="text-sm text-red-600">
+                  {errors.cobros}
+                </p>
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -508,6 +880,7 @@ export default function CobrosPage() {
                   <label className="mb-2 block text-sm font-bold text-slate-700">
                     Método de pago
                   </label>
+
                   <select
                     name="metodo_pago"
                     value={form.metodo_pago}
@@ -515,9 +888,14 @@ export default function CobrosPage() {
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
                   >
                     <option value="QR">QR</option>
-                    <option value="EFECTIVO">EFECTIVO</option>
-                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                    <option value="EFECTIVO">
+                      EFECTIVO
+                    </option>
+                    <option value="TRANSFERENCIA">
+                      TRANSFERENCIA
+                    </option>
                   </select>
+
                   {errors.metodo_pago && (
                     <p className="mt-1 text-sm text-red-600">
                       {errors.metodo_pago}
@@ -529,26 +907,39 @@ export default function CobrosPage() {
                   <label className="mb-2 block text-sm font-bold text-slate-700">
                     Monto a pagar
                   </label>
+
                   <input
+                    type="number"
                     name="monto"
+                    min="0"
+                    step="0.01"
                     value={form.monto}
                     onChange={handleChange}
                     placeholder="Monto automático"
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
                   />
+
                   {errors.monto && (
-                    <p className="mt-1 text-sm text-red-600">{errors.monto}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.monto}
+                    </p>
                   )}
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={saving || form.cobros.length === 0}
+                disabled={
+                  saving ||
+                  form.cobros.length === 0
+                }
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <CreditCardIcon className="h-5 w-5" />
-                {saving ? 'Registrando pago...' : 'Confirmar y registrar pago'}
+
+                {saving
+                  ? 'Registrando pago...'
+                  : 'Confirmar y registrar pago'}
               </button>
             </form>
           )}
