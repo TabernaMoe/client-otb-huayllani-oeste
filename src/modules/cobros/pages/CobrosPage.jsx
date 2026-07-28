@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  MagnifyingGlassIcon,
+  ArrowPathIcon,
   BanknotesIcon,
-  UserIcon,
-  CreditCardIcon,
+  CheckCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  CreditCardIcon,
+  ExclamationCircleIcon,
+  IdentificationIcon,
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  QrCodeIcon,
+  UserGroupIcon,
+  UserIcon,
+  WalletIcon,
 } from '@heroicons/react/24/outline';
 
 import { CobrosServices } from '../services/cobros.services';
@@ -17,9 +25,6 @@ const formatMoney = (value) =>
     currency: 'BOB',
   }).format(Number(value || 0));
 
-/**
- * Obtiene el ID real del socio.
- */
 const getSocioId = (socio) => {
   const socioId =
     socio?.socio_id ??
@@ -30,9 +35,6 @@ const getSocioId = (socio) => {
   return socioId ? Number(socioId) : 0;
 };
 
-/**
- * Obtiene el nombre completo del socio.
- */
 const getSocioName = (socio) =>
   socio?.nombre_completo ||
   [
@@ -44,17 +46,20 @@ const getSocioName = (socio) =>
     .join(' ') ||
   'Sin nombre';
 
-/**
- * El listado de socios devuelve las acciones así:
- *
- * {
- *   codigo_interno: 1,
- *   nro_medidor: "12345",
- *   estado: "ACTIVO"
- * }
- *
- * Por eso codigo_interno debe tener prioridad.
- */
+const getSocioInitials = (socio) =>
+  getSocioName(socio)
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((item) => item.charAt(0).toUpperCase())
+    .join('');
+
+const getSocioCi = (socio) =>
+  socio?.ci_socio ||
+  socio?.ci ||
+  socio?.cedula_identidad ||
+  '-';
+
 const getAccionIdentifier = (accion) => {
   const identifier =
     accion?.codigo_interno ??
@@ -73,9 +78,6 @@ const getAccionIdentifier = (accion) => {
   return identifier;
 };
 
-/**
- * Obtiene el ID del cobro que se enviará en el arreglo cobros.
- */
 const getCobroId = (cobro) => {
   const cobroId =
     cobro?.cobro_id ??
@@ -86,9 +88,6 @@ const getCobroId = (cobro) => {
   return cobroId ? Number(cobroId) : 0;
 };
 
-/**
- * Obtiene el saldo pendiente.
- */
 const getCobroSaldo = (cobro) =>
   Number(
     cobro?.saldo ??
@@ -97,9 +96,6 @@ const getCobroSaldo = (cobro) =>
       0,
   );
 
-/**
- * Obtiene el código de acción para agrupar los cobros.
- */
 const getCodigoAccion = (cobro) => {
   const codigo =
     cobro?.codigo_accion ??
@@ -121,62 +117,15 @@ const getCodigoAccion = (cobro) => {
   return match?.[1] || 'Sin código';
 };
 
-/**
- * Extrae la lista de socios independientemente de si el backend
- * devuelve data como arreglo o dentro de otra propiedad.
- */
 const getSociosFromResponse = (response) => {
-  if (Array.isArray(response?.data)) {
-    return response.data;
-  }
-
-  if (Array.isArray(response?.data?.socios)) {
-    return response.data.socios;
-  }
-
-  if (Array.isArray(response?.socios)) {
-    return response.socios;
-  }
-
-  if (Array.isArray(response?.rows)) {
-    return response.rows;
-  }
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.socios)) return response.data.socios;
+  if (Array.isArray(response?.socios)) return response.socios;
+  if (Array.isArray(response?.rows)) return response.rows;
 
   return [];
 };
 
-/**
- * Extrae los cobros de la respuesta del detalle.
- */
-const getCobrosFromResponse = (response) => {
-  const data = response?.data || {};
-
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  if (Array.isArray(data?.cobrosSocio)) {
-    return data.cobrosSocio;
-  }
-
-  if (Array.isArray(data?.cobrosAccion)) {
-    return data.cobrosAccion;
-  }
-
-  if (Array.isArray(data?.cobros)) {
-    return data.cobros;
-  }
-
-  if (Array.isArray(data?.detalles)) {
-    return data.detalles;
-  }
-
-  return [];
-};
-
-/**
- * Agrupa los cobros por código de acción.
- */
 const groupCobrosByAccion = (cobros = []) => {
   const groups = {};
 
@@ -202,21 +151,21 @@ const groupCobrosByAccion = (cobros = []) => {
   return Object.values(groups);
 };
 
+const inputClass =
+  'w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50';
+
 export default function CobrosPage() {
   const [socios, setSocios] = useState([]);
   const [selectedSocio, setSelectedSocio] = useState(null);
   const [cobros, setCobros] = useState([]);
 
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] =
-    useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [openGroups, setOpenGroups] = useState({});
 
-  const [loadingSocios, setLoadingSocios] =
-    useState(false);
-  const [loadingCobros, setLoadingCobros] =
-    useState(false);
+  const [loadingSocios, setLoadingSocios] = useState(false);
+  const [loadingCobros, setLoadingCobros] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -228,12 +177,8 @@ export default function CobrosPage() {
 
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] =
-    useState('success');
+  const [messageType, setMessageType] = useState('success');
 
-  /**
-   * Evita realizar una petición en cada tecla.
-   */
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -242,21 +187,15 @@ export default function CobrosPage() {
     return () => window.clearTimeout(timeout);
   }, [search]);
 
-  /**
-   * Obtiene la lista inicial de socios.
-   */
   const fetchSocios = async () => {
     setLoadingSocios(true);
 
-    const response =
-      await CobrosServices.getSocios(debouncedSearch);
+    const response = await CobrosServices.getSocios(debouncedSearch);
 
     setLoadingSocios(false);
 
     if (!response?.ok) {
-      setMessage(
-        response?.message || 'Error al cargar socios',
-      );
+      setMessage(response?.message || 'Error al cargar socios');
       setMessageType('error');
       setSocios([]);
       return;
@@ -269,80 +208,68 @@ export default function CobrosPage() {
     fetchSocios();
   }, [debouncedSearch]);
 
-  /**
-   * Selecciona un socio y consulta los cobros de cada acción.
-   */
   const openSocio = async (socio) => {
-  const socioId = getSocioId(socio);
+    const socioId = getSocioId(socio);
 
-  setSelectedSocio(socio);
-  setCobros([]);
-  setErrors({});
-  setMessage('');
-  setOpenGroups({});
+    setSelectedSocio(socio);
+    setCobros([]);
+    setErrors({});
+    setMessage('');
+    setOpenGroups({});
 
-  setForm({
-    socio_id: socioId,
-    monto: '',
-    cobros: [],
-    metodo_pago: 'QR',
-  });
+    setForm({
+      socio_id: socioId,
+      monto: '',
+      cobros: [],
+      metodo_pago: 'QR',
+    });
 
-  if (!socioId) {
-    setMessage(
-      'El socio seleccionado no tiene un ID válido',
-    );
-    setMessageType('error');
-    return;
-  }
+    if (!socioId) {
+      setMessage('El socio seleccionado no tiene un ID válido');
+      setMessageType('error');
+      return;
+    }
 
-  setLoadingCobros(true);
+    setLoadingCobros(true);
 
-  const response =
-    await CobrosServices.getSocioCobros(socioId);
+    const response = await CobrosServices.getSocioCobros(socioId);
 
-  setLoadingCobros(false);
+    setLoadingCobros(false);
 
-  if (!response?.ok) {
-    setMessage(
-      response?.message ||
-        'No se pudieron cargar los cobros del socio',
-    );
-    setMessageType('error');
-    return;
-  }
+    if (!response?.ok) {
+      setMessage(
+        response?.message ||
+          'No se pudieron cargar los cobros del socio',
+      );
+      setMessageType('error');
+      return;
+    }
 
-  const data = response?.data || {};
+    const data = response?.data || {};
 
-  const cobrosSocio =
-    data?.cobrosSocio ??
-    data?.cobros ??
-    data?.detalles ??
-    [];
+    const cobrosSocio =
+      data?.cobrosSocio ??
+      data?.cobros ??
+      data?.detalles ??
+      [];
 
-  setSelectedSocio({
-    ...socio,
-    ...data,
-    socio_id: socioId,
-  });
+    setSelectedSocio({
+      ...socio,
+      ...data,
+      socio_id: socioId,
+    });
 
-  setCobros(
-    Array.isArray(cobrosSocio)
-      ? cobrosSocio
-      : [],
-  );
+    setCobros(Array.isArray(cobrosSocio) ? cobrosSocio : []);
 
-  const grouped =
-    groupCobrosByAccion(cobrosSocio);
+    const grouped = groupCobrosByAccion(cobrosSocio);
+    const initialOpen = {};
 
-  const initialOpen = {};
+    grouped.forEach((group) => {
+      initialOpen[group.codigo] = true;
+    });
 
-  grouped.forEach((group) => {
-    initialOpen[group.codigo] = true;
-  });
-
-  setOpenGroups(initialOpen);
-};
+    setOpenGroups(initialOpen);
+  };
 
   const cobrosAgrupados = useMemo(
     () => groupCobrosByAccion(cobros),
@@ -360,11 +287,19 @@ export default function CobrosPage() {
   const totalSeleccionado = useMemo(
     () =>
       selectedCobros.reduce(
-        (sum, cobro) =>
-          sum + getCobroSaldo(cobro),
+        (sum, cobro) => sum + getCobroSaldo(cobro),
         0,
       ),
     [selectedCobros],
+  );
+
+  const totalPendiente = useMemo(
+    () =>
+      cobros.reduce(
+        (sum, cobro) => sum + getCobroSaldo(cobro),
+        0,
+      ),
+    [cobros],
   );
 
   const toggleGroup = (codigo) => {
@@ -378,21 +313,16 @@ export default function CobrosPage() {
     const cobroId = getCobroId(cobro);
 
     if (!cobroId) {
-      setMessage(
-        'El cobro seleccionado no tiene un ID válido',
-      );
+      setMessage('El cobro seleccionado no tiene un ID válido');
       setMessageType('error');
       return;
     }
 
     setForm((previous) => {
-      const exists =
-        previous.cobros.includes(cobroId);
+      const exists = previous.cobros.includes(cobroId);
 
       const newCobros = exists
-        ? previous.cobros.filter(
-            (item) => item !== cobroId,
-          )
+        ? previous.cobros.filter((item) => item !== cobroId)
         : [...previous.cobros, cobroId];
 
       const total = cobros
@@ -400,8 +330,7 @@ export default function CobrosPage() {
           newCobros.includes(getCobroId(item)),
         )
         .reduce(
-          (sum, item) =>
-            sum + getCobroSaldo(item),
+          (sum, item) => sum + getCobroSaldo(item),
           0,
         );
 
@@ -435,20 +364,15 @@ export default function CobrosPage() {
 
     setForm((previous) => {
       const newCobros = allSelected
-        ? previous.cobros.filter(
-            (id) => !ids.includes(id),
-          )
-        : Array.from(
-            new Set([...previous.cobros, ...ids]),
-          );
+        ? previous.cobros.filter((id) => !ids.includes(id))
+        : Array.from(new Set([...previous.cobros, ...ids]));
 
       const total = cobros
         .filter((item) =>
           newCobros.includes(getCobroId(item)),
         )
         .reduce(
-          (sum, item) =>
-            sum + getCobroSaldo(item),
+          (sum, item) => sum + getCobroSaldo(item),
           0,
         );
 
@@ -493,38 +417,29 @@ export default function CobrosPage() {
     }
 
     const confirmPay = window.confirm(
-      `¿Confirmar pago por ${formatMoney(
-        totalSeleccionado,
-      )}?`,
+      `¿Confirmar pago por ${formatMoney(totalSeleccionado)}?`,
     );
 
-    if (!confirmPay) {
-      return;
-    }
+    if (!confirmPay) return;
 
     setSaving(true);
 
-    const response = await CobrosServices.pagar(
-      validation.data,
-    );
+    const response = await CobrosServices.pagar(validation.data);
 
     setSaving(false);
 
     if (!response?.ok) {
       setMessage(
-        response?.message ||
-          'Error al registrar el pago',
+        response?.message || 'Error al registrar el pago',
       );
       setMessageType('error');
       return;
     }
 
     setMessage(
-      response?.message ||
-        'Pago registrado correctamente',
+      response?.message || 'Pago registrado correctamente',
     );
     setMessageType('success');
-
     setErrors({});
 
     if (selectedSocio) {
@@ -534,417 +449,637 @@ export default function CobrosPage() {
     await fetchSocios();
   };
 
+  const clearSearch = () => {
+    setSearch('');
+  };
+
   const getMessageClasses = () => {
     if (messageType === 'error') {
-      return 'bg-red-50 text-red-700';
+      return 'border-red-200 bg-red-50 text-red-700';
     }
 
     if (messageType === 'warning') {
-      return 'bg-amber-50 text-amber-700';
+      return 'border-amber-200 bg-amber-50 text-amber-700';
     }
 
-    return 'bg-emerald-50 text-emerald-700';
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
   };
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-3xl bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="rounded-2xl bg-blue-50 p-3 text-blue-800">
-            <BanknotesIcon className="h-7 w-7" />
+    <section className="min-h-screen bg-slate-50">
+      <div className="space-y-5">
+        <header>
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+            <span>Inicio</span>
+            <span>/</span>
+            <span>Cobros</span>
+            <span>/</span>
+            <span className="text-emerald-700">Cobro a un socio</span>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              Cobros
-            </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Cobro a un socio
+          </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Selecciona un socio, revisa sus acciones y
-              registra el pago de sus detalles pendientes.
-            </p>
-          </div>
-        </div>
-      </div>
+          <p className="mt-1 text-sm text-slate-500">
+            Selecciona un socio, revisa sus acciones y registra el pago de sus deudas pendientes.
+          </p>
+        </header>
 
-      {message && (
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm font-semibold ${getMessageClasses()}`}
-        >
-          {message}
-        </div>
-      )}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">
+            <StepItem
+              number="1"
+              label="Buscar socio"
+              active={!selectedSocio}
+              completed={Boolean(selectedSocio)}
+            />
 
-      <div className="grid gap-6 xl:grid-cols-[0.85fr_1.5fr]">
-        <div className="rounded-3xl bg-white p-5 shadow-sm">
-          <div className="relative mb-5">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <StepItem
+              number="2"
+              label="Deudas pendientes"
+              active={Boolean(selectedSocio)}
+              completed={form.cobros.length > 0}
+            />
 
-            <input
-              type="search"
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Buscar por nombre o CI..."
-              className="w-full rounded-2xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
+            <StepItem
+              number="3"
+              label="Seleccionar conceptos"
+              active={form.cobros.length > 0}
+              completed={false}
+            />
+
+            <StepItem
+              number="4"
+              label="Registrar pago"
+              active={false}
+              completed={false}
             />
           </div>
-
-          <div className="space-y-3">
-            {loadingSocios ? (
-              <p className="py-8 text-center text-sm text-slate-500">
-                Cargando socios...
-              </p>
-            ) : socios.length === 0 ? (
-              <p className="py-8 text-center text-sm text-slate-500">
-                No hay socios para cobrar
-              </p>
-            ) : (
-              socios.map((socio) => {
-                const socioId = getSocioId(socio);
-
-                const active =
-                  String(
-                    getSocioId(selectedSocio),
-                  ) === String(socioId);
-
-                return (
-                  <button
-                    key={socioId}
-                    type="button"
-                    onClick={() => openSocio(socio)}
-                    className={`w-full rounded-2xl border p-4 text-left transition ${
-                      active
-                        ? 'border-blue-700 bg-blue-50'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex gap-3">
-                      <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
-                        <UserIcon className="h-5 w-5" />
-                      </div>
-
-                      <div>
-                        <p className="font-bold text-slate-800">
-                          {getSocioName(socio)}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          CI:{' '}
-                          {socio.ci_socio ||
-                            socio.ci ||
-                            '-'}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          Acciones:{' '}
-                          {Array.isArray(
-                            socio.acciones,
-                          )
-                            ? socio.acciones.length
-                            : 0}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-5 shadow-sm">
-          {!selectedSocio ? (
-            <div className="flex min-h-96 items-center justify-center rounded-3xl border border-dashed border-slate-200">
-              <p className="text-sm text-slate-500">
-                Selecciona un socio para ver sus acciones
-                pendientes.
-              </p>
-            </div>
-          ) : (
-            <form
-              onSubmit={handlePagar}
-              className="space-y-5"
-            >
-              <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center">
+        {message && (
+          <div
+            className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${getMessageClasses()}`}
+          >
+            {messageType === 'error' ? (
+              <ExclamationCircleIcon className="mt-0.5 h-5 w-5 shrink-0" />
+            ) : (
+              <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0" />
+            )}
+
+            <span>{message}</span>
+          </div>
+        )}
+
+        <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)_300px]">
+          <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-5 py-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
+                  1
+                </span>
+
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">
-                    {getSocioName(selectedSocio)}
+                  <h2 className="font-bold text-slate-900">
+                    Buscar socio
                   </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    CI:{' '}
-                    {selectedSocio.ci_socio ||
-                      selectedSocio.ci ||
-                      '-'}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-blue-50 px-4 py-3 text-right">
-                  <p className="text-xs font-bold text-blue-700">
-                    Total seleccionado
-                  </p>
-
-                  <p className="text-xl font-black text-blue-900">
-                    {formatMoney(totalSeleccionado)}
+                  <p className="text-xs text-slate-500">
+                    Selecciona el socio al que deseas cobrar.
                   </p>
                 </div>
               </div>
 
-              {loadingCobros ? (
-                <p className="py-10 text-center text-sm text-slate-500">
-                  Cargando cobros...
-                </p>
-              ) : cobrosAgrupados.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
-                  Este socio no tiene cobros pendientes.
+              <div className="relative mt-4">
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar por nombre o CI"
+                  className={`${inputClass} pl-11 pr-11`}
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <ArrowPathIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="max-h-180 space-y-2 overflow-y-auto p-3">
+              {loadingSocios ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
+                  <p className="mt-3 text-sm font-medium text-slate-500">
+                    Cargando socios...
+                  </p>
+                </div>
+              ) : socios.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
+                  <UserGroupIcon className="mx-auto h-8 w-8 text-slate-300" />
+                  <p className="mt-3 text-sm font-medium text-slate-500">
+                    No hay socios para cobrar
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {cobrosAgrupados.map((group) => {
-                    const isOpen =
-                      openGroups[group.codigo];
+                socios.map((socio) => {
+                  const socioId = getSocioId(socio);
+                  const active =
+                    String(getSocioId(selectedSocio)) ===
+                    String(socioId);
 
-                    const ids = group.cobros
-                      .map((cobro) =>
-                        getCobroId(cobro),
-                      )
-                      .filter(Boolean);
+                  return (
+                    <button
+                      key={socioId}
+                      type="button"
+                      onClick={() => openSocio(socio)}
+                      className={`w-full rounded-lg border p-3 text-left transition ${
+                        active
+                          ? 'border-emerald-300 bg-emerald-50'
+                          : 'border-transparent hover:border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                            active
+                              ? 'bg-white text-emerald-700 shadow-sm'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {getSocioInitials(socio) || 'S'}
+                        </div>
 
-                    const selectedCount = ids.filter(
-                      (id) =>
-                        form.cobros.includes(id),
-                    ).length;
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-slate-900">
+                            {getSocioName(socio)}
+                          </p>
 
-                    return (
-                      <div
-                        key={group.codigo}
-                        className="overflow-hidden rounded-3xl border border-slate-200"
-                      >
-                        <div className="flex items-center justify-between gap-3 bg-slate-50 p-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              toggleGroup(
-                                group.codigo,
-                              )
-                            }
-                            className="flex items-center gap-2 text-left"
-                          >
-                            {isOpen ? (
-                              <ChevronDownIcon className="h-5 w-5 text-slate-500" />
-                            ) : (
-                              <ChevronRightIcon className="h-5 w-5 text-slate-500" />
-                            )}
+                          <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                            <IdentificationIcon className="h-3.5 w-3.5" />
+                            CI: {getSocioCi(socio)}
+                          </div>
 
-                            <div>
-                              <p className="font-bold text-slate-800">
-                                {group.titulo}
-                              </p>
-
-                              <p className="text-xs text-slate-500">
-                                {group.cobros.length}{' '}
-                                detalles pendientes
-                              </p>
-                            </div>
-                          </button>
-
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <p className="text-xs text-slate-500">
-                                Total
-                              </p>
-
-                              <p className="font-black text-slate-900">
-                                {formatMoney(
-                                  group.total,
-                                )}
-                              </p>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                toggleCobrosAccion(
-                                  group,
-                                )
-                              }
-                              className="rounded-2xl border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50"
-                            >
-                              {selectedCount ===
-                              ids.length
-                                ? 'Quitar todos'
-                                : 'Seleccionar acción'}
-                            </button>
+                          <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                            <CreditCardIcon className="h-3.5 w-3.5" />
+                            {Array.isArray(socio.acciones)
+                              ? socio.acciones.length
+                              : 0}{' '}
+                            acciones
                           </div>
                         </div>
 
-                        {isOpen && (
-                          <div className="grid gap-3 p-4 md:grid-cols-2">
-                            {group.cobros.map(
-                              (cobro, index) => {
-                                const id =
-                                  getCobroId(cobro);
-
-                                const checked =
-                                  form.cobros.includes(
-                                    id,
-                                  );
-
-                                return (
-                                  <label
-                                    key={
-                                      id ||
-                                      `${group.codigo}-${index}`
-                                    }
-                                    className={`cursor-pointer rounded-2xl border p-4 transition ${
-                                      checked
-                                        ? 'border-blue-700 bg-blue-50'
-                                        : 'border-slate-200 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      <input
-                                        type="checkbox"
-                                        checked={
-                                          checked
-                                        }
-                                        disabled={!id}
-                                        onChange={() =>
-                                          toggleCobro(
-                                            cobro,
-                                          )
-                                        }
-                                        className="mt-1 h-4 w-4 accent-blue-800"
-                                      />
-
-                                      <div>
-                                        <p className="font-bold text-slate-800">
-                                          {cobro.concepto ||
-                                            cobro.nombre ||
-                                            'Cobro pendiente'}
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-slate-500">
-                                          {cobro.descripcion ||
-                                            'Sin descripción'}
-                                        </p>
-
-                                        {cobro.nro_medidor && (
-                                          <p className="mt-1 text-xs text-slate-500">
-                                            Medidor:{' '}
-                                            {
-                                              cobro.nro_medidor
-                                            }
-                                          </p>
-                                        )}
-
-                                        <p className="mt-2 text-sm text-slate-500">
-                                          Pagado:{' '}
-                                          {formatMoney(
-                                            cobro.monto_pagado,
-                                          )}
-                                        </p>
-
-                                        <p className="mt-2 text-lg font-black text-slate-900">
-                                          Saldo:{' '}
-                                          {formatMoney(
-                                            getCobroSaldo(
-                                              cobro,
-                                            ),
-                                          )}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </label>
-                                );
-                              },
-                            )}
-                          </div>
-                        )}
+                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </button>
+                  );
+                })
               )}
+            </div>
+          </aside>
 
-              {errors.cobros && (
-                <p className="text-sm text-red-600">
-                  {errors.cobros}
-                </p>
-              )}
+          <main className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            {!selectedSocio ? (
+              <div className="flex min-h-[560px] items-center justify-center p-6">
+                <div className="max-w-sm text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                    <UserIcon className="h-8 w-8" />
+                  </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Método de pago
-                  </label>
+                  <h2 className="mt-4 text-lg font-bold text-slate-900">
+                    Selecciona un socio
+                  </h2>
 
-                  <select
-                    name="metodo_pago"
-                    value={form.metodo_pago}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="QR">QR</option>
-                    <option value="EFECTIVO">
-                      EFECTIVO
-                    </option>
-                    <option value="TRANSFERENCIA">
-                      TRANSFERENCIA
-                    </option>
-                  </select>
-
-                  {errors.metodo_pago && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.metodo_pago}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Monto a pagar
-                  </label>
-
-                  <input
-                    type="number"
-                    name="monto"
-                    min="0"
-                    step="0.01"
-                    value={form.monto}
-                    onChange={handleChange}
-                    placeholder="Monto automático"
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
-                  />
-
-                  {errors.monto && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.monto}
-                    </p>
-                  )}
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Elige un socio del panel izquierdo para revisar sus acciones y cobros pendientes.
+                  </p>
                 </div>
               </div>
+            ) : (
+              <form onSubmit={handlePagar}>
+                <div className="border-b border-slate-200 px-5 py-5 lg:px-6">
+                  <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-base font-bold text-emerald-700">
+                        {getSocioInitials(selectedSocio) || 'S'}
+                      </div>
 
-              <button
-                type="submit"
-                disabled={
-                  saving ||
-                  form.cobros.length === 0
-                }
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900">
+                          {getSocioName(selectedSocio)}
+                        </h2>
+
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                          <span>CI: {getSocioCi(selectedSocio)}</span>
+                          <span>
+                            {cobrosAgrupados.length} acciones con deuda
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-right">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        Total pendiente
+                      </p>
+                      <p className="mt-1 text-xl font-bold text-emerald-800">
+                        {formatMoney(totalPendiente)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 lg:p-6">
+                  <div className="mb-5 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">
+                      2
+                    </span>
+
+                    <div>
+                      <h3 className="font-bold text-slate-900">
+                        Deudas pendientes del socio
+                      </h3>
+
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        Selecciona los conceptos que deseas cobrar.
+                      </p>
+                    </div>
+                  </div>
+
+                  {loadingCobros ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
+                      <p className="mt-3 text-sm font-medium text-slate-500">
+                        Cargando cobros...
+                      </p>
+                    </div>
+                  ) : cobrosAgrupados.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center">
+                      <CheckCircleIcon className="mx-auto h-10 w-10 text-emerald-500" />
+                      <h3 className="mt-3 font-bold text-slate-800">
+                        Sin cobros pendientes
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Este socio no tiene deudas registradas.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {cobrosAgrupados.map((group) => {
+                        const isOpen = openGroups[group.codigo];
+
+                        const ids = group.cobros
+                          .map((cobro) => getCobroId(cobro))
+                          .filter(Boolean);
+
+                        const selectedCount = ids.filter((id) =>
+                          form.cobros.includes(id),
+                        ).length;
+
+                        const allSelected =
+                          ids.length > 0 &&
+                          selectedCount === ids.length;
+
+                        return (
+                          <div
+                            key={group.codigo}
+                            className="overflow-hidden rounded-xl border border-slate-200"
+                          >
+                            <div className="flex flex-col gap-3 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                              <button
+                                type="button"
+                                onClick={() => toggleGroup(group.codigo)}
+                                className="flex min-w-0 items-center gap-3 text-left"
+                              >
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+                                  {isOpen ? (
+                                    <ChevronDownIcon className="h-5 w-5" />
+                                  ) : (
+                                    <ChevronRightIcon className="h-5 w-5" />
+                                  )}
+                                </span>
+
+                                <div className="min-w-0">
+                                  <p className="truncate font-bold text-slate-900">
+                                    {group.titulo}
+                                  </p>
+                                  <p className="mt-0.5 text-xs text-slate-500">
+                                    {group.cobros.length} conceptos pendientes
+                                  </p>
+                                </div>
+                              </button>
+
+                              <div className="flex items-center justify-between gap-4 sm:justify-end">
+                                <div className="text-right">
+                                  <p className="text-xs text-slate-500">
+                                    Total acción
+                                  </p>
+                                  <p className="font-bold text-slate-900">
+                                    {formatMoney(group.total)}
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleCobrosAccion(group)}
+                                  className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                                    allSelected
+                                      ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                                      : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                                  }`}
+                                >
+                                  {allSelected
+                                    ? 'Quitar todos'
+                                    : 'Seleccionar acción'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {isOpen && (
+                              <div className="divide-y divide-slate-100">
+                                {group.cobros.map((cobro, index) => {
+                                  const id = getCobroId(cobro);
+                                  const checked =
+                                    form.cobros.includes(id);
+
+                                  return (
+                                    <label
+                                      key={
+                                        id ||
+                                        `${group.codigo}-${index}`
+                                      }
+                                      className={`flex cursor-pointer items-start gap-4 px-4 py-4 transition ${
+                                        checked
+                                          ? 'bg-emerald-50/60'
+                                          : 'bg-white hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        disabled={!id}
+                                        onChange={() => toggleCobro(cobro)}
+                                        className="mt-1 h-4 w-4 accent-emerald-700"
+                                      />
+
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                                          <div>
+                                            <p className="font-semibold text-slate-900">
+                                              {cobro.concepto ||
+                                                cobro.nombre ||
+                                                'Cobro pendiente'}
+                                            </p>
+
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                                              {cobro.descripcion ||
+                                                'Sin descripción'}
+                                            </p>
+
+                                            {cobro.nro_medidor && (
+                                              <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                                                <MapPinIcon className="h-3.5 w-3.5" />
+                                                Medidor: {cobro.nro_medidor}
+                                              </p>
+                                            )}
+                                          </div>
+
+                                          <div className="shrink-0 text-left sm:text-right">
+                                            <p className="text-xs text-slate-500">
+                                              Saldo pendiente
+                                            </p>
+                                            <p className="mt-1 text-lg font-bold text-emerald-700">
+                                              {formatMoney(
+                                                getCobroSaldo(cobro),
+                                              )}
+                                            </p>
+
+                                            <p className="mt-1 text-xs text-slate-400">
+                                              Pagado:{' '}
+                                              {formatMoney(
+                                                cobro.monto_pagado,
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {errors.cobros && (
+                    <p className="mt-3 flex items-center gap-1 text-sm font-medium text-red-600">
+                      <ExclamationCircleIcon className="h-4 w-4" />
+                      {errors.cobros}
+                    </p>
+                  )}
+                </div>
+              </form>
+            )}
+          </main>
+
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900">
+                Resumen del cobro
+              </h3>
+
+              <div className="mt-4 space-y-4">
+                <SummaryRow
+                  label="Conceptos seleccionados"
+                  value={form.cobros.length}
+                />
+
+                <SummaryRow
+                  label="Monto pendiente"
+                  value={formatMoney(totalSeleccionado)}
+                  highlight
+                />
+              </div>
+
+              <div className="mt-5 border-t border-slate-100 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Total a cobrar
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-emerald-700">
+                  {formatMoney(totalSeleccionado)}
+                </p>
+              </div>
+            </div>
+
+            {selectedSocio && (
+              <form
+                onSubmit={handlePagar}
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
               >
-                <CreditCardIcon className="h-5 w-5" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Registrar pago
+                </h3>
 
-                {saving
-                  ? 'Registrando pago...'
-                  : 'Confirmar y registrar pago'}
-              </button>
-            </form>
-          )}
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Método de pago
+                    </label>
+
+                    <div className="relative">
+                      <WalletIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                      <select
+                        name="metodo_pago"
+                        value={form.metodo_pago}
+                        onChange={handleChange}
+                        className={`${inputClass} appearance-none pl-11 pr-10`}
+                      >
+                        <option value="QR">QR</option>
+                        <option value="EFECTIVO">EFECTIVO</option>
+                        <option value="TRANSFERENCIA">
+                          TRANSFERENCIA
+                        </option>
+                      </select>
+
+                      <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    </div>
+
+                    {errors.metodo_pago && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {errors.metodo_pago}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Monto a pagar
+                    </label>
+
+                    <div className="relative">
+                      <BanknotesIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                      <input
+                        type="number"
+                        name="monto"
+                        min="0"
+                        step="0.01"
+                        value={form.monto}
+                        onChange={handleChange}
+                        placeholder="Monto automático"
+                        className={`${inputClass} pl-11`}
+                      />
+                    </div>
+
+                    {errors.monto && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {errors.monto}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={
+                      saving ||
+                      form.cobros.length === 0
+                    }
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {form.metodo_pago === 'QR' ? (
+                      <QrCodeIcon className="h-5 w-5" />
+                    ) : (
+                      <CreditCardIcon className="h-5 w-5" />
+                    )}
+
+                    {saving
+                      ? 'Registrando pago...'
+                      : 'Confirmar pago'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-white p-2 text-blue-700">
+                  <BanknotesIcon className="h-4 w-4" />
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold text-blue-900">
+                    Información
+                  </h4>
+
+                  <p className="mt-1 text-xs leading-5 text-blue-800/80">
+                    Selecciona uno o varios conceptos. El monto se calcula automáticamente según los saldos pendientes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
+  );
+}
+
+function StepItem({ number, label, active, completed }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-4">
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+          completed
+            ? 'bg-emerald-700 text-white'
+            : active
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-slate-100 text-slate-500'
+        }`}
+      >
+        {completed ? (
+          <CheckCircleIcon className="h-5 w-5" />
+        ) : (
+          number
+        )}
+      </span>
+
+      <span
+        className={`text-xs font-semibold ${
+          active || completed
+            ? 'text-slate-800'
+            : 'text-slate-400'
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, highlight = false }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span
+        className={`text-sm font-bold ${
+          highlight ? 'text-emerald-700' : 'text-slate-900'
+        }`}
+      >
+        {value}
+      </span>
+    </div>
   );
 }

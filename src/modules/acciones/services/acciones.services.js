@@ -11,17 +11,64 @@ const getDataArray = (response) => {
 };
 
 export class AccionesServices {
-  static async getAll(page = 1, limit = 10, search = '', estado = 'ACTIVO') {
-    try {
-      const { data } = await api.get('/admin/accion', {
-        params: { page, limit, search, estado },
-      });
+  static async getAll(
+  page = 1,
+  limit = 10,
+  search = '',
+  estado = '',
+) {
+  try {
+    const params = {
+      page: Math.max(
+        1,
+        Number.parseInt(page, 10) || 1,
+      ),
 
-      return data;
-    } catch (error) {
-      return toServiceError(error);
+      limit: Math.max(
+        1,
+        Number.parseInt(limit, 10) || 10,
+      ),
+
+      search: String(search || '').trim(),
+    };
+
+    /*
+     * Solo agregamos estado cuando el usuario
+     * selecciona ACTIVO, PASIVO o ANULADO.
+     *
+     * Cuando estado es '', se solicitan todos.
+     */
+    if (estado) {
+      params.estado = String(estado)
+        .trim()
+        .toUpperCase();
     }
+
+    console.log('FILTROS ENVIADOS AL ENDPOINT:', params);
+
+    const { data } = await api.get('/admin/accion', {
+      params,
+    });
+
+    console.log('RESPUESTA DEL ENDPOINT DE ACCIONES:', data);
+    console.log('ACCIONES RECIBIDAS:', data?.data);
+    console.log(
+      'CANTIDAD DE ACCIONES:',
+      Array.isArray(data?.data)
+        ? data.data.length
+        : 0,
+    );
+
+    return data;
+  } catch (error) {
+    console.error(
+      'ERROR AL OBTENER ACCIONES:',
+      error?.response?.data || error,
+    );
+
+    return toServiceError(error);
   }
+}
 
   static async getById(id) {
     try {

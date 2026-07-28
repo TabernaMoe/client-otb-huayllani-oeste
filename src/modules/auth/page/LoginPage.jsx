@@ -26,7 +26,7 @@ export default function LoginPage() {
     return '/cliente/dashboard';
   }
 
-  return '/admin/usuarios';
+  return '/admin/dashboard';
 };
 
   const handleChange = (e) => {
