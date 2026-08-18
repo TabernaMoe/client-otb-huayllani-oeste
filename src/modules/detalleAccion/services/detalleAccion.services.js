@@ -18,6 +18,14 @@ export class DetalleAccionServices {
       return toServiceError(error);
     }
   }
+  static async getSelectTipoAccion() {
+    try {
+      const response = await api.get('/admin/accion/detalle/tipos-accion');
+      return response.data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
 
   static async getForSelect(search = '') {
     try {
@@ -60,7 +68,9 @@ export class DetalleAccionServices {
 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/admin/accion/detalle/toggle-status/${id}`);
+      const response = await api.patch(
+        `/admin/accion/detalle/toggle-status/${id}`,
+      );
       return response.data;
     } catch (error) {
       return toServiceError(error);

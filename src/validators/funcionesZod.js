@@ -64,6 +64,33 @@ export const reqExpedidoCi = (label = 'Expedido', required = true) => {
 
   return schema;
 };
+export const reqInteger = (
+  label = 'Número',
+  required = true,
+  min = null,
+  max = null,
+) => {
+  let schema = z.coerce
+    .number({
+      required_error: `Debe ingresar ${label.toLowerCase()}`,
+      invalid_type_error: `${label} debe ser un número`,
+    })
+    .int(`${label} debe ser un número entero`);
+
+  if (min !== null) {
+    schema = schema.min(min, `${label} debe ser mayor o igual a ${min}`);
+  }
+
+  if (max !== null) {
+    schema = schema.max(max, `${label} debe ser menor o igual a ${max}`);
+  }
+
+  if (!required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+};
 export const reqString = ({
   label = 'Campo',
   required = true,

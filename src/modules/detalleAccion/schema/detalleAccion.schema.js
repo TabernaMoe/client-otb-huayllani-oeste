@@ -1,6 +1,8 @@
 export const validateDetalleAccionForm = (form) => {
   const errors = {};
-
+  if (!form.tipo_accion_id) {
+    errors.tipo_cobro = 'Debe seleccionar uni tipo de accion';
+  }
   if (!form.nombre_accion?.trim()) {
     errors.nombre_accion = 'El nombre del detalle es obligatorio';
   }

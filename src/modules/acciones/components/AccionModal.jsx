@@ -18,6 +18,7 @@ import {
 
 import { AccionesServices } from '../services/acciones.services';
 import { validateAccionForm } from '../schema/acciones.schema';
+import { toast } from 'react-toastify';
 
 const initialForm = {
   socio_id: '',
@@ -87,10 +88,7 @@ const getDetalleLabel = (detalle) =>
   `Detalle ${detalle?.id || detalle?.value}`;
 
 const getSelectedSocio = (selected) =>
-  selected?.socio ||
-  selected?.Socio ||
-  selected?.socio_data ||
-  null;
+  selected?.socio || selected?.Socio || selected?.socio_data || null;
 
 const inputClass = (hasError = false) =>
   `w-full rounded-lg border bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 ${
@@ -99,12 +97,7 @@ const inputClass = (hasError = false) =>
       : 'border-slate-200 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50'
   }`;
 
-export default function AccionModal({
-  open,
-  selected,
-  onClose,
-  onSaved,
-}) {
+export default function AccionModal({ open, selected, onClose, onSaved }) {
   const [form, setForm] = useState(initialForm);
 
   const [socios, setSocios] = useState([]);
@@ -114,6 +107,8 @@ export default function AccionModal({
   const [calles, setCalles] = useState([]);
   const [tarifas, setTarifas] = useState([]);
   const [detalles, setDetalles] = useState([]);
+  const [tiposAccion, setTiposAccion] = useState([]);
+  const [datoTipoAccion, setDatoTipoAccion] = useState('');
 
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -124,12 +119,14 @@ export default function AccionModal({
     setLoadingSelects(true);
     setMessage('');
 
-    const [sociosRes, callesRes, tarifasRes, detallesRes] =
+    //detallesRes,
+    const [sociosRes, callesRes, tarifasRes, resTiposAccion] =
       await Promise.all([
         AccionesServices.getSociosSelect(),
         AccionesServices.getCallesSelect(),
         AccionesServices.getTarifasSelect(),
-        AccionesServices.getDetallesAccionSelect(),
+        // AccionesServices.getDetallesAccionSelect(),
+        AccionesServices.getSelectTiposAccion(),
       ]);
 
     setLoadingSelects(false);
@@ -137,26 +134,23 @@ export default function AccionModal({
     const erroresCarga = [];
 
     if (!sociosRes.ok) {
-      erroresCarga.push(
-        sociosRes.message || 'Error al cargar socios',
-      );
+      erroresCarga.push(sociosRes.message || 'Error al cargar socios');
     }
 
     if (!callesRes.ok) {
-      erroresCarga.push(
-        callesRes.message || 'Error al cargar calles',
-      );
+      erroresCarga.push(callesRes.message || 'Error al cargar calles');
     }
 
     if (!tarifasRes.ok) {
-      erroresCarga.push(
-        tarifasRes.message || 'Error al cargar tarifas',
-      );
+      erroresCarga.push(tarifasRes.message || 'Error al cargar tarifas');
     }
 
-    if (!detallesRes.ok) {
+    // if (!detallesRes.ok) {
+    //   erroresCarga.push(detallesRes.message || 'Error al cargar detalles');
+    // }
+    if (!resTiposAccion.ok) {
       erroresCarga.push(
-        detallesRes.message || 'Error al cargar detalles',
+        resTiposAccion.message || 'Error al cargar tipos accion',
       );
     }
 
@@ -167,7 +161,8 @@ export default function AccionModal({
     setSocios(sociosRes.data || []);
     setCalles(callesRes.data || []);
     setTarifas(tarifasRes.data || []);
-    setDetalles(detallesRes.data || []);
+    //setDetalles(detallesRes.data || []);
+    setTiposAccion(resTiposAccion.data || []);
   };
 
   useEffect(() => {
@@ -231,9 +226,7 @@ export default function AccionModal({
   useEffect(() => {
     if (!open || !selected || socioSearch) return;
 
-    const socioId = Number(
-      selected.socio_id || selected.socio?.id,
-    );
+    const socioId = Number(selected.socio_id || selected.socio?.id);
 
     const socioEncontrado = socios.find(
       (socio) => getOptionId(socio) === socioId,
@@ -243,6 +236,25 @@ export default function AccionModal({
       setSocioSearch(getSocioLabel(socioEncontrado));
     }
   }, [socios, selected, open, socioSearch]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resDetalleAccion =
+          await AccionesServices.getDetallesAccionSelect(datoTipoAccion);
+        if (!resDetalleAccion.ok) {
+          throw new Error(
+            resDetalleAccion.message ||
+              'No se pudo cargar lo detalles de accion',
+          );
+        }
+        setDetalles(resDetalleAccion.data || []);
+      } catch (e) {
+        toast.error(e.message || 'Algo salio mal');
+      }
+    };
+    fetchData();
+  }, [datoTipoAccion]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -292,9 +304,7 @@ export default function AccionModal({
     setForm((prev) => ({
       ...prev,
       detallesAccion: prev.detallesAccion.includes(detalleId)
-        ? prev.detallesAccion.filter(
-            (item) => item !== detalleId,
-          )
+        ? prev.detallesAccion.filter((item) => item !== detalleId)
         : [...prev.detallesAccion, detalleId],
     }));
 
@@ -311,9 +321,7 @@ export default function AccionModal({
 
     if (!validation.isValid) {
       setErrors(validation.errors);
-      setMessage(
-        'Revise los campos marcados antes de guardar la acción.',
-      );
+      setMessage('Revise los campos marcados antes de guardar la acción.');
       return;
     }
 
@@ -323,13 +331,9 @@ export default function AccionModal({
     const payload = { ...validation.data };
 
     if (selected) {
-      const medidorActual = String(
-        selected.nro_medidor || '',
-      ).trim();
+      const medidorActual = String(selected.nro_medidor || '').trim();
 
-      const medidorFormulario = String(
-        payload.nro_medidor || '',
-      ).trim();
+      const medidorFormulario = String(payload.nro_medidor || '').trim();
 
       if (medidorActual === medidorFormulario) {
         delete payload.nro_medidor;
@@ -343,9 +347,7 @@ export default function AccionModal({
     setSaving(false);
 
     if (!response.ok) {
-      setMessage(
-        response.message || 'Error al guardar la acción',
-      );
+      setMessage(response.message || 'Error al guardar la acción');
       return;
     }
 
@@ -376,8 +378,7 @@ export default function AccionModal({
   const detallesDisponibles = useMemo(
     () =>
       detalles.filter(
-        (detalle) =>
-          !form.detallesAccion.includes(getOptionId(detalle)),
+        (detalle) => !form.detallesAccion.includes(getOptionId(detalle)),
       ),
     [detalles, form.detallesAccion],
   );
@@ -385,8 +386,7 @@ export default function AccionModal({
   if (!open) return null;
 
   return (
-    <button
-      type="button"
+    <div
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           handleClose();
@@ -434,10 +434,7 @@ export default function AccionModal({
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex min-h-0 flex-1 flex-col"
-        >
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_310px]">
               {/* Formulario principal */}
@@ -540,9 +537,7 @@ export default function AccionModal({
                                     .split(' ')
                                     .filter(Boolean)
                                     .slice(0, 2)
-                                    .map((item) =>
-                                      item.charAt(0).toUpperCase(),
-                                    )
+                                    .map((item) => item.charAt(0).toUpperCase())
                                     .join('')}
                                 </span>
 
@@ -587,8 +582,7 @@ export default function AccionModal({
                         Datos de la conexión
                       </h3>
                       <p className="mt-0.5 text-sm text-slate-500">
-                        Registre la ubicación, tarifa y número de
-                        medidor.
+                        Registre la ubicación, tarifa y número de medidor.
                       </p>
                     </div>
                   </div>
@@ -611,9 +605,7 @@ export default function AccionModal({
                             Boolean(errors.calle_id),
                           )} appearance-none pl-11 pr-10`}
                         >
-                          <option value="">
-                            Seleccionar calle
-                          </option>
+                          <option value="">Seleccionar calle</option>
 
                           {calles.map((calle) => {
                             const id = getOptionId(calle);
@@ -653,9 +645,7 @@ export default function AccionModal({
                             Boolean(errors.tarifa_id),
                           )} appearance-none pl-11 pr-10`}
                         >
-                          <option value="">
-                            Seleccionar tarifa
-                          </option>
+                          <option value="">Seleccionar tarifa</option>
 
                           {tarifas.map((tarifa) => {
                             const id = getOptionId(tarifa);
@@ -785,6 +775,41 @@ export default function AccionModal({
                 </section>
 
                 <div className="border-t border-slate-100" />
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Seleccione tipo de accion
+                    <span className="ml-1 text-red-500">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <BanknotesIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                    <select
+                      value={datoTipoAccion}
+                      onChange={(e) => {
+                        setDatoTipoAccion(e.target.value);
+                      }}
+                      className={`${inputClass(
+                        Boolean(errors.tarifa_id),
+                      )} appearance-none pl-11 pr-10`}
+                    >
+                      <option value="">Seleccionar tipo de accion</option>
+                      {tiposAccion.map((row) => (
+                        <option key={row.value} value={row.value}>
+                          {row.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  </div>
+
+                  {errors.tarifa_id && (
+                    <p className="mt-1.5 text-xs font-medium text-red-600">
+                      {errors.tarifa_id}
+                    </p>
+                  )}
+                </div>
 
                 {/* Sección 3 */}
                 <section>
@@ -1017,9 +1042,8 @@ export default function AccionModal({
                         </h4>
 
                         <p className="mt-1 text-xs leading-5 text-blue-800/80">
-                          Los campos marcados con un asterisco son
-                          obligatorios. Revise los datos antes de
-                          guardar.
+                          Los campos marcados con un asterisco son obligatorios.
+                          Revise los datos antes de guardar.
                         </p>
                       </div>
                     </div>
@@ -1053,15 +1077,13 @@ export default function AccionModal({
               ) : (
                 <>
                   <CheckCircleIcon className="h-5 w-5" />
-                  {selected
-                    ? 'Guardar cambios'
-                    : 'Registrar acción'}
+                  {selected ? 'Guardar cambios' : 'Registrar acción'}
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
-    </button>
+    </div>
   );
 }

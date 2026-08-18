@@ -55,7 +55,7 @@ export default function ElegantInput({
       </div>
 
       {error && (
-        <p className="mt-2 text-sm font-medium text-sky-500">{error}</p>
+        <p className="mt-2 text-sm font-medium text-red-500">{error}</p>
       )}
     </div>
   );

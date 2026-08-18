@@ -12,6 +12,7 @@ import {
 
 import { DetalleAccionServices } from '../services/detalleAccion.services';
 import { validateDetalleAccionForm } from '../schema/detalleAccion.schema';
+import { toast } from 'react-toastify';
 
 const initialForm = {
   nombre_accion: '',
@@ -38,26 +39,39 @@ export default function DetalleAccionModal({
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [dataTipoAccion, setDataTipoAccion] = useState([]);
 
   useEffect(() => {
     if (!open) return;
 
-    if (detalle) {
-      setForm({
-        nombre_accion:
-          detalle.nombre_accion ||
-          detalle.nombre_detalle_accion ||
-          '',
-        precio_accion:
-          detalle.precio_accion ??
-          detalle.costo_detalles_accion ??
-          '',
-        tipo_cobro: detalle.tipo_cobro || '',
-      });
-    } else {
-      setForm(initialForm);
-    }
+    const fetchData = async () => {
+      try {
+        const resTipoAccion = await DetalleAccionServices.getSelectTipoAccion();
 
+        if (!resTipoAccion.ok) {
+          throw new Error(e.message || 'Error al cargar lo tipo accion');
+        }
+
+        setDataTipoAccion(
+          Array.isArray(resTipoAccion.data) ? resTipoAccion.data : [],
+        );
+        if (detalle) {
+          setForm({
+            nombre_accion:
+              detalle.nombre_accion || detalle.nombre_detalle_accion || '',
+            precio_accion:
+              detalle.precio_accion ?? detalle.costo_detalles_accion ?? '',
+            tipo_cobro: detalle.tipo_cobro || '',
+            tipo_accion_id: detalle.tipo_accion_id || '',
+          });
+        } else {
+          setForm(initialForm);
+        }
+      } catch (e) {
+        toast.error(e.message || 'Algo salio mal intentelo mas tarde');
+      }
+    };
+    fetchData();
     setErrors({});
     setMessage('');
   }, [open, detalle]);
@@ -84,6 +98,7 @@ export default function DetalleAccionModal({
     nombre_accion: form.nombre_accion.trim(),
     precio_accion: Number(form.precio_accion),
     tipo_cobro: form.tipo_cobro,
+    tipo_accion_id: form.tipo_accion_id,
   });
 
   const handleClose = () => {
@@ -255,6 +270,41 @@ export default function DetalleAccionModal({
                     </p>
                   )}
                 </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Tipo de accion
+                    <span className="ml-1 text-red-500">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <ReceiptPercentIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                    <select
+                      name="tipo_accion_id"
+                      value={form.tipo_accion_id}
+                      onChange={handleChange}
+                      className={`${inputClass(
+                        Boolean(errors.tipo_accion_id),
+                      )} appearance-none pl-11 pr-10`}
+                    >
+                      <option value="">Seleccione tipo tipo cobro</option>
+                      {dataTipoAccion?.map((row) => (
+                        <option key={row.value} value={row.value}>
+                          {row.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  </div>
+
+                  {errors.tipo_accion_id && (
+                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+                      <ExclamationCircleIcon className="h-4 w-4" />
+                      {errors.tipo_accion_id}
+                    </p>
+                  )}
+                </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -273,9 +323,7 @@ export default function DetalleAccionModal({
                         Boolean(errors.tipo_cobro),
                       )} appearance-none pl-11 pr-10`}
                     >
-                      <option value="">
-                        Seleccione tipo de cobro
-                      </option>
+                      <option value="">Seleccione tipo de cobro</option>
                       <option value="UNICO">Único</option>
                       <option value="MENSUAL">Mensual</option>
                     </select>

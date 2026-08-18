@@ -11,64 +11,58 @@ const getDataArray = (response) => {
 };
 
 export class AccionesServices {
-  static async getAll(
-  page = 1,
-  limit = 10,
-  search = '',
-  estado = '',
-) {
-  try {
-    const params = {
-      page: Math.max(
-        1,
-        Number.parseInt(page, 10) || 1,
-      ),
+  static async getAll(page = 1, limit = 10, search = '', estado = '') {
+    try {
+      const params = {
+        page: Math.max(1, Number.parseInt(page, 10) || 1),
 
-      limit: Math.max(
-        1,
-        Number.parseInt(limit, 10) || 10,
-      ),
+        limit: Math.max(1, Number.parseInt(limit, 10) || 10),
 
-      search: String(search || '').trim(),
-    };
+        search: String(search || '').trim(),
+      };
 
-    /*
-     * Solo agregamos estado cuando el usuario
-     * selecciona ACTIVO, PASIVO o ANULADO.
-     *
-     * Cuando estado es '', se solicitan todos.
-     */
-    if (estado) {
-      params.estado = String(estado)
-        .trim()
-        .toUpperCase();
+      /*
+       * Solo agregamos estado cuando el usuario
+       * selecciona ACTIVO, PASIVO o ANULADO.
+       *
+       * Cuando estado es '', se solicitan todos.
+       */
+      if (estado) {
+        params.estado = String(estado).trim().toUpperCase();
+      }
+
+      console.log('FILTROS ENVIADOS AL ENDPOINT:', params);
+
+      const { data } = await api.get('/admin/accion', {
+        params,
+      });
+
+      console.log('RESPUESTA DEL ENDPOINT DE ACCIONES:', data);
+      console.log('ACCIONES RECIBIDAS:', data?.data);
+      console.log(
+        'CANTIDAD DE ACCIONES:',
+        Array.isArray(data?.data) ? data.data.length : 0,
+      );
+
+      return data;
+    } catch (error) {
+      console.error(
+        'ERROR AL OBTENER ACCIONES:',
+        error?.response?.data || error,
+      );
+
+      return toServiceError(error);
     }
-
-    console.log('FILTROS ENVIADOS AL ENDPOINT:', params);
-
-    const { data } = await api.get('/admin/accion', {
-      params,
-    });
-
-    console.log('RESPUESTA DEL ENDPOINT DE ACCIONES:', data);
-    console.log('ACCIONES RECIBIDAS:', data?.data);
-    console.log(
-      'CANTIDAD DE ACCIONES:',
-      Array.isArray(data?.data)
-        ? data.data.length
-        : 0,
-    );
-
-    return data;
-  } catch (error) {
-    console.error(
-      'ERROR AL OBTENER ACCIONES:',
-      error?.response?.data || error,
-    );
-
-    return toServiceError(error);
   }
-}
+
+  static async getSelectTiposAccion() {
+    try {
+      const response = await api.get('/admin/accion/tipos-accion');
+      return response.data;
+    } catch (e) {
+      toServiceError(e);
+    }
+  }
 
   static async getById(id) {
     try {
@@ -93,7 +87,9 @@ export class AccionesServices {
         nro_medidor: String(payload.nro_medidor || '').trim(),
         direccion: String(payload.direccion || '').trim(),
         observacion: String(payload.observacion || '').trim(),
-        estado: String(payload.estado || 'ACTIVO').trim().toUpperCase(),
+        estado: String(payload.estado || 'ACTIVO')
+          .trim()
+          .toUpperCase(),
         detallesAccion: (payload.detallesAccion || []).map(Number),
       };
 
@@ -111,7 +107,9 @@ export class AccionesServices {
         tarifa_id: Number(payload.tarifa_id),
         direccion: String(payload.direccion || '').trim(),
         observacion: String(payload.observacion || '').trim(),
-        estado: String(payload.estado || 'ACTIVO').trim().toUpperCase(),
+        estado: String(payload.estado || 'ACTIVO')
+          .trim()
+          .toUpperCase(),
         detallesAccion: (payload.detallesAccion || []).map(Number),
       };
 
@@ -174,9 +172,9 @@ export class AccionesServices {
     }
   }
 
-  static async getDetallesAccionSelect() {
+  static async getDetallesAccionSelect(id) {
     try {
-      const { data } = await api.get('/admin/accion/detalle/select');
+      const { data } = await api.get(`/admin/accion/detalle/select/${id}`);
 
       return {
         ok: data?.ok ?? true,

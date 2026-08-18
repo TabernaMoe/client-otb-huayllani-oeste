@@ -179,8 +179,6 @@ export const AdminNav = [
 
 */
 
-
-
 import {
   AdjustmentsHorizontalIcon,
   BanknotesIcon,
@@ -254,8 +252,6 @@ export const AdminNav = [
     ],
   },
 
-  
-
   {
     id: 'socios',
     title: 'Socios',
@@ -265,23 +261,15 @@ export const AdminNav = [
         label: 'Administrar socios',
         to: '/admin/socios',
         icon: UsersIcon,
-        permission: [
-          'socio.ver',
-          'socios.ver',
-          'socios.socio.ver',
-        ],
+        permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
       {
         label: 'Acciones',
         to: '/admin/acciones',
         icon: ClipboardDocumentListIcon,
-        permission: [
-          'acciones.accion.ver',
-          'accion.ver',
-          'acciones.ver',
-        ],
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
-         {
+      {
         label: 'Detalle de acción',
         to: '/admin/detalle-pago-accion',
         icon: DocumentChartBarIcon,
@@ -291,6 +279,13 @@ export const AdminNav = [
           'detalle_accion.ver',
           'detalle_pago_accion.ver',
         ],
+      },
+      //Añadido por Becas
+      {
+        label: 'Tipo Accion',
+        to: '/admin/tipo-accion',
+        icon: ClipboardDocumentListIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
     ],
   },
@@ -304,12 +299,7 @@ export const AdminNav = [
         label: 'Cobros de acción',
         to: '/admin/cobros',
         icon: CreditCardIcon,
-        permission: [
-          'cobro.ver',
-          'cobros.ver',
-          'pago.ver',
-          'pagos.ver',
-        ],
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
       {
         label: 'Cobros de agua',
@@ -323,20 +313,16 @@ export const AdminNav = [
           'agua.cobro.ver',
         ],
       },
-   
+
       {
         label: 'Lecturas',
         to: '/admin/lecturas',
         icon: DocumentTextIcon,
-        permission: [
-          'lectura.ver',
-          'lecturas.ver',
-          'agua.lectura.ver',
-        ],
+        permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
       },
     ],
   },
-{
+  {
     id: 'operaciones',
     title: 'Administración',
     icon: WrenchScrewdriverIcon,
@@ -353,17 +339,12 @@ export const AdminNav = [
         icon: ClipboardDocumentCheckIcon,
         permission: ['periodo.ver', 'periodos.ver', 'gestion.ver'],
       },
-      
-      
-       {
+
+      {
         label: 'Calles',
         to: '/admin/calles',
         icon: MapPinIcon,
-        permission: [
-          'calle.ver',
-          'calles.ver',
-          'acciones.calles.ver',
-        ],
+        permission: ['calle.ver', 'calles.ver', 'acciones.calles.ver'],
       },
       {
         label: 'Tarifas',
@@ -373,7 +354,6 @@ export const AdminNav = [
       },
     ],
   },
-  
 
   {
     id: 'seguridad',
@@ -384,21 +364,13 @@ export const AdminNav = [
         label: 'Gestión de usuarios',
         to: '/admin/usuarios',
         icon: UsersIcon,
-        permission: [
-          'usuario.ver',
-          'usuarios.ver',
-          'auth.usuario.ver',
-        ],
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
       },
       {
         label: 'Roles y permisos',
         to: '/admin/roles',
         icon: ShieldCheckIcon,
-        permission: [
-          'rol.ver',
-          'roles.ver',
-          'auth.rol.ver',
-        ],
+        permission: ['rol.ver', 'roles.ver', 'auth.rol.ver'],
       },
     ],
   },
@@ -407,9 +379,7 @@ export const AdminNav = [
     id: 'configuracion',
     title: 'Configuración',
     icon: Cog6ToothIcon,
-    items: [
-     
-    ],
+    items: [],
   },
 
   {
@@ -437,5 +407,17 @@ export const AdminNav = [
     ],
   },
 
-
+  {
+    id: 'funciones_extras',
+    title: 'Funciones',
+    icon: Cog6ToothIcon,
+    items: [
+      {
+        label: 'Inventario',
+        to: '/admin/inventario',
+        icon: ChartBarSquareIcon,
+        permission: ['inventario.ver', 'inventario.ver'],
+      },
+    ],
+  },
 ];

@@ -69,14 +69,9 @@ export default function DetalleAccionPage() {
       return;
     }
 
-    const data =
-      response.data ||
-      response.detalles ||
-      response.items ||
-      [];
+    const data = response.data || response.detalles || response.items || [];
 
-    const paginationData =
-      response.pagination ||
+    const paginationData = response.pagination ||
       response.meta || {
         totalPages: response.totalPages,
         totalItems: response.total,
@@ -130,9 +125,7 @@ export default function DetalleAccionPage() {
 
   const handleDelete = async (detalle) => {
     const nombre =
-      detalle.nombre_accion ||
-      detalle.nombre_detalle_accion ||
-      'este detalle';
+      detalle.nombre_accion || detalle.nombre_detalle_accion || 'este detalle';
 
     const confirmDelete = window.confirm(
       `¿Seguro que deseas eliminar "${nombre}"?`,
@@ -153,9 +146,7 @@ export default function DetalleAccionPage() {
 
   const handleToggleStatus = async (detalle) => {
     const nombre =
-      detalle.nombre_accion ||
-      detalle.nombre_detalle_accion ||
-      'este detalle';
+      detalle.nombre_accion || detalle.nombre_detalle_accion || 'este detalle';
 
     const accion = detalle.estado ? 'deshabilitar' : 'habilitar';
 
@@ -183,14 +174,10 @@ export default function DetalleAccionPage() {
   };
 
   const getNombre = (detalle) =>
-    detalle.nombre_accion ||
-    detalle.nombre_detalle_accion ||
-    'Sin nombre';
+    detalle.nombre_accion || detalle.nombre_detalle_accion || 'Sin nombre';
 
   const getPrecio = (detalle) =>
-    detalle.precio_accion ??
-    detalle.costo_detalles_accion ??
-    0;
+    detalle.precio_accion ?? detalle.costo_detalles_accion ?? 0;
 
   const resumen = useMemo(
     () => ({
@@ -207,9 +194,7 @@ export default function DetalleAccionPage() {
 
   const totalPages = Number(pagination?.totalPages || 1);
   const totalItems = Number(
-    pagination?.totalItems ||
-      pagination?.total ||
-      detalles.length,
+    pagination?.totalItems || pagination?.total || detalles.length,
   );
 
   return (
@@ -222,9 +207,7 @@ export default function DetalleAccionPage() {
               <span>/</span>
               <span>Configuración</span>
               <span>/</span>
-              <span className="text-emerald-700">
-                Detalles de acción
-              </span>
+              <span className="text-emerald-700">Detalles de acción</span>
             </div>
 
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -232,7 +215,8 @@ export default function DetalleAccionPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Administra los conceptos, precios y tipos de cobro asociados a las acciones.
+              Administra los conceptos, precios y tipos de cobro asociados a las
+              acciones.
             </p>
           </div>
 
@@ -363,6 +347,7 @@ export default function DetalleAccionPage() {
                   <th className="px-4 py-4">Precio</th>
                   <th className="px-4 py-4">Tipo de cobro</th>
                   <th className="px-4 py-4">Estado</th>
+                  <th className="px-4 py-4">Tipo accion</th>
                   <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
@@ -453,6 +438,9 @@ export default function DetalleAccionPage() {
                             {detalle.estado ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
+                        <td className="px-4 py-4">
+                          {detalle.nombre_tipo_accion}
+                        </td>
 
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
@@ -475,9 +463,7 @@ export default function DetalleAccionPage() {
                                   : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
                               }`}
                               title={
-                                detalle.estado
-                                  ? 'Deshabilitar'
-                                  : 'Habilitar'
+                                detalle.estado ? 'Deshabilitar' : 'Habilitar'
                               }
                             >
                               <PowerIcon className="h-4 w-4" />
@@ -566,9 +552,7 @@ function MetricCard({ label, value, icon: Icon, iconClass }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {value}
-          </p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
         </div>
 
         <div className={`rounded-full p-3 ${iconClass}`}>

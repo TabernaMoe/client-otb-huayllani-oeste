@@ -38,6 +38,10 @@ import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
 import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
 import ClienteAccionesPage from '../modules/client/pages/ClienteAccionesPage';
 
+//añadido por Becas
+import TipoAccionPage from '../modules/tipoAccion/pages/TipoAccionPage';
+import InventarioPage from '../modules/inventario/pages/InventarioPage';
+
 export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
     {/* ====================================================== */}
@@ -50,10 +54,7 @@ export const privateRoutes = (
         <Route index element={<Navigate to="dashboard" replace />} />
 
         {/* Dashboard general: accesible para usuarios administrativos */}
-        <Route
-          path="dashboard"
-          element={<AdminDashboardPage />}
-        />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
 
         {/* ================================================== */}
         {/* GESTIÓN DE USUARIOS */}
@@ -62,18 +63,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'usuario.ver',
-                'usuarios.ver',
-                'auth.usuario.ver',
-              ]}
+              permission={['usuario.ver', 'usuarios.ver', 'auth.usuario.ver']}
             />
           }
         >
-          <Route
-            path="usuarios"
-            element={<AdminPage />}
-          />
+          <Route path="usuarios" element={<AdminPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -83,18 +77,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'rol.ver',
-                'roles.ver',
-                'auth.rol.ver',
-              ]}
+              permission={['rol.ver', 'roles.ver', 'auth.rol.ver']}
             />
           }
         >
-          <Route
-            path="roles"
-            element={<RolesPage />}
-          />
+          <Route path="roles" element={<RolesPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -103,18 +90,10 @@ export const privateRoutes = (
 
         <Route
           element={
-            <PermissionRoute
-              permission={[
-                'gestion.ver',
-                'gestiones.ver',
-              ]}
-            />
+            <PermissionRoute permission={['gestion.ver', 'gestiones.ver']} />
           }
         >
-          <Route
-            path="gestiones"
-            element={<GestionesPage />}
-          />
+          <Route path="gestiones" element={<GestionesPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -133,10 +112,7 @@ export const privateRoutes = (
             />
           }
         >
-          <Route
-            path="periodos"
-            element={<PeriodosPage />}
-          />
+          <Route path="periodos" element={<PeriodosPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -146,18 +122,33 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'acciones.accion.ver',
-                'accion.ver',
-                'acciones.ver',
-              ]}
+              permission={['acciones.accion.ver', 'accion.ver', 'acciones.ver']}
             />
           }
         >
-          <Route
-            path="acciones"
-            element={<AccionesPage />}
-          />
+          <Route path="acciones" element={<AccionesPage />} />
+        </Route>
+
+        {/*AÑADIDO POR BECAS TIPO ACCION*/}
+
+        <Route
+          element={
+            <PermissionRoute
+              permission={['acciones.accion.ver', 'accion.ver', 'acciones.ver']}
+            />
+          }
+        >
+          <Route path="tipo-accion" element={<TipoAccionPage />} />
+        </Route>
+
+        <Route
+          element={
+            <PermissionRoute
+              permission={['acciones.accion.ver', 'accion.ver', 'acciones.ver']}
+            />
+          }
+        >
+          <Route path="inventario" element={<InventarioPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -167,18 +158,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'socio.ver',
-                'socios.ver',
-                'socios.socio.ver',
-              ]}
+              permission={['socio.ver', 'socios.ver', 'socios.socio.ver']}
             />
           }
         >
-          <Route
-            path="socios"
-            element={<SocioPage />}
-          />
+          <Route path="socios" element={<SocioPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -188,18 +172,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'calle.ver',
-                'calles.ver',
-                'acciones.calles.ver',
-              ]}
+              permission={['calle.ver', 'calles.ver', 'acciones.calles.ver']}
             />
           }
         >
-          <Route
-            path="calles"
-            element={<CallesPage />}
-          />
+          <Route path="calles" element={<CallesPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -208,18 +185,10 @@ export const privateRoutes = (
 
         <Route
           element={
-            <PermissionRoute
-              permission={[
-                'tarifa.ver',
-                'tarifas.ver',
-              ]}
-            />
+            <PermissionRoute permission={['tarifa.ver', 'tarifas.ver']} />
           }
         >
-          <Route
-            path="tarifas"
-            element={<TarifasPage />}
-          />
+          <Route path="tarifas" element={<TarifasPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -238,10 +207,7 @@ export const privateRoutes = (
             />
           }
         >
-          <Route
-            path="detalle-pago-accion"
-            element={<DetalleAccionPage />}
-          />
+          <Route path="detalle-pago-accion" element={<DetalleAccionPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -251,19 +217,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'cobro.ver',
-                'cobros.ver',
-                'pago.ver',
-                'pagos.ver',
-              ]}
+              permission={['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver']}
             />
           }
         >
-          <Route
-            path="cobros"
-            element={<CobrosPage />}
-          />
+          <Route path="cobros" element={<CobrosPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -273,18 +231,11 @@ export const privateRoutes = (
         <Route
           element={
             <PermissionRoute
-              permission={[
-                'lectura.ver',
-                'lecturas.ver',
-                'agua.lectura.ver',
-              ]}
+              permission={['lectura.ver', 'lecturas.ver', 'agua.lectura.ver']}
             />
           }
         >
-          <Route
-            path="lecturas"
-            element={<LecturasPage />}
-          />
+          <Route path="lecturas" element={<LecturasPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -304,10 +255,7 @@ export const privateRoutes = (
             />
           }
         >
-          <Route
-            path="cobros-agua"
-            element={<CobrosAguaPage />}
-          />
+          <Route path="cobros-agua" element={<CobrosAguaPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -326,10 +274,7 @@ export const privateRoutes = (
             />
           }
         >
-          <Route
-            path="asambleas"
-            element={<AsambleasPage />}
-          />
+          <Route path="asambleas" element={<AsambleasPage />} />
         </Route>
 
         {/* ================================================== */}
@@ -338,25 +283,14 @@ export const privateRoutes = (
 
         <Route
           element={
-            <PermissionRoute
-              permission={[
-                'reporte.ver',
-                'reportes.ver',
-              ]}
-            />
+            <PermissionRoute permission={['reporte.ver', 'reportes.ver']} />
           }
         >
-          <Route
-            path="reportes"
-            element={<ReportesPage />}
-          />
+          <Route path="reportes" element={<ReportesPage />} />
         </Route>
 
         {/* Ruta administrativa no encontrada */}
-        <Route
-          path="*"
-          element={<Navigate to="dashboard" replace />}
-        />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Route>
 
@@ -369,26 +303,14 @@ export const privateRoutes = (
         {/* Al entrar a /cliente, mostrar dashboard */}
         <Route index element={<Navigate to="dashboard" replace />} />
 
-        <Route
-          path="dashboard"
-          element={<ClienteDashboardPage />}
-        />
+        <Route path="dashboard" element={<ClienteDashboardPage />} />
 
-        <Route
-          path="perfil"
-          element={<ClientePerfilPage />}
-        />
+        <Route path="perfil" element={<ClientePerfilPage />} />
 
-        <Route
-          path="acciones"
-          element={<ClienteAccionesPage />}
-        />
+        <Route path="acciones" element={<ClienteAccionesPage />} />
 
         {/* Ruta de cliente no encontrada */}
-        <Route
-          path="*"
-          element={<Navigate to="dashboard" replace />}
-        />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Route>
   </Route>
