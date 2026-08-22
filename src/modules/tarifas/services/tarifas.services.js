@@ -95,43 +95,58 @@ export class TarifasServices {
    * }
    */
   static async create(payload) {
-    try {
-      const cleanPayload = {
-        nombre_tarifa: String(
-          payload.nombre_tarifa || '',
-        ).trim(),
+  try {
+    const cleanPayload = {
+      nombre_tarifa: String(
+        payload.nombre_tarifa || '',
+      ).trim(),
 
-        rangosTarifa: (
-          payload.rangosTarifa || []
-        ).map((rango) => ({
-          consumo_minimo: Number(
-            rango.consumo_minimo,
-          ),
+      rangosTarifa: (
+        payload.rangosTarifa || []
+      ).map((rango) => ({
+        consumo_minimo: Number(
+          rango.consumo_minimo,
+        ),
 
-          consumo_maximo:
-            rango.consumo_maximo === null ||
-            rango.consumo_maximo === ''
-              ? null
-              : Number(
-                  rango.consumo_maximo,
-                ),
+        consumo_maximo:
+          rango.consumo_maximo === null ||
+          rango.consumo_maximo === ''
+            ? null
+            : Number(
+                rango.consumo_maximo,
+              ),
 
-          precio: Number(
-            rango.precio,
-          ),
-        })),
-      };
+        precio: Number(
+          rango.precio,
+        ),
+      })),
+    };
 
-      const { data } = await api.post(
-        '/admin/tarifa',
-        cleanPayload,
-      );
+    console.log(
+      'PAYLOAD TARIFA:',
+      JSON.stringify(cleanPayload, null, 2),
+    );
 
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    const { data } = await api.post(
+      '/admin/tarifa',
+      cleanPayload,
+    );
+
+    return data;
+  } catch (error) {
+    console.error(
+      'ERROR BACKEND TARIFA:',
+      error?.response?.data,
+    );
+
+    console.error(
+      'ERRORES VALIDACIÓN:',
+      error?.response?.data?.errors,
+    );
+
+    return toServiceError(error);
   }
+}
 
   /**
    * ============================================================
