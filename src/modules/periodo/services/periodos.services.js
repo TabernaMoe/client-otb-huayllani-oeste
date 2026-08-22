@@ -3,45 +3,43 @@ import { toServiceError } from '../../../services/error';
 
 export class PeriodosServices {
 
-  // =========================
-  // GET LISTA
-  // =========================
   static async getAll(page = 1, limit = 10) {
     try {
-      const res = await api.get('/admin/gestion/periodo', {
-        params: { page, limit },
-      });
+      const params = {
+        page: Math.max(
+          1,
+          Number.parseInt(page, 10) || 1,
+        ),
 
-      return res.data;
-    } catch (err) {
-      return toServiceError(err);
-    }
-  }
+        limit: Math.max(
+          1,
+          Number.parseInt(limit, 10) || 10,
+        ),
+      };
 
-  // =========================
-  // SELECT (dropdown)
-  // =========================
-  static async getSelect() {
-    try {
-      const res = await api.get('/admin/gestion/periodo/select');
-      return res.data;
-    } catch (err) {
-      return toServiceError(err);
-    }
-  }
-
-  // =========================
-  // CERRAR PERIODO
-  // =========================
-  static async cerrar(id) {
-    try {
-      const res = await api.patch(
-        `/admin/gestion/periodo/cerrar/${id}`
+      const { data } = await api.get(
+        '/admin/gestion/periodo',
+        {
+          params,
+        },
       );
 
-      return res.data;
-    } catch (err) {
-      return toServiceError(err);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+
+  static async cerrar(id) {
+    try {
+      const { data } = await api.patch(
+        `/admin/gestion/periodo/cerrar/${id}`,
+      );
+
+      return data;
+    } catch (error) {
+      return toServiceError(error);
     }
   }
 }

@@ -2,39 +2,36 @@ import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
 
 export class CallesServices {
-  static async getAll(page = 1, limit = 5, search = '', estado = true) {
+ 
+  static async getAll(page = 1, limit = 10, search = '', estado = '') {
     try {
-      const response = await api.get('/admin/calle', {
-        params: {
-          page,
-          limit,
-          search,
-          estado,
-        },
+      const params = {
+        page: Math.max(1, Number.parseInt(page, 10) || 1),
+
+        limit: Math.max(1, Number.parseInt(limit, 10) || 10),
+
+        search: String(search || '').trim(),
+      };      
+      if (estado !== '' && estado !== null && estado !== undefined) {
+        params.estado = estado;
+      }
+
+      const { data } = await api.get('/admin/calle', {
+        params,
       });
 
-      return response.data;
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
-  static async getForSelect(search = '') {
-    try {
-      const response = await api.get('/admin/calle/select', {
-        params: { search },
-      });
-
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
 
   static async getById(id) {
     try {
-      const response = await api.get(`/admin/calle/${id}`);
-      return response.data;
+      const { data } = await api.get(`/admin/calle/${id}`);
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
@@ -42,35 +39,44 @@ export class CallesServices {
 
   static async create(payload) {
     try {
-      const response = await api.post('/admin/calle', payload);
-      return response.data;
+      const cleanPayload = {
+        nombre_calle: String(payload.nombre_calle || '').trim(),
+      };
+
+      const { data } = await api.post('/admin/calle',
+        cleanPayload,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
-
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/admin/calle/${id}`, payload);
-      return response.data;
+      const cleanPayload = {
+        nombre_calle: String(payload.nombre_calle || '').trim(),
+      };
+
+      const { data } = await api.patch(
+        `/admin/calle/${id}`,
+        cleanPayload,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
-  static async delete(id) {
-    try {
-      const response = await api.delete(`/admin/calle/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
+ 
   static async toggleStatus(id) {
     try {
-      const response = await api.patch(`/admin/calle/toggle-status/${id}`);
-      return response.data;
+      const { data } = await api.patch(
+        `/admin/calle/cambiar-estado/${id}`,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }

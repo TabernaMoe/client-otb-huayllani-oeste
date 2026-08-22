@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -11,107 +12,365 @@ import {
   PlusIcon,
   PowerIcon,
   ReceiptPercentIcon,
-  TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
+import { toast } from 'react-toastify';
+
 import DetalleAccionModal from '../components/DetalleAccionModal';
+
 import { DetalleAccionServices } from '../services/detalleAccion.services';
 
+/**
+ * ============================================================
+ * FORMATEAR PRECIO
+ * ============================================================
+ *
+ * Ejemplo:
+ *
+ * 100
+ *
+ * pasa a:
+ *
+ * Bs 100,00
+ */
 const formatMoney = (value) =>
   new Intl.NumberFormat('es-BO', {
     style: 'currency',
     currency: 'BOB',
   }).format(Number(value || 0));
 
+/**
+ * ============================================================
+ * ESTILOS SEGÚN ESTADO
+ * ============================================================
+ */
 const statusStyles = {
   active: {
-    badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    dot: 'bg-emerald-500',
+    badge:
+      'border-emerald-200 bg-emerald-50 text-emerald-700',
+
+    dot:
+      'bg-emerald-500',
   },
+
   inactive: {
-    badge: 'border-slate-200 bg-slate-100 text-slate-600',
-    dot: 'bg-slate-400',
+    badge:
+      'border-slate-200 bg-slate-100 text-slate-600',
+
+    dot:
+      'bg-slate-400',
   },
 };
 
 export default function DetalleAccionPage() {
-  const [detalles, setDetalles] = useState([]);
+  /**
+   * ============================================================
+   * DATOS
+   * ============================================================
+   */
+  const [detalles, setDetalles] =
+    useState([]);
 
-  const [page, setPage] = useState(1);
-  const [limit] = useState(5);
-  const [search, setSearch] = useState('');
-  const [estado, setEstado] = useState(true);
+  /**
+   * ============================================================
+   * PAGINACIÓN
+   * ============================================================
+   */
+  const [page, setPage] =
+    useState(1);
 
-  const [pagination, setPagination] = useState(null);
+  const [limit] =
+    useState(5);
 
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDetalle, setSelectedDetalle] = useState(null);
-  const [message, setMessage] = useState('');
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(1);
 
-  const fetchDetalles = async () => {
-    setLoading(true);
-    setMessage('');
+  const [
+    totalItems,
+    setTotalItems,
+  ] = useState(0);
 
-    const response = await DetalleAccionServices.getAll(
-      page,
-      limit,
-      search,
-      estado,
-    );
+  /**
+   * ============================================================
+   * FILTROS
+   * ============================================================
+   */
+  const [search, setSearch] =
+    useState('');
 
-    setLoading(false);
+  /**
+   * ''
+   *      -> Todos
+   *
+   * 'true'
+   *      -> Activos
+   *
+   * 'false'
+   *      -> Inactivos
+   */
+  const [estado, setEstado] =
+    useState('');
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al cargar detalles');
-      setDetalles([]);
-      return;
+  /**
+   * ============================================================
+   * INTERFAZ
+   * ============================================================
+   */
+  const [loading, setLoading] =
+    useState(false);
+
+  const [
+    loadingAction,
+    setLoadingAction,
+  ] = useState(false);
+
+  const [modalOpen, setModalOpen] =
+    useState(false);
+
+  const [
+    selectedDetalle,
+    setSelectedDetalle,
+  ] = useState(null);
+
+  const [message, setMessage] =
+    useState('');
+
+  const [
+    messageType,
+    setMessageType,
+  ] = useState('success');
+
+  /**
+   * ============================================================
+   * CONVERTIR ESTADO PARA EL SERVICE
+   * ============================================================
+   *
+   * ''
+   *      -> undefined
+   *
+   * 'true'
+   *      -> true
+   *
+   * 'false'
+   *      -> false
+   */
+  const getEstadoValue = () => {
+    if (estado === '') {
+      return undefined;
     }
 
-    const data = response.data || response.detalles || response.items || [];
-
-    const paginationData = response.pagination ||
-      response.meta || {
-        totalPages: response.totalPages,
-        totalItems: response.total,
-        page: response.page,
-      };
-
-    setDetalles(data);
-    setPagination(paginationData);
+    return estado === 'true';
   };
 
+  /**
+   * ============================================================
+   * OBTENER DETALLES
+   * ============================================================
+   */
+  const fetchDetalles = async () => {
+    try {
+      setLoading(true);
+
+      setMessage('');
+
+      const response =
+        await DetalleAccionServices.getAll(
+          page,
+          limit,
+          search,
+          getEstadoValue(),
+        );
+
+      /**
+       * Error controlado por backend/service.
+       */
+      if (!response?.ok) {
+        setMessage(
+          response?.message ||
+            'Error al cargar los detalles de acción',
+        );
+
+        setMessageType('error');
+
+        setDetalles([]);
+
+        setTotalItems(0);
+
+        setTotalPages(1);
+
+        return;
+      }
+
+      /**
+       * El backend responde:
+       *
+       * {
+       *   ok: true,
+       *   message: "...",
+       *   total: 1,
+       *   page: 1,
+       *   limit: 10,
+       *   totalPages: 1,
+       *   data: [...]
+       * }
+       */
+      setDetalles(
+        Array.isArray(response.data)
+          ? response.data
+          : [],
+      );
+
+      setTotalItems(
+        Number(
+          response.total || 0,
+        ),
+      );
+
+      setTotalPages(
+        Number(
+          response.totalPages || 1,
+        ),
+      );
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al cargar los detalles',
+      );
+
+      setMessageType('error');
+
+      setDetalles([]);
+
+      setTotalItems(0);
+
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Consultamos nuevamente cuando cambia:
+   *
+   * - página
+   * - búsqueda
+   * - estado
+   */
   useEffect(() => {
     fetchDetalles();
-  }, [page, search, estado]);
+  }, [
+    page,
+    search,
+    estado,
+  ]);
 
+  /**
+   * ============================================================
+   * CREAR
+   * ============================================================
+   */
   const openCreateModal = () => {
     setSelectedDetalle(null);
+
     setModalOpen(true);
   };
 
-  const openEditModal = async (detalle) => {
-    setMessage('');
+  /**
+   * ============================================================
+   * EDITAR
+   * ============================================================
+   *
+   * Antes de abrir el modal consultamos:
+   *
+   * GET /admin/accion/detalle/:id
+   *
+   * para obtener la información completa.
+   */
+  const openEditModal = async (
+    detalle,
+  ) => {
+    try {
+      setMessage('');
 
-    const response = await DetalleAccionServices.getById(detalle.id);
+      const response =
+        await DetalleAccionServices.getById(
+          detalle.id,
+        );
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al cargar el detalle');
-      return;
+      if (!response?.ok) {
+        setMessage(
+          response?.message ||
+            'Error al cargar el detalle',
+        );
+
+        setMessageType('error');
+
+        return;
+      }
+
+      /**
+       * El backend devuelve:
+       *
+       * {
+       *   ok: true,
+       *   message: "...",
+       *   dato: {
+       *     ...
+       *   }
+       * }
+       *
+       * Ojo:
+       * en la documentación actual de este endpoint
+       * la propiedad aparece como "dato".
+       */
+      const detalleCompleto =
+        response.dato ??
+        response.data;
+
+      if (!detalleCompleto) {
+        setMessage(
+          'No se encontró la información del detalle.',
+        );
+
+        setMessageType('error');
+
+        return;
+      }
+
+      setSelectedDetalle(
+        detalleCompleto,
+      );
+
+      setModalOpen(true);
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al cargar el detalle',
+      );
+
+      setMessageType('error');
     }
-
-    const data = response.data || response.dato || detalle;
-
-    setSelectedDetalle(data);
-    setModalOpen(true);
   };
 
+  /**
+   * ============================================================
+   * CERRAR MODAL
+   * ============================================================
+   */
   const closeModal = () => {
     setModalOpen(false);
+
     setSelectedDetalle(null);
   };
 
+  /**
+   * ============================================================
+   * GUARDADO CORRECTAMENTE
+   * ============================================================
+   */
   const handleSuccess = () => {
     setMessage(
       selectedDetalle
@@ -119,95 +378,169 @@ export default function DetalleAccionPage() {
         : 'Detalle creado correctamente',
     );
 
+    setMessageType('success');
+
     closeModal();
+
     fetchDetalles();
   };
 
-  const handleDelete = async (detalle) => {
-    const nombre =
-      detalle.nombre_accion || detalle.nombre_detalle_accion || 'este detalle';
+  /**
+   * ============================================================
+   * CAMBIAR ESTADO
+   * ============================================================
+   *
+   * PATCH
+   * /admin/accion/detalle/cambiar-estado/:id
+   */
+  const handleChangeEstado = async (
+    detalle,
+  ) => {
+    const accion =
+      detalle.estado
+        ? 'deshabilitar'
+        : 'habilitar';
 
-    const confirmDelete = window.confirm(
-      `¿Seguro que deseas eliminar "${nombre}"?`,
-    );
+    const confirmacion =
+      window.confirm(
+        `¿Seguro que deseas ${accion} "${detalle.nombre_accion}"?`,
+      );
 
-    if (!confirmDelete) return;
-
-    const response = await DetalleAccionServices.delete(detalle.id);
-
-    if (!response.ok) {
-      setMessage(response.message || 'Error al eliminar detalle');
+    if (!confirmacion) {
       return;
     }
 
-    setMessage('Detalle eliminado correctamente');
-    fetchDetalles();
-  };
+    try {
+      setLoadingAction(true);
 
-  const handleToggleStatus = async (detalle) => {
-    const nombre =
-      detalle.nombre_accion || detalle.nombre_detalle_accion || 'este detalle';
+      setMessage('');
 
-    const accion = detalle.estado ? 'deshabilitar' : 'habilitar';
+      const response =
+        await DetalleAccionServices.changeEstado(
+          detalle.id,
+        );
 
-    const confirmToggle = window.confirm(
-      `¿Seguro que deseas ${accion} "${nombre}"?`,
-    );
+      if (!response?.ok) {
+        setMessage(
+          response?.message ||
+            'Error al cambiar el estado',
+        );
 
-    if (!confirmToggle) return;
+        setMessageType('error');
 
-    const response = await DetalleAccionServices.toggleStatus(detalle.id);
+        return;
+      }
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al cambiar estado');
-      return;
+      toast.success(
+        response?.message ||
+          'Estado actualizado correctamente',
+      );
+
+      await fetchDetalles();
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al cambiar el estado',
+      );
+
+      setMessageType('error');
+    } finally {
+      setLoadingAction(false);
     }
-
-    setMessage('Estado actualizado correctamente');
-    fetchDetalles();
   };
 
+  /**
+   * ============================================================
+   * LIMPIAR FILTROS
+   * ============================================================
+   */
   const clearFilters = () => {
     setPage(1);
+
     setSearch('');
-    setEstado(true);
+
+    setEstado('');
   };
 
-  const getNombre = (detalle) =>
-    detalle.nombre_accion || detalle.nombre_detalle_accion || 'Sin nombre';
+  /**
+   * ============================================================
+   * RESUMEN
+   * ============================================================
+   *
+   * Estas métricas representan solamente
+   * los registros de la página visible.
+   */
+  const resumen = useMemo(() => {
+    const activos =
+      detalles.filter(
+        (item) =>
+          Boolean(item.estado),
+      ).length;
 
-  const getPrecio = (detalle) =>
-    detalle.precio_accion ?? detalle.costo_detalles_accion ?? 0;
+    const inactivos =
+      detalles.filter(
+        (item) =>
+          !Boolean(item.estado),
+      ).length;
 
-  const resumen = useMemo(
-    () => ({
-      visibles: detalles.length,
-      activos: detalles.filter((item) => item.estado).length,
-      inactivos: detalles.filter((item) => !item.estado).length,
-      totalVisible: detalles.reduce(
-        (sum, item) => sum + Number(getPrecio(item) || 0),
+    const totalVisible =
+      detalles.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.precio_accion || 0,
+          ),
         0,
-      ),
-    }),
-    [detalles],
-  );
+      );
 
-  const totalPages = Number(pagination?.totalPages || 1);
-  const totalItems = Number(
-    pagination?.totalItems || pagination?.total || detalles.length,
-  );
+    return {
+      visibles:
+        detalles.length,
+
+      activos,
+
+      inactivos,
+
+      totalVisible,
+    };
+  }, [detalles]);
+
+  /**
+   * ============================================================
+   * CLASE DEL MENSAJE
+   * ============================================================
+   */
+  const messageClass =
+    messageType === 'error'
+      ? 'border-red-200 bg-red-50 text-red-700'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-700';
 
   return (
     <section className="min-h-screen bg-slate-50">
       <div className="space-y-5">
+
+        {/* ======================================================
+            ENCABEZADO
+            ====================================================== */}
+
         <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-              <span>Inicio</span>
+              <span>
+                Inicio
+              </span>
+
               <span>/</span>
-              <span>Configuración</span>
+
+              <span>
+                Configuración
+              </span>
+
               <span>/</span>
-              <span className="text-emerald-700">Detalles de acción</span>
+
+              <span className="text-emerald-700">
+                Detalles de acción
+              </span>
             </div>
 
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -215,38 +548,48 @@ export default function DetalleAccionPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Administra los conceptos, precios y tipos de cobro asociados a las
-              acciones.
+              Administra los conceptos,
+              precios y tipos de cobro
+              asociados a las acciones.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={openCreateModal}
+            onClick={
+              openCreateModal
+            }
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100"
           >
             <PlusIcon className="h-5 w-5" />
+
             Nuevo detalle
           </button>
         </header>
+
+        {/* ======================================================
+            MÉTRICAS
+            ====================================================== */}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             label="Total de detalles"
             value={totalItems}
-            icon={ClipboardDocumentListIcon}
+            icon={
+              ClipboardDocumentListIcon
+            }
             iconClass="bg-slate-100 text-slate-700"
           />
 
           <MetricCard
-            label="Detalles activos"
+            label="Activos visibles"
             value={resumen.activos}
             icon={CheckCircleIcon}
             iconClass="bg-emerald-50 text-emerald-700"
           />
 
           <MetricCard
-            label="Detalles inactivos"
+            label="Inactivos visibles"
             value={resumen.inactivos}
             icon={PowerIcon}
             iconClass="bg-amber-50 text-amber-700"
@@ -254,21 +597,39 @@ export default function DetalleAccionPage() {
 
           <MetricCard
             label="Valor visible"
-            value={formatMoney(resumen.totalVisible)}
+            value={formatMoney(
+              resumen.totalVisible,
+            )}
             icon={BanknotesIcon}
             iconClass="bg-blue-50 text-blue-700"
           />
         </div>
 
+        {/* ======================================================
+            MENSAJE
+            ====================================================== */}
+
         {message && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+          <div
+            className={`rounded-xl border px-4 py-3 text-sm font-medium ${messageClass}`}
+          >
             {message}
           </div>
         )}
 
+        {/* ======================================================
+            CONTENEDOR
+            ====================================================== */}
+
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+          {/* ====================================================
+              FILTROS
+              ==================================================== */}
+
           <div className="border-b border-slate-200 px-5 py-5 lg:px-6">
             <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+
               <div className="flex items-center gap-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
                   1
@@ -278,22 +639,33 @@ export default function DetalleAccionPage() {
                   <h2 className="font-bold text-slate-900">
                     Conceptos registrados
                   </h2>
+
                   <p className="mt-0.5 text-sm text-slate-500">
-                    Busca un detalle o filtra los registros por estado.
+                    Busca un detalle o
+                    filtra los registros
+                    por estado.
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
+
+                {/* BUSCADOR */}
+
                 <div className="relative w-full sm:w-80">
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                   <input
                     type="text"
                     value={search}
-                    onChange={(event) => {
+                    onChange={(
+                      event,
+                    ) => {
                       setPage(1);
-                      setSearch(event.target.value);
+
+                      setSearch(
+                        event.target.value,
+                      );
                     }}
                     placeholder="Buscar detalle por nombre"
                     className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-11 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
@@ -304,6 +676,7 @@ export default function DetalleAccionPage() {
                       type="button"
                       onClick={() => {
                         setPage(1);
+
                         setSearch('');
                       }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
@@ -314,59 +687,118 @@ export default function DetalleAccionPage() {
                   )}
                 </div>
 
+                {/* ESTADO */}
+
                 <select
-                  value={String(estado)}
-                  onChange={(event) => {
+                  value={estado}
+                  onChange={(
+                    event,
+                  ) => {
                     setPage(1);
-                    setEstado(event.target.value === 'true');
+
+                    setEstado(
+                      event.target.value,
+                    );
                   }}
                   className="min-w-40 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
                 >
-                  <option value="true">Activos</option>
-                  <option value="false">Inactivos</option>
+                  <option value="">
+                    Todos
+                  </option>
+
+                  <option value="true">
+                    Activos
+                  </option>
+
+                  <option value="false">
+                    Inactivos
+                  </option>
                 </select>
+
+                {/* LIMPIAR */}
 
                 <button
                   type="button"
-                  onClick={clearFilters}
+                  onClick={
+                    clearFilters
+                  }
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
                 >
                   <ArrowPathIcon className="h-4 w-4" />
+
                   Limpiar
                 </button>
               </div>
             </div>
           </div>
 
+          {/* ====================================================
+              TABLA
+              ==================================================== */}
+
           <div className="overflow-x-auto">
-            <table className="min-w-[900px] w-full text-left text-sm">
+            <table className="min-w-[950px] w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/80">
                 <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-4">Detalle</th>
-                  <th className="px-4 py-4">Código</th>
-                  <th className="px-4 py-4">Precio</th>
-                  <th className="px-4 py-4">Tipo de cobro</th>
-                  <th className="px-4 py-4">Estado</th>
-                  <th className="px-4 py-4">Tipo accion</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
+                  <th className="px-6 py-4">
+                    Detalle
+                  </th>
+
+                  <th className="px-4 py-4">
+                    Código
+                  </th>
+
+                  <th className="px-4 py-4">
+                    Precio
+                  </th>
+
+                  <th className="px-4 py-4">
+                    Tipo de cobro
+                  </th>
+
+                  <th className="px-4 py-4">
+                    Tipo de acción
+                  </th>
+
+                  <th className="px-4 py-4">
+                    Estado
+                  </th>
+
+                  <th className="px-6 py-4 text-right">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-100">
+
+                {/* ================= LOADING ================= */}
+
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-16">
+                    <td
+                      colSpan="7"
+                      className="px-6 py-16"
+                    >
                       <div className="flex flex-col items-center justify-center">
                         <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
+
                         <p className="mt-3 text-sm font-medium text-slate-500">
                           Cargando detalles...
                         </p>
                       </div>
                     </td>
                   </tr>
-                ) : detalles.length === 0 ? (
+                ) : detalles.length ===
+                  0 ? (
+
+                  /* ================= VACÍO ================= */
+
                   <tr>
-                    <td colSpan="6" className="px-6 py-16">
+                    <td
+                      colSpan="7"
+                      className="px-6 py-16"
+                    >
                       <div className="flex flex-col items-center justify-center text-center">
                         <div className="rounded-full bg-slate-100 p-4 text-slate-400">
                           <ClipboardDocumentListIcon className="h-8 w-8" />
@@ -377,135 +809,215 @@ export default function DetalleAccionPage() {
                         </h3>
 
                         <p className="mt-1 max-w-sm text-sm text-slate-500">
-                          No existen registros con los filtros seleccionados.
+                          No existen registros
+                          con los filtros seleccionados.
                         </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  detalles.map((detalle) => {
-                    const styles = detalle.estado
-                      ? statusStyles.active
-                      : statusStyles.inactive;
 
-                    return (
-                      <tr
-                        key={detalle.id}
-                        className="transition hover:bg-slate-50/80"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex min-w-64 items-center gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                              <ReceiptPercentIcon className="h-5 w-5" />
+                  /* ================= REGISTROS ================= */
+
+                  detalles.map(
+                    (detalle) => {
+                      const activo =
+                        Boolean(
+                          detalle.estado,
+                        );
+
+                      const styles =
+                        activo
+                          ? statusStyles.active
+                          : statusStyles.inactive;
+
+                      return (
+                        <tr
+                          key={
+                            detalle.id
+                          }
+                          className="transition hover:bg-slate-50/80"
+                        >
+
+                          {/* DETALLE */}
+
+                          <td className="px-6 py-4">
+                            <div className="flex min-w-64 items-center gap-3">
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                                <ReceiptPercentIcon className="h-5 w-5" />
+                              </div>
+
+                              <div>
+                                <p className="font-bold text-slate-900">
+                                  {detalle.nombre_accion ||
+                                    'Sin nombre'}
+                                </p>
+
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                  Concepto de cobro
+                                  para acciones
+                                </p>
+                              </div>
                             </div>
+                          </td>
 
-                            <div>
-                              <p className="font-bold text-slate-900">
-                                {getNombre(detalle)}
-                              </p>
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                Concepto de cobro para acciones
-                              </p>
-                            </div>
-                          </div>
-                        </td>
+                          {/* CÓDIGO */}
 
-                        <td className="px-4 py-4">
-                          <span className="font-semibold text-slate-600">
-                            #{String(detalle.id).padStart(4, '0')}
-                          </span>
-                        </td>
+                          <td className="px-4 py-4">
+                            <span className="font-semibold text-slate-600">
+                              #
+                              {String(
+                                detalle.id,
+                              ).padStart(
+                                4,
+                                '0',
+                              )}
+                            </span>
+                          </td>
 
-                        <td className="px-4 py-4">
-                          <span className="font-bold text-emerald-700">
-                            {formatMoney(getPrecio(detalle))}
-                          </span>
-                        </td>
+                          {/* PRECIO */}
 
-                        <td className="px-4 py-4">
-                          <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                            {detalle.tipo_cobro || 'Sin tipo'}
-                          </span>
-                        </td>
+                          <td className="px-4 py-4">
+                            <span className="font-bold text-emerald-700">
+                              {formatMoney(
+                                detalle.precio_accion,
+                              )}
+                            </span>
+                          </td>
 
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${styles.badge}`}
-                          >
+                          {/* TIPO COBRO */}
+
+                          <td className="px-4 py-4">
+                            <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                              {detalle.tipo_cobro ||
+                                'Sin tipo'}
+                            </span>
+                          </td>
+
+                          {/* TIPO ACCIÓN */}
+
+                          <td className="px-4 py-4">
+                            <span className="font-medium text-slate-600">
+                              {detalle.nombre_tipo_accion ||
+                                '-'}
+                            </span>
+                          </td>
+
+                          {/* ESTADO */}
+
+                          <td className="px-4 py-4">
                             <span
-                              className={`h-2 w-2 rounded-full ${styles.dot}`}
-                            />
-                            {detalle.estado ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          {detalle.nombre_tipo_accion}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(detalle)}
-                              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                              title="Editar detalle"
+                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${styles.badge}`}
                             >
-                              <PencilSquareIcon className="h-4 w-4" />
-                              Editar
-                            </button>
+                              <span
+                                className={`h-2 w-2 rounded-full ${styles.dot}`}
+                              />
 
-                            <button
-                              type="button"
-                              onClick={() => handleToggleStatus(detalle)}
-                              className={`rounded-lg border p-2 transition ${
-                                detalle.estado
-                                  ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                                  : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-                              }`}
-                              title={
-                                detalle.estado ? 'Deshabilitar' : 'Habilitar'
-                              }
-                            >
-                              <PowerIcon className="h-4 w-4" />
-                            </button>
+                              {activo
+                                ? 'Activo'
+                                : 'Inactivo'}
+                            </span>
+                          </td>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(detalle)}
-                              className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                              title="Eliminar detalle"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
+                          {/* ACCIONES */}
+
+                          <td className="px-6 py-4">
+                            <div className="flex justify-end gap-2">
+
+                              {/* EDITAR */}
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openEditModal(
+                                    detalle,
+                                  )
+                                }
+                                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                title="Editar detalle"
+                              >
+                                <PencilSquareIcon className="h-4 w-4" />
+
+                                Editar
+                              </button>
+
+                              {/* CAMBIAR ESTADO */}
+
+                              <button
+                                type="button"
+                                disabled={
+                                  loadingAction
+                                }
+                                onClick={() =>
+                                  handleChangeEstado(
+                                    detalle,
+                                  )
+                                }
+                                className={`rounded-lg border p-2 transition ${
+                                  activo
+                                    ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                                    : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                                title={
+                                  activo
+                                    ? 'Deshabilitar'
+                                    : 'Habilitar'
+                                }
+                              >
+                                <PowerIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )
                 )}
               </tbody>
             </table>
           </div>
 
+          {/* ====================================================
+              PAGINACIÓN
+              ==================================================== */}
+
           <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+
             <p className="text-sm text-slate-500">
               Mostrando{' '}
               <span className="font-semibold text-slate-700">
                 {detalles.length}
               </span>{' '}
+              de{' '}
+              <span className="font-semibold text-slate-700">
+                {totalItems}
+              </span>{' '}
               registros
             </p>
 
             <div className="flex items-center gap-2">
+
+              {/* ANTERIOR */}
+
               <button
                 type="button"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((prev) => prev - 1)}
+                disabled={
+                  page <= 1 ||
+                  loading
+                }
+                onClick={() =>
+                  setPage(
+                    (previous) =>
+                      previous - 1,
+                  )
+                }
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Página anterior"
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </button>
+
+              {/* PÁGINA */}
 
               <span className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700">
                 {page}
@@ -515,15 +1027,21 @@ export default function DetalleAccionPage() {
                 de {totalPages}
               </span>
 
+              {/* SIGUIENTE */}
+
               <button
                 type="button"
                 disabled={
-                  loading ||
-                  (pagination?.totalPages
-                    ? page >= pagination.totalPages
-                    : detalles.length < limit)
+                  page >=
+                    totalPages ||
+                  loading
                 }
-                onClick={() => setPage((prev) => prev + 1)}
+                onClick={() =>
+                  setPage(
+                    (previous) =>
+                      previous + 1,
+                  )
+                }
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Página siguiente"
               >
@@ -534,17 +1052,37 @@ export default function DetalleAccionPage() {
         </div>
       </div>
 
+      {/* ======================================================
+          MODAL
+          ====================================================== */}
+
       <DetalleAccionModal
         open={modalOpen}
-        detalle={selectedDetalle}
-        onClose={closeModal}
-        onSuccess={handleSuccess}
+        detalle={
+          selectedDetalle
+        }
+        onClose={
+          closeModal
+        }
+        onSuccess={
+          handleSuccess
+        }
       />
     </section>
   );
 }
 
-function MetricCard({ label, value, icon: Icon, iconClass }) {
+/**
+ * ============================================================
+ * TARJETA DE MÉTRICA
+ * ============================================================
+ */
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  iconClass,
+}) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
@@ -552,10 +1090,15 @@ function MetricCard({ label, value, icon: Icon, iconClass }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {value}
+          </p>
         </div>
 
-        <div className={`rounded-full p-3 ${iconClass}`}>
+        <div
+          className={`rounded-full p-3 ${iconClass}`}
+        >
           <Icon className="h-6 w-6" />
         </div>
       </div>

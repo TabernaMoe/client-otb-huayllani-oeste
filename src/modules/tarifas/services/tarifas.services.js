@@ -2,70 +2,197 @@ import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
 
 export class TarifasServices {
-  static async getAll(page = 1, limit = 5, search = '', estado = true) {
+  /**
+   * ============================================================
+   * OBTENER TARIFAS
+   * ============================================================
+   *
+   * GET /admin/tarifa
+   */
+  static async getAll(
+    page = 1,
+    limit = 10,
+    search = '',
+    estado = '',
+  ) {
     try {
-      const response = await api.get('/admin/tarifa', {
-        params: { page, limit, search, estado },
-      });
+      const params = {
+        page: Math.max(
+          1,
+          Number.parseInt(page, 10) || 1,
+        ),
 
-      return response.data;
+        limit: Math.max(
+          1,
+          Number.parseInt(limit, 10) || 10,
+        ),
+
+        search: String(search || '').trim(),
+      };
+
+      /**
+       * true  -> activas
+       * false -> inactivas
+       * ''    -> todas
+       */
+      if (typeof estado === 'boolean') {
+        params.estado = estado;
+      }
+
+      const { data } = await api.get(
+        '/admin/tarifa',
+        {
+          params,
+        },
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
-  static async getForSelect(search = '') {
-    try {
-      const response = await api.get('/admin/tarifa/select', {
-        params: { search },
-      });
-
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
+  /**
+   * ============================================================
+   * OBTENER TARIFA POR ID
+   * ============================================================
+   *
+   * GET /admin/tarifa/:id
+   */
   static async getById(id) {
     try {
-      const response = await api.get(`/admin/tarifa/${id}`);
-      return response.data;
+      const { data } = await api.get(
+        `/admin/tarifa/${id}`,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
+  /**
+   * ============================================================
+   * CREAR TARIFA
+   * ============================================================
+   *
+   * POST /admin/tarifa
+   *
+   * {
+   *   nombre_tarifa: "Empresaria",
+   *   rangosTarifa: [
+   *     {
+   *       consumo_minimo: 0,
+   *       consumo_maximo: 10,
+   *       precio: 10
+   *     },
+   *     {
+   *       consumo_minimo: 31,
+   *       consumo_maximo: null,
+   *       precio: 40
+   *     }
+   *   ]
+   * }
+   */
   static async create(payload) {
     try {
-      const response = await api.post('/admin/tarifa', payload);
-      return response.data;
+      const cleanPayload = {
+        nombre_tarifa: String(
+          payload.nombre_tarifa || '',
+        ).trim(),
+
+        rangosTarifa: (
+          payload.rangosTarifa || []
+        ).map((rango) => ({
+          consumo_minimo: Number(
+            rango.consumo_minimo,
+          ),
+
+          consumo_maximo:
+            rango.consumo_maximo === null ||
+            rango.consumo_maximo === ''
+              ? null
+              : Number(
+                  rango.consumo_maximo,
+                ),
+
+          precio: Number(
+            rango.precio,
+          ),
+        })),
+      };
+
+      const { data } = await api.post(
+        '/admin/tarifa',
+        cleanPayload,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
+  /**
+   * ============================================================
+   * ACTUALIZAR TARIFA
+   * ============================================================
+   *
+   * PATCH /admin/tarifa/:id
+   */
   static async update(id, payload) {
     try {
-      const response = await api.patch(`/admin/tarifa/${id}`, payload);
-      return response.data;
+      const cleanPayload = {
+        nombre_tarifa: String(
+          payload.nombre_tarifa || '',
+        ).trim(),
+
+        rangosTarifa: (
+          payload.rangosTarifa || []
+        ).map((rango) => ({
+          consumo_minimo: Number(
+            rango.consumo_minimo,
+          ),
+
+          consumo_maximo:
+            rango.consumo_maximo === null ||
+            rango.consumo_maximo === ''
+              ? null
+              : Number(
+                  rango.consumo_maximo,
+                ),
+
+          precio: Number(
+            rango.precio,
+          ),
+        })),
+      };
+
+      const { data } = await api.patch(
+        `/admin/tarifa/${id}`,
+        cleanPayload,
+      );
+
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
-  static async delete(id) {
+  /**
+   * ============================================================
+   * CAMBIAR ESTADO
+   * ============================================================
+   *
+   * PATCH /admin/tarifa/cambiar-estado/:id
+   */
+  static async changeEstado(id) {
     try {
-      const response = await api.delete(`/admin/tarifa/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
+      const { data } = await api.patch(
+        `/admin/tarifa/cambiar-estado/${id}`,
+      );
 
-  static async toggleStatus(id) {
-    try {
-      const response = await api.patch(`/admin/tarifa/toggle-status/${id}`);
-      return response.data;
+      return data;
     } catch (error) {
       return toServiceError(error);
     }

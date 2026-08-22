@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
+
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -10,17 +14,22 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
-import { DetalleAccionServices } from '../services/detalleAccion.services';
-import { validateDetalleAccionForm } from '../schema/detalleAccion.schema';
 import { toast } from 'react-toastify';
 
+import { DetalleAccionServices } from '../services/detalleAccion.services';
+
+import { validateDetalleAccionForm } from '../schema/detalleAccion.schema';
+
 const initialForm = {
+  tipo_accion_id: '',
   nombre_accion: '',
   precio_accion: '',
   tipo_cobro: '',
 };
 
-const inputClass = (hasError = false) =>
+const inputClass = (
+  hasError = false,
+) =>
   `w-full rounded-lg border bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 ${
     hasError
       ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
@@ -33,119 +42,272 @@ export default function DetalleAccionModal({
   onClose,
   onSuccess,
 }) {
-  const isEdit = Boolean(detalle);
+  const isEdit =
+    Boolean(detalle);
 
-  const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [dataTipoAccion, setDataTipoAccion] = useState([]);
+  const [
+    form,
+    setForm,
+  ] = useState(initialForm);
 
+  const [
+    errors,
+    setErrors,
+  ] = useState({});
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    loadingTipos,
+    setLoadingTipos,
+  ] = useState(false);
+
+  const [
+    message,
+    setMessage,
+  ] = useState('');
+
+  const [
+    tiposAccion,
+    setTiposAccion,
+  ] = useState([]);
+
+  /**
+   * ============================================================
+   * ABRIR MODAL
+   * ============================================================
+   */
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
-    const fetchData = async () => {
-      try {
-        const resTipoAccion = await DetalleAccionServices.getSelectTipoAccion();
-
-        if (!resTipoAccion.ok) {
-          throw new Error(e.message || 'Error al cargar lo tipo accion');
-        }
-
-        setDataTipoAccion(
-          Array.isArray(resTipoAccion.data) ? resTipoAccion.data : [],
-        );
-        if (detalle) {
-          setForm({
-            nombre_accion:
-              detalle.nombre_accion || detalle.nombre_detalle_accion || '',
-            precio_accion:
-              detalle.precio_accion ?? detalle.costo_detalles_accion ?? '',
-            tipo_cobro: detalle.tipo_cobro || '',
-            tipo_accion_id: detalle.tipo_accion_id || '',
-          });
-        } else {
-          setForm(initialForm);
-        }
-      } catch (e) {
-        toast.error(e.message || 'Algo salio mal intentelo mas tarde');
-      }
-    };
-    fetchData();
     setErrors({});
     setMessage('');
-  }, [open, detalle]);
 
-  if (!open) return null;
+    /**
+     * EDITAR
+     */
+    if (detalle) {
+      setForm({
+        tipo_accion_id:
+          detalle.tipo_accion_id ??
+          '',
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+        nombre_accion:
+          detalle.nombre_accion ??
+          '',
+
+        precio_accion:
+          detalle.precio_accion ??
+          '',
+
+        tipo_cobro:
+          detalle.tipo_cobro ??
+          '',
+      });
+    } else {
+      /**
+       * CREAR
+       */
+      setForm(initialForm);
+    }
+  }, [
+    open,
+    detalle,
+  ]);
+
+  /**
+   * ============================================================
+   * CARGAR TIPOS DE ACCIÓN
+   * ============================================================
+   */
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchTiposAccion =
+      async () => {
+        try {
+          setLoadingTipos(true);
+
+          const response =
+            await DetalleAccionServices.getTiposAccion();
+
+          if (!response?.ok) {
+            toast.error(
+              response?.message ||
+                'Error al cargar los tipos de acción',
+            );
+
+            return;
+          }
+
+          if (!cancelled) {
+            setTiposAccion(
+              Array.isArray(
+                response.data,
+              )
+                ? response.data
+                : [],
+            );
+          }
+        } catch (error) {
+          toast.error(
+            error?.message ||
+              'Error al cargar los tipos de acción',
+          );
+        } finally {
+          if (!cancelled) {
+            setLoadingTipos(false);
+          }
+        }
+      };
+
+    fetchTiposAccion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  /**
+   * ============================================================
+   * CAMBIO DE INPUTS
+   * ============================================================
+   */
+  const handleChange = (
+    event,
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
 
     setForm((previous) => ({
       ...previous,
+
       [name]: value,
     }));
 
     setErrors((previous) => ({
       ...previous,
+
       [name]: '',
     }));
 
     setMessage('');
   };
 
-  const buildPayload = () => ({
-    nombre_accion: form.nombre_accion.trim(),
-    precio_accion: Number(form.precio_accion),
-    tipo_cobro: form.tipo_cobro,
-    tipo_accion_id: form.tipo_accion_id,
-  });
-
+  /**
+   * ============================================================
+   * CERRAR
+   * ============================================================
+   */
   const handleClose = () => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
+
     onClose();
   };
 
-  const handleSubmit = async (event) => {
+  /**
+   * ============================================================
+   * GUARDAR
+   * ============================================================
+   */
+  const handleSubmit = async (
+    event,
+  ) => {
     event.preventDefault();
 
-    const validation = validateDetalleAccionForm(form);
+    const validation =
+      validateDetalleAccionForm(
+        form,
+      );
 
     if (!validation.isValid) {
-      setErrors(validation.errors);
-      setMessage('Revise los campos marcados antes de guardar.');
+      setErrors(
+        validation.errors,
+      );
+
+      setMessage(
+        'Revise los campos marcados antes de guardar.',
+      );
+
       return;
     }
 
-    setLoading(true);
-    setMessage('');
+    try {
+      setLoading(true);
 
-    const payload = buildPayload();
+      setMessage('');
 
-    const response = isEdit
-      ? await DetalleAccionServices.update(detalle.id, payload)
-      : await DetalleAccionServices.create(payload);
+      const response = isEdit
+        ? await DetalleAccionServices.update(
+            detalle.id,
+            validation.data,
+          )
+        : await DetalleAccionServices.create(
+            validation.data,
+          );
 
-    setLoading(false);
+      if (!response?.ok) {
+        setMessage(
+          response?.message ||
+            'No se pudo guardar el detalle',
+        );
 
-    if (!response.ok) {
-      setMessage(response.message || 'No se pudo guardar el detalle');
-      return;
+        return;
+      }
+
+      toast.success(
+        response?.message ||
+          (
+            isEdit
+              ? 'Detalle actualizado correctamente'
+              : 'Detalle registrado correctamente'
+          ),
+      );
+
+      onSuccess?.();
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al guardar el detalle',
+      );
+    } finally {
+      setLoading(false);
     }
-
-    onSuccess?.();
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
           handleClose();
         }
       }}
     >
       <div className="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+        {/* ================= HEADER ================= */}
+
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="hidden rounded-full bg-emerald-50 p-3 text-emerald-700 sm:block">
@@ -154,10 +316,16 @@ export default function DetalleAccionModal({
 
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                <span>Detalles de acción</span>
+                <span>
+                  Detalles de acción
+                </span>
+
                 <span>/</span>
+
                 <span className="text-emerald-700">
-                  {isEdit ? 'Editar' : 'Nuevo'}
+                  {isEdit
+                    ? 'Editar'
+                    : 'Nuevo'}
                 </span>
               </div>
 
@@ -168,28 +336,36 @@ export default function DetalleAccionModal({
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Configura el concepto, precio y frecuencia del cobro.
+                Configure el tipo de acción,
+                concepto, precio y tipo de cobro.
               </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={handleClose}
+            onClick={
+              handleClose
+            }
             disabled={loading}
-            className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50"
-            aria-label="Cerrar modal"
+            className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
+        {/* ================= FORMULARIO ================= */}
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-6 p-6">
+
             {message && (
               <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 <ExclamationCircleIcon className="mt-0.5 h-5 w-5 shrink-0" />
-                <p className="font-medium">{message}</p>
+
+                <p className="font-medium">
+                  {message}
+                </p>
               </div>
             )}
 
@@ -205,16 +381,144 @@ export default function DetalleAccionModal({
                   </h3>
 
                   <p className="mt-0.5 text-sm text-slate-500">
-                    Define el nombre y el valor del detalle.
+                    Defina los datos del detalle de acción.
                   </p>
                 </div>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
+
+                {/* TIPO ACCIÓN */}
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Tipo de acción
+
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <div className="relative">
+                    <ReceiptPercentIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                    <select
+                      name="tipo_accion_id"
+                      value={
+                        form.tipo_accion_id
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      disabled={
+                        loadingTipos
+                      }
+                      className={`${inputClass(
+                        Boolean(
+                          errors.tipo_accion_id,
+                        ),
+                      )} appearance-none pl-11 pr-10 disabled:bg-slate-100`}
+                    >
+                      <option value="">
+                        Seleccione tipo de acción
+                      </option>
+
+                      {tiposAccion.map(
+                        (tipo) => (
+                          <option
+                            key={
+                              tipo.value
+                            }
+                            value={
+                              tipo.value
+                            }
+                          >
+                            {
+                              tipo.label
+                            }
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  </div>
+
+                  {errors.tipo_accion_id && (
+                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+                      <ExclamationCircleIcon className="h-4 w-4" />
+
+                      {
+                        errors.tipo_accion_id
+                      }
+                    </p>
+                  )}
+                </div>
+
+                {/* TIPO COBRO */}
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Tipo de cobro
+
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <div className="relative">
+                    <ReceiptPercentIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                    <select
+                      name="tipo_cobro"
+                      value={
+                        form.tipo_cobro
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      className={`${inputClass(
+                        Boolean(
+                          errors.tipo_cobro,
+                        ),
+                      )} appearance-none pl-11 pr-10`}
+                    >
+                      <option value="">
+                        Seleccione tipo de cobro
+                      </option>
+
+                      <option value="UNICO">
+                        Único
+                      </option>
+
+                      <option value="MENSUAL">
+                        Mensual
+                      </option>
+                    </select>
+
+                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  </div>
+
+                  {errors.tipo_cobro && (
+                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+                      <ExclamationCircleIcon className="h-4 w-4" />
+
+                      {
+                        errors.tipo_cobro
+                      }
+                    </p>
+                  )}
+                </div>
+
+                {/* NOMBRE */}
+
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Nombre del detalle
-                    <span className="ml-1 text-red-500">*</span>
+
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
                   </label>
 
                   <div className="relative">
@@ -223,27 +527,39 @@ export default function DetalleAccionModal({
                     <input
                       type="text"
                       name="nombre_accion"
-                      value={form.nombre_accion}
-                      onChange={handleChange}
-                      placeholder="Ej. Cuota de conexión"
+                      value={
+                        form.nombre_accion
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Ej. Carnet socio"
                       className={`${inputClass(
-                        Boolean(errors.nombre_accion),
+                        Boolean(
+                          errors.nombre_accion,
+                        ),
                       )} pl-11`}
                     />
                   </div>
 
                   {errors.nombre_accion && (
-                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
-                      <ExclamationCircleIcon className="h-4 w-4" />
-                      {errors.nombre_accion}
+                    <p className="mt-1.5 text-xs font-medium text-red-600">
+                      {
+                        errors.nombre_accion
+                      }
                     </p>
                   )}
                 </div>
 
+                {/* PRECIO */}
+
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Precio
-                    <span className="ml-1 text-red-500">*</span>
+
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
                   </label>
 
                   <div className="relative">
@@ -254,92 +570,33 @@ export default function DetalleAccionModal({
                       name="precio_accion"
                       min="0"
                       step="0.01"
-                      value={form.precio_accion}
-                      onChange={handleChange}
-                      placeholder="Ej. 100.00"
+                      value={
+                        form.precio_accion
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="100.00"
                       className={`${inputClass(
-                        Boolean(errors.precio_accion),
+                        Boolean(
+                          errors.precio_accion,
+                        ),
                       )} pl-11`}
                     />
                   </div>
 
                   {errors.precio_accion && (
-                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
-                      <ExclamationCircleIcon className="h-4 w-4" />
-                      {errors.precio_accion}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Tipo de accion
-                    <span className="ml-1 text-red-500">*</span>
-                  </label>
-
-                  <div className="relative">
-                    <ReceiptPercentIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-
-                    <select
-                      name="tipo_accion_id"
-                      value={form.tipo_accion_id}
-                      onChange={handleChange}
-                      className={`${inputClass(
-                        Boolean(errors.tipo_accion_id),
-                      )} appearance-none pl-11 pr-10`}
-                    >
-                      <option value="">Seleccione tipo tipo cobro</option>
-                      {dataTipoAccion?.map((row) => (
-                        <option key={row.value} value={row.value}>
-                          {row.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
-
-                  {errors.tipo_accion_id && (
-                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
-                      <ExclamationCircleIcon className="h-4 w-4" />
-                      {errors.tipo_accion_id}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Tipo de cobro
-                    <span className="ml-1 text-red-500">*</span>
-                  </label>
-
-                  <div className="relative">
-                    <ReceiptPercentIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-
-                    <select
-                      name="tipo_cobro"
-                      value={form.tipo_cobro}
-                      onChange={handleChange}
-                      className={`${inputClass(
-                        Boolean(errors.tipo_cobro),
-                      )} appearance-none pl-11 pr-10`}
-                    >
-                      <option value="">Seleccione tipo de cobro</option>
-                      <option value="UNICO">Único</option>
-                      <option value="MENSUAL">Mensual</option>
-                    </select>
-
-                    <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </div>
-
-                  {errors.tipo_cobro && (
-                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
-                      <ExclamationCircleIcon className="h-4 w-4" />
-                      {errors.tipo_cobro}
+                    <p className="mt-1.5 text-xs font-medium text-red-600">
+                      {
+                        errors.precio_accion
+                      }
                     </p>
                   )}
                 </div>
               </div>
             </section>
+
+            {/* INFORMACIÓN */}
 
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
               <div className="flex items-start gap-3">
@@ -353,38 +610,50 @@ export default function DetalleAccionModal({
                   </h4>
 
                   <p className="mt-1 text-xs leading-5 text-blue-800/80">
-                    El cobro único se genera una sola vez. El cobro mensual
-                    puede utilizarse para conceptos periódicos.
+                    El cobro único se genera una sola vez.
+                    El cobro mensual se utiliza para
+                    conceptos periódicos.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* ================= BOTONES ================= */}
+
           <div className="flex flex-col-reverse gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={
+                handleClose
+              }
               disabled={loading}
-              className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={
+                loading ||
+                loadingTipos
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
             >
               {loading ? (
                 <>
                   <ArrowPathIcon className="h-5 w-5 animate-spin" />
+
                   Guardando...
                 </>
               ) : (
                 <>
                   <CheckCircleIcon className="h-5 w-5" />
-                  {isEdit ? 'Guardar cambios' : 'Registrar detalle'}
+
+                  {isEdit
+                    ? 'Guardar cambios'
+                    : 'Registrar detalle'}
                 </>
               )}
             </button>

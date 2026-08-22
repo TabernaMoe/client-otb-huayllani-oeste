@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -11,7 +12,10 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
+import { toast } from 'react-toastify';
+
 import { TarifasServices } from '../services/tarifas.services';
+
 import { validateTarifaForm } from '../schema/tarifas.schema';
 
 const emptyRango = {
@@ -22,10 +26,17 @@ const emptyRango = {
 
 const initialForm = {
   nombre_tarifa: '',
-  rangosTarifa: [{ ...emptyRango }],
+
+  rangosTarifa: [
+    {
+      ...emptyRango,
+    },
+  ],
 };
 
-const inputClass = (hasError = false) =>
+const inputClass = (
+  hasError = false,
+) =>
   `w-full rounded-lg border bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 ${
     hasError
       ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50'
@@ -38,145 +49,360 @@ export default function TarifaModal({
   onClose,
   onSuccess,
 }) {
-  const isEdit = Boolean(tarifa);
+  /**
+   * Si existe tarifa estamos editando.
+   */
+  const isEdit =
+    Boolean(tarifa);
 
-  const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [form, setForm] =
+    useState(initialForm);
 
+  const [errors, setErrors] =
+    useState({});
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState('');
+
+  /**
+   * ============================================================
+   * CARGAR FORMULARIO
+   * ============================================================
+   */
   useEffect(() => {
-    if (!open) return;
-
-    if (tarifa) {
-      const rangos =
-        tarifa.rangosTarifa ||
-        tarifa.rangos_tarifa ||
-        tarifa.rangos ||
-        tarifa.tarifa_rangos ||
-        [];
-
-      setForm({
-        nombre_tarifa: tarifa.nombre_tarifa || '',
-        rangosTarifa:
-          rangos.length > 0
-            ? rangos.map((rango) => ({
-                consumo_minimo:
-                  rango.consumo_minimo ?? rango.rango_min ?? '',
-                consumo_maximo:
-                  rango.consumo_maximo ?? rango.rango_max ?? '',
-                precio:
-                  rango.precio ?? rango.precio_unitario ?? '',
-              }))
-            : [{ ...emptyRango }],
-      });
-    } else {
-      setForm({
-        nombre_tarifa: '',
-        rangosTarifa: [{ ...emptyRango }],
-      });
+    if (!open) {
+      return;
     }
 
     setErrors({});
+
     setMessage('');
-  }, [open, tarifa]);
 
-  if (!open) return null;
+    /**
+     * CREAR
+     */
+    if (!tarifa) {
+      setForm({
+        nombre_tarifa: '',
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+        rangosTarifa: [
+          {
+            ...emptyRango,
+          },
+        ],
+      });
+
+      return;
+    }
+
+    /**
+     * EDITAR
+     */
+    const rangos = Array.isArray(
+      tarifa.rangosTarifa,
+    )
+      ? tarifa.rangosTarifa
+      : [];
+
+    setForm({
+      nombre_tarifa:
+        tarifa.nombre_tarifa || '',
+
+      rangosTarifa:
+        rangos.length > 0
+          ? rangos.map(
+              (rango) => ({
+                consumo_minimo:
+                  rango.consumo_minimo ??
+                  '',
+
+                /**
+                 * null se transforma en ''
+                 * para mostrar input vacío.
+                 */
+                consumo_maximo:
+                  rango.consumo_maximo ??
+                  '',
+
+                precio:
+                  rango.precio ??
+                  '',
+              }),
+            )
+          : [
+              {
+                ...emptyRango,
+              },
+            ],
+    });
+  }, [
+    open,
+    tarifa,
+  ]);
+
+  if (!open) {
+    return null;
+  }
+
+  /**
+   * ============================================================
+   * NOMBRE DE TARIFA
+   * ============================================================
+   */
+  const handleChange = (
+    event,
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
 
     setForm((previous) => ({
       ...previous,
+
       [name]: value,
     }));
 
     setErrors((previous) => ({
       ...previous,
+
       [name]: '',
     }));
 
     setMessage('');
   };
 
-  const handleRangoChange = (index, field, value) => {
+  /**
+   * ============================================================
+   * MODIFICAR RANGO
+   * ============================================================
+   */
+  const handleRangoChange = (
+    index,
+    field,
+    value,
+  ) => {
     setForm((previous) => ({
       ...previous,
-      rangosTarifa: previous.rangosTarifa.map((rango, i) =>
-        i === index
-          ? {
-              ...rango,
-              [field]: value,
-            }
-          : rango,
-      ),
+
+      rangosTarifa:
+        previous.rangosTarifa.map(
+          (rango, i) =>
+            i === index
+              ? {
+                  ...rango,
+
+                  [field]: value,
+                }
+              : rango,
+        ),
     }));
 
     setErrors((previous) => ({
       ...previous,
+
       [`${field}_${index}`]: '',
+
       rangosTarifa: '',
     }));
 
     setMessage('');
   };
 
+  /**
+   * ============================================================
+   * AGREGAR NUEVO RANGO
+   * ============================================================
+   */
   const addRango = () => {
+    const rangos =
+      form.rangosTarifa;
+
+    const ultimo =
+      rangos[
+        rangos.length - 1
+      ];
+
+    /**
+     * Para agregar otro rango,
+     * el actual tiene que tener
+     * consumo máximo.
+     */
+    if (
+      ultimo.consumo_maximo === '' ||
+      ultimo.consumo_maximo === null
+    ) {
+      setMessage(
+        'Debe indicar el consumo máximo del último rango antes de agregar otro.',
+      );
+
+      return;
+    }
+
+    const maximo = Number(
+      ultimo.consumo_maximo,
+    );
+
+    if (
+      Number.isNaN(maximo)
+    ) {
+      setMessage(
+        'El consumo máximo del último rango no es válido.',
+      );
+
+      return;
+    }
+
+    /**
+     * El siguiente comienza automáticamente
+     * en máximo anterior + 1.
+     *
+     * Ejemplo:
+     *
+     * 0 - 10
+     *
+     * siguiente:
+     *
+     * 11 - ...
+     */
     setForm((previous) => ({
       ...previous,
+
       rangosTarifa: [
         ...previous.rangosTarifa,
-        { ...emptyRango },
+
+        {
+          consumo_minimo:
+            maximo + 1,
+
+          consumo_maximo: '',
+
+          precio: '',
+        },
       ],
     }));
+
+    setMessage('');
   };
 
-  const removeRango = (index) => {
+  /**
+   * ============================================================
+   * ELIMINAR RANGO
+   * ============================================================
+   */
+  const removeRango = (
+    index,
+  ) => {
+    if (
+      form.rangosTarifa.length <= 1
+    ) {
+      return;
+    }
+
     setForm((previous) => ({
       ...previous,
-      rangosTarifa: previous.rangosTarifa.filter(
-        (_, i) => i !== index,
-      ),
+
+      rangosTarifa:
+        previous.rangosTarifa.filter(
+          (_, i) =>
+            i !== index,
+        ),
     }));
+
+    setErrors({});
+
+    setMessage('');
   };
 
-  const buildPayload = () => ({
-    nombre_tarifa: form.nombre_tarifa.trim(),
-    rangosTarifa: form.rangosTarifa.map((rango) => ({
-      consumo_minimo: Number(rango.consumo_minimo),
-      consumo_maximo: Number(rango.consumo_maximo),
-      precio: Number(rango.precio),
-    })),
-  });
+  /**
+   * ============================================================
+   * CERRAR
+   * ============================================================
+   */
+  const handleClose = () => {
+    if (loading) {
+      return;
+    }
 
-  const handleSubmit = async (event) => {
+    onClose();
+  };
+
+  /**
+   * ============================================================
+   * GUARDAR
+   * ============================================================
+   */
+  const handleSubmit = async (
+    event,
+  ) => {
     event.preventDefault();
 
-    const validation = validateTarifaForm(form);
+    const validation =
+      validateTarifaForm(form);
 
     if (!validation.isValid) {
-      setErrors(validation.errors);
-      setMessage('Revise los campos marcados antes de guardar.');
+      setErrors(
+        validation.errors,
+      );
+
+      setMessage(
+        'Revise los campos marcados antes de guardar.',
+      );
+
       return;
     }
 
-    setLoading(true);
-    setMessage('');
+    try {
+      setLoading(true);
 
-    const payload = buildPayload();
+      setMessage('');
 
-    const response = isEdit
-      ? await TarifasServices.update(tarifa.id, payload)
-      : await TarifasServices.create(payload);
+      /**
+       * EDITAR
+       */
+      const response = isEdit
+        ? await TarifasServices.update(
+            tarifa.id,
+            validation.data,
+          )
 
-    setLoading(false);
+        /**
+         * CREAR
+         */
+        : await TarifasServices.create(
+            validation.data,
+          );
 
-    if (!response.ok) {
-      setMessage(response.message || 'No se pudo guardar la tarifa');
-      return;
+      if (!response?.ok) {
+        setMessage(
+          response?.message ||
+            'No se pudo guardar la tarifa',
+        );
+
+        return;
+      }
+
+      toast.success(
+        response?.message ||
+          (
+            isEdit
+              ? 'Tarifa actualizada correctamente'
+              : 'Tarifa creada correctamente'
+          ),
+      );
+
+      onSuccess?.();
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al guardar la tarifa',
+      );
+    } finally {
+      setLoading(false);
     }
-
-    onSuccess?.();
   };
 
   return (
@@ -184,14 +410,17 @@ export default function TarifaModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]"
       onMouseDown={(event) => {
         if (
-          event.target === event.currentTarget &&
-          !loading
+          event.target ===
+            event.currentTarget
         ) {
-          onClose();
+          handleClose();
         }
       }}
     >
       <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+        {/* ================= HEADER ================= */}
+
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="hidden rounded-full bg-emerald-50 p-3 text-emerald-700 sm:block">
@@ -200,44 +429,68 @@ export default function TarifaModal({
 
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                <span>Tarifas</span>
+                <span>
+                  Tarifas
+                </span>
+
                 <span>/</span>
+
                 <span className="text-emerald-700">
-                  {isEdit ? 'Editar' : 'Nueva'}
+                  {isEdit
+                    ? 'Editar'
+                    : 'Nueva'}
                 </span>
               </div>
 
               <h2 className="mt-1 text-xl font-bold text-slate-900">
-                {isEdit ? 'Editar tarifa' : 'Registrar nueva tarifa'}
+                {isEdit
+                  ? 'Editar tarifa'
+                  : 'Registrar tarifa'}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Configura el nombre y los rangos de consumo aplicables.
+                Configure el nombre y
+                los rangos de consumo.
               </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={
+              handleClose
+            }
             disabled={loading}
             className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+            aria-label="Cerrar modal"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
+        {/* ================= FORMULARIO ================= */}
+
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           className="max-h-[calc(92vh-90px)] overflow-y-auto"
         >
-          <div className="space-y-6 p-6">
+          <div className="space-y-7 p-6">
+
+            {/* MENSAJE */}
+
             {message && (
               <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 <ExclamationCircleIcon className="mt-0.5 h-5 w-5 shrink-0" />
-                <span>{message}</span>
+
+                <span>
+                  {message}
+                </span>
               </div>
             )}
+
+            {/* ================= NOMBRE ================= */}
 
             <section>
               <div className="mb-4 flex items-start gap-3">
@@ -251,7 +504,8 @@ export default function TarifaModal({
                   </h3>
 
                   <p className="mt-0.5 text-sm text-slate-500">
-                    Define el nombre que identificará a la tarifa.
+                    Ingrese el nombre
+                    identificador de la tarifa.
                   </p>
                 </div>
               </div>
@@ -259,7 +513,10 @@ export default function TarifaModal({
               <div className="max-w-xl">
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Nombre de tarifa
-                  <span className="ml-1 text-red-500">*</span>
+
+                  <span className="ml-1 text-red-500">
+                    *
+                  </span>
                 </label>
 
                 <div className="relative">
@@ -268,25 +525,37 @@ export default function TarifaModal({
                   <input
                     type="text"
                     name="nombre_tarifa"
-                    value={form.nombre_tarifa}
-                    onChange={handleChange}
-                    placeholder="Ej. Domiciliaria, Empresa, Social"
+                    value={
+                      form.nombre_tarifa
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Ej. Empresaria"
                     className={`${inputClass(
-                      Boolean(errors.nombre_tarifa),
+                      Boolean(
+                        errors.nombre_tarifa,
+                      ),
                     )} pl-11`}
                   />
                 </div>
 
                 {errors.nombre_tarifa && (
                   <p className="mt-1.5 text-xs font-medium text-red-600">
-                    {errors.nombre_tarifa}
+                    {
+                      errors.nombre_tarifa
+                    }
                   </p>
                 )}
               </div>
             </section>
 
+            <div className="border-t border-slate-100" />
+
+            {/* ================= RANGOS ================= */}
+
             <section>
-              <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+              <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
                 <div className="flex items-start gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">
                     2
@@ -298,163 +567,193 @@ export default function TarifaModal({
                     </h3>
 
                     <p className="mt-0.5 text-sm text-slate-500">
-                      Define los tramos y el precio correspondiente.
+                      Configure mínimo,
+                      máximo y precio.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={addRango}
+                  onClick={
+                    addRango
+                  }
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                 >
                   <PlusIcon className="h-5 w-5" />
+
                   Agregar rango
                 </button>
               </div>
 
               {errors.rangosTarifa && (
-                <p className="mb-3 text-sm text-red-600">
-                  {errors.rangosTarifa}
+                <p className="mb-3 text-sm font-medium text-red-600">
+                  {
+                    errors.rangosTarifa
+                  }
                 </p>
               )}
 
-              <div className="space-y-3">
-                {form.rangosTarifa.map((rango, index) => (
-                  <div
-                    key={index}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
-                  >
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-white p-2 text-emerald-700 shadow-sm">
-                          <ScaleIcon className="h-4 w-4" />
-                        </span>
+              <div className="space-y-4">
+                {form.rangosTarifa.map(
+                  (
+                    rango,
+                    index,
+                  ) => {
+                    const esUltimo =
+                      index ===
+                      form
+                        .rangosTarifa
+                        .length -
+                        1;
 
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">
-                            Rango {index + 1}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Configura mínimo, máximo y precio.
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeRango(index)}
-                        disabled={form.rangosTarifa.length === 1}
-                        className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        title="Eliminar rango"
+                    return (
+                      <div
+                        key={
+                          index
+                        }
+                        className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
                       >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
+                        <div className="mb-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-white p-2 text-emerald-700 shadow-sm">
+                              <ScaleIcon className="h-4 w-4" />
+                            </span>
 
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                          Consumo mínimo
-                        </label>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800">
+                                Rango{' '}
+                                {index +
+                                  1}
+                              </p>
 
-                        <input
-                          type="number"
-                          value={rango.consumo_minimo}
-                          onChange={(event) =>
-                            handleRangoChange(
-                              index,
-                              'consumo_minimo',
-                              event.target.value,
-                            )
-                          }
-                          placeholder="0"
-                          className={inputClass(
-                            Boolean(
-                              errors[`consumo_minimo_${index}`],
-                            ),
-                          )}
-                        />
+                              {esUltimo && (
+                                <p className="text-xs text-slate-500">
+                                  El máximo puede
+                                  quedar vacío para
+                                  representar sin límite.
+                                </p>
+                              )}
+                            </div>
+                          </div>
 
-                        {errors[`consumo_minimo_${index}`] && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors[`consumo_minimo_${index}`]}
-                          </p>
-                        )}
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeRango(
+                                index,
+                              )
+                            }
+                            disabled={
+                              form
+                                .rangosTarifa
+                                .length ===
+                              1
+                            }
+                            className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Eliminar rango"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
 
-                      <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                          Consumo máximo
-                        </label>
+                        <div className="grid gap-4 md:grid-cols-3">
 
-                        <input
-                          type="number"
-                          value={rango.consumo_maximo}
-                          onChange={(event) =>
-                            handleRangoChange(
-                              index,
-                              'consumo_maximo',
-                              event.target.value,
-                            )
-                          }
-                          placeholder="10"
-                          className={inputClass(
-                            Boolean(
-                              errors[`consumo_maximo_${index}`],
-                            ),
-                          )}
-                        />
+                          {/* MÍNIMO */}
 
-                        {errors[`consumo_maximo_${index}`] && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors[`consumo_maximo_${index}`]}
-                          </p>
-                        )}
-                      </div>
+                          <RangeInput
+                            label="Consumo mínimo"
+                            value={
+                              rango.consumo_minimo
+                            }
+                            error={
+                              errors[
+                                `consumo_minimo_${index}`
+                              ]
+                            }
+                            onChange={(
+                              value,
+                            ) =>
+                              handleRangoChange(
+                                index,
+                                'consumo_minimo',
+                                value,
+                              )
+                            }
+                          />
 
-                      <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                          Precio
-                        </label>
+                          {/* MÁXIMO */}
 
-                        <div className="relative">
-                          <BanknotesIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                          <RangeInput
+                            label={
+                              esUltimo
+                                ? 'Consumo máximo (opcional)'
+                                : 'Consumo máximo'
+                            }
+                            value={
+                              rango.consumo_maximo
+                            }
+                            error={
+                              errors[
+                                `consumo_maximo_${index}`
+                              ]
+                            }
+                            placeholder={
+                              esUltimo
+                                ? 'Sin límite'
+                                : ''
+                            }
+                            onChange={(
+                              value,
+                            ) =>
+                              handleRangoChange(
+                                index,
+                                'consumo_maximo',
+                                value,
+                              )
+                            }
+                          />
 
-                          <input
-                            type="number"
-                            value={rango.precio}
-                            onChange={(event) =>
+                          {/* PRECIO */}
+
+                          <RangeInput
+                            label="Precio"
+                            value={
+                              rango.precio
+                            }
+                            error={
+                              errors[
+                                `precio_${index}`
+                              ]
+                            }
+                            step="0.01"
+                            onChange={(
+                              value,
+                            ) =>
                               handleRangoChange(
                                 index,
                                 'precio',
-                                event.target.value,
+                                value,
                               )
                             }
-                            placeholder="10"
-                            className={`${inputClass(
-                              Boolean(errors[`precio_${index}`]),
-                            )} pl-11`}
                           />
                         </div>
-
-                        {errors[`precio_${index}`] && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors[`precio_${index}`]}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  },
+                )}
               </div>
             </section>
           </div>
 
+          {/* ================= FOOTER ================= */}
+
           <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={
+                handleClose
+              }
               disabled={loading}
               className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
@@ -464,23 +763,71 @@ export default function TarifaModal({
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
             >
               {loading ? (
                 <>
                   <ArrowPathIcon className="h-5 w-5 animate-spin" />
+
                   Guardando...
                 </>
               ) : (
                 <>
                   <CheckCircleIcon className="h-5 w-5" />
-                  {isEdit ? 'Guardar cambios' : 'Registrar tarifa'}
+
+                  {isEdit
+                    ? 'Guardar cambios'
+                    : 'Registrar tarifa'}
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * INPUT DE RANGO
+ * ============================================================
+ */
+function RangeInput({
+  label,
+  value,
+  error,
+  onChange,
+  step = '1',
+  placeholder = '',
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+        {label}
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        step={step}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) =>
+          onChange(
+            event.target.value,
+          )
+        }
+        className={inputClass(
+          Boolean(error),
+        )}
+      />
+
+      {error && (
+        <p className="mt-1 text-xs font-medium text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

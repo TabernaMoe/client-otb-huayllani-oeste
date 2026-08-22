@@ -1,14 +1,11 @@
 import { z } from 'zod';
 
-// =========================
-// CERRAR PERIODO
-// =========================
 export const cerrarPeriodoSchema = z.object({
   id: z.coerce
     .number({
       required_error: 'El ID del periodo es obligatorio',
-      invalid_type_error: 'ID inválido',
+      invalid_type_error: 'El ID del periodo no es válido',
     })
-    .int('Debe ser un número entero')
-    .positive('Debe ser mayor a 0'),
+    .int('El ID debe ser un número entero')
+    .positive('El ID debe ser mayor a 0'),
 });

@@ -5,6 +5,7 @@ import {
   MagnifyingGlassIcon,
   PencilSquareIcon,
 } from '@heroicons/react/24/outline';
+
 import { TipoAccionServices as Servs } from '../tipoAccion.services';
 import DataTable from '../../../components/DataTable';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
@@ -12,11 +13,17 @@ import { toast } from 'react-toastify';
 import TipoAccionModal from './TipoAccionModal';
 
 export default function TipoAccion() {
-  const [filas, setFila] = useState([]);
+  const [filas, setFilas] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [searchInput, setSearchInput] = useState('');
 
-  const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
+  const {
+    closeModal,
+    isModalOpen,
+    modalState,
+    openModal,
+  } = useModalManager();
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -25,6 +32,11 @@ export default function TipoAccion() {
     totalPages: 1,
   });
 
+  /**
+   * ============================================================
+   * OBTENER TIPOS DE ACCIÓN
+   * ============================================================
+   */
   const fetchFilas = async () => {
     try {
       setLoading(true);
@@ -35,87 +47,191 @@ export default function TipoAccion() {
         searchInput,
       );
 
-      if (!response.ok) {
-        toast.error(response.message || 'Error al cargar datos');
+      if (!response?.ok) {
+        toast.error(
+          response?.message ||
+            'Error al cargar los tipos de acción',
+        );
+
+        setFilas([]);
+
         return;
       }
 
-      setFila(response?.data || []);
+      /**
+       * El backend responde:
+       *
+       * {
+       *   ok: true,
+       *   message: "...",
+       *   total: 1,
+       *   page: 1,
+       *   limit: 10,
+       *   totalPages: 1,
+       *   data: [...]
+       * }
+       */
+      setFilas(
+        Array.isArray(response.data)
+          ? response.data
+          : [],
+      );
 
       setPagination((previous) => ({
         ...previous,
-        page: response?.page || previous.page,
-        totalItems: response?.total || 0,
-        totalPages: response?.totalPages || 1,
+
+        page: Number(
+          response.page || previous.page,
+        ),
+
+        totalItems: Number(
+          response.total || 0,
+        ),
+
+        totalPages: Number(
+          response.totalPages || 1,
+        ),
       }));
     } catch (error) {
-      toast.error(error.message || 'Error al cargar datos');
+      toast.error(
+        error?.message ||
+          'Error al cargar los tipos de acción',
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Vuelve a consultar cuando cambia:
+   *
+   * - página
+   * - cantidad por página
+   * - búsqueda
+   */
   useEffect(() => {
     fetchFilas();
-  }, [pagination.page, pagination.limit, searchInput]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    searchInput,
+  ]);
 
+  /**
+   * ============================================================
+   * COLUMNAS
+   * ============================================================
+   */
   const columns = useMemo(
     () => [
       {
         accessorKey: 'nombre_tipo_accion',
-        header: 'Nombre tipo accion',
+
+        header: 'Tipo de acción',
+
+        cell: ({ row }) => (
+          <span className="font-semibold text-slate-800">
+            {row.original.nombre_tipo_accion}
+          </span>
+        ),
       },
 
       {
         id: 'acciones',
-        accessorKey: 'acciones',
+
         header: 'Acciones',
-        cell: ({ row }) => {
-          return (
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => openModal(MODALS.EDIT, row.original)}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <PencilSquareIcon className="h-4 w-4" />
-                Editar
-              </button>
-            </div>
-          );
-        },
+
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                openModal(
+                  MODALS.EDIT,
+                  row.original,
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              <PencilSquareIcon className="h-4 w-4" />
+
+              Editar
+            </button>
+          </div>
+        ),
       },
     ],
-    [],
+    [openModal],
   );
+
+  /**
+   * ============================================================
+   * BUSCADOR
+   * ============================================================
+   */
+  const handleSearch = (event) => {
+    setPagination((previous) => ({
+      ...previous,
+
+      page: 1,
+    }));
+
+    setSearchInput(event.target.value);
+  };
+
+  /**
+   * ============================================================
+   * LIMPIAR BÚSQUEDA
+   * ============================================================
+   */
+  const clearSearch = () => {
+    setSearchInput('');
+
+    setPagination((previous) => ({
+      ...previous,
+
+      page: 1,
+    }));
+  };
 
   return (
     <>
       <section className="space-y-5">
+
+        {/* ================= ENCABEZADO ================= */}
+
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <h2 className="text-xl font-bold text-slate-900">
-              Socios registrados
+              Tipos de acción
             </h2>
+
             <p className="mt-1 text-sm text-slate-500">
-              Administra la información y el estado de los socios.
+              Administra los tipos de acción disponibles
+              en el sistema.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => openModal(MODALS.CREATE)}
+            onClick={() =>
+              openModal(MODALS.CREATE)
+            }
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
           >
             <PlusIcon className="h-5 w-5" />
-            Nuevo socio
+
+            Nuevo tipo de acción
           </button>
         </div>
+
+        {/* ================= BUSCADOR ================= */}
+
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="w-full lg:max-w-md">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar socio
+                Buscar tipo de acción
               </label>
 
               <div className="relative">
@@ -124,28 +240,17 @@ export default function TipoAccion() {
                 <input
                   type="text"
                   value={searchInput}
-                  onChange={(event) => {
-                    setPagination((previous) => ({
-                      ...previous,
-                      page: 1,
-                    }));
-                    setSearchInput(event.target.value);
-                  }}
-                  placeholder="Nombre, CI o número de celular"
+                  onChange={handleSearch}
+                  placeholder="Buscar por nombre"
                   className="w-full rounded-lg border border-slate-200 py-3 pl-11 pr-11 text-sm outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
                 />
 
                 {searchInput && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchInput('');
-                      setPagination((previous) => ({
-                        ...previous,
-                        page: 1,
-                      }));
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Limpiar búsqueda"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -154,6 +259,9 @@ export default function TipoAccion() {
             </div>
           </div>
         </div>
+
+        {/* ================= TABLA ================= */}
+
         <DataTable
           data={filas}
           columns={columns}
@@ -161,38 +269,52 @@ export default function TipoAccion() {
           page={pagination.page}
           totalPages={pagination.totalPages}
           totalItems={pagination.totalItems}
+          limit={pagination.limit}
           onPageChange={(newPage) =>
             setPagination((previous) => ({
               ...previous,
+
               page: newPage,
             }))
           }
-          limit={pagination.limit}
           onLimitChange={(newLimit) =>
             setPagination((previous) => ({
               ...previous,
+
               page: 1,
+
               limit: Number(newLimit),
             }))
           }
         />
       </section>
+
+      {/* ================= CREAR ================= */}
+
       <TipoAccionModal
         open={isModalOpen(MODALS.CREATE)}
-        onClose={() => closeModal()}
+        onClose={() =>
+          closeModal(MODALS.CREATE)
+        }
         onSuccess={() => {
-          closeModal();
+          closeModal(MODALS.CREATE);
+
           fetchFilas();
         }}
       />
+
+      {/* ================= EDITAR ================= */}
 
       <TipoAccionModal
         open={isModalOpen(MODALS.EDIT)}
         isEdit
         dataRow={modalState?.data}
-        onClose={() => closeModal()}
+        onClose={() =>
+          closeModal(MODALS.EDIT)
+        }
         onSuccess={() => {
-          closeModal();
+          closeModal(MODALS.EDIT);
+
           fetchFilas();
         }}
       />

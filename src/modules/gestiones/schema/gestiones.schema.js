@@ -3,16 +3,29 @@ export const validateGestionForm = (form) => {
 
   const anio = Number(form.anio);
 
-  if (!form.anio) {
-    errors.anio = 'El año de gestión es obligatorio';
+  if (
+    form.anio === '' ||
+    form.anio === null ||
+    form.anio === undefined
+  ) {
+    errors.anio =
+      'El año de gestión es obligatorio';
   } else if (Number.isNaN(anio)) {
-    errors.anio = 'El año debe ser numérico';
-  } else if (anio < 2000 || anio > 2100) {
-    errors.anio = 'El año debe estar entre 2000 y 2100';
-  }
+    errors.anio =
+      'El año debe ser numérico';
+  } else if (!Number.isInteger(anio)) {
+    errors.anio =
+      'El año debe ser un número entero';
+  } 
 
   return {
-    isValid: Object.keys(errors).length === 0,
+    isValid:
+      Object.keys(errors).length === 0,
+
     errors,
+
+    data: {
+      anio,
+    },
   };
 };
