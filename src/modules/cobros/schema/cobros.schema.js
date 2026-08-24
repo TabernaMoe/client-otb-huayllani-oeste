@@ -17,7 +17,7 @@ export const pagoCobroSchema = z
       .min(1, 'Debe seleccionar al menos un cobro'),
 
     metodo_pago: z.enum(
-      ['EFECTIVO', 'QR', 'TRANSFERENCIA'],
+      ['EFECTIVO', 'QR'],
       {
         message:
           'Debe seleccionar un método de pago válido',
