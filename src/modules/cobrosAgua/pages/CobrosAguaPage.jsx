@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { CobrosAguaServices } from '../services/cobrosAgua.services';
-import { validatePagoAgua } from '../schema/cobrosAgua.schema';
+import { cobrosAguaParamsSchema } from '../schema/cobrosAgua.schema';
 
 /**
  * Estado inicial del formulario.

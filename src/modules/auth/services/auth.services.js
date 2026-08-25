@@ -9,11 +9,7 @@ const normalizePermission = (permission) => {
   }
 
   return (
-    permission?.codigo_permiso ||
-    permission?.code ||
-    permission?.nombre_permiso ||
-    permission?.codigo ||
-    null
+    permission?.codigo_permiso
   )?.toLowerCase?.().trim();
 };
 

@@ -2,14 +2,10 @@ import { api } from '../../services/api';
 import { toServiceError } from '../../services/error';
 
 export class InventarioServices {
-  static async getAll(page, limit, search) {
+  static async getAll(params = {}) {
     try {
       const response = await api.get('/admin/inventario', {
-        params: {
-          page,
-          limit,
-          search,
-        },
+        params,
       });
 
       return response.data;

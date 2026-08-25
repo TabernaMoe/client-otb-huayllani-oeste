@@ -80,29 +80,11 @@ export class AccionesServices {
  
   static async create(payload) {
     try {
-      const cleanPayload = {
-        socio_id: Number(payload.socio_id),
-
-        calle_id: Number(payload.calle_id),
-
-        tarifa_id: Number(payload.tarifa_id),
-
-        nro_medidor: String(payload.nro_medidor || '').trim(),
-
-        direccion: String(payload.direccion || '').trim(),
-
-        observacion: String(payload.observacion || '').trim(),
-
-        estado: String(payload.estado || 'ACTIVO')
-          .trim()
-          .toUpperCase(),
-
-        detallesAccion: (payload.detallesAccion || []).map(Number),
-      };
+     
 
       const { data } = await api.post(
         '/admin/accion',
-        cleanPayload,
+        payload,
       );
 
       return data;
@@ -114,29 +96,9 @@ export class AccionesServices {
 
   static async update(id, payload) {
     try {
-      const cleanPayload = {
-        socio_id: Number(payload.socio_id),
-
-        calle_id: Number(payload.calle_id),
-
-        tarifa_id: Number(payload.tarifa_id),
-
-        nro_medidor: String(payload.nro_medidor || '').trim(),
-
-        direccion: String(payload.direccion || '').trim(),
-
-        observacion: String(payload.observacion || '').trim(),
-
-        estado: String(payload.estado || 'ACTIVO')
-          .trim()
-          .toUpperCase(),
-
-        detallesAccion: (payload.detallesAccion || []).map(Number),
-      };
-
       const { data } = await api.patch(
         `/admin/accion/${id}`,
-        cleanPayload,
+        payload,
       );
 
       return data;
@@ -148,15 +110,11 @@ export class AccionesServices {
 
   static async changeEstado(id, estado) {
     try {
-      const cleanPayload = {
-        estado: String(estado || '')
-          .trim()
-          .toUpperCase(),
-      };
+    
 
       const { data } = await api.patch(
         `/admin/accion/camibiar-estado/${id}`,
-        cleanPayload,
+        estado,
       );
 
       return data;
