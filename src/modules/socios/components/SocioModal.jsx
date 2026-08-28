@@ -6,7 +6,6 @@ import {
   IdentificationIcon,
   MapPinIcon,
   PhoneIcon,
-  UserIcon,
   UsersIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -25,8 +24,8 @@ import {
 } from '../../../hooks/useModalManager';
 
 import {
-  socioSchema,
-  updateSocioSchema,
+  validateSocio,
+  validateUpdateSocio,
 } from '../schema/socio.schema';
 
 import { getChangedFields } from '../../../utils/getChangedFields';
@@ -65,7 +64,7 @@ const opcionesGenero = [
 
 /**
  * ============================================================
- * DEPARTAMENTOS
+ * OPCIONES DE DEPARTAMENTO
  * ============================================================
  */
 const opcionesDepartamento = [
@@ -116,53 +115,50 @@ export default function SocioModal({
 }) {
   /**
    * ============================================================
-   * FORMULARIO ACTUAL
+   * ESTADOS DEL FORMULARIO
    * ============================================================
    */
-  const [form, setForm] = useState(
-    initialForm(),
-  );
+
+  const [form, setForm] = useState(initialForm());
 
   /**
-   * Copia de los datos originales.
+   * Guarda una copia de los datos originales.
    *
-   * Se utiliza cuando editamos para conocer
-   * qué campos realmente cambiaron.
+   * Esto se usa en EDITAR para saber
+   * qué campos realmente fueron modificados.
    */
-  const [
-    originalForm,
-    setOriginalForm,
-  ] = useState(null);
+  const [originalForm, setOriginalForm] = useState(null);
 
   /**
-   * Datos ya validados que enviaremos
-   * al backend.
+   * Guarda únicamente los datos
+   * que ya fueron validados por Zod.
    */
-  const [
-    payload,
-    setPayload,
-  ] = useState(null);
+  const [payload, setPayload] = useState(null);
 
   /**
-   * ============================================================
-   * ESTADOS
-   * ============================================================
+   * Control de carga.
    */
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    errors,
-    setErrors,
-  ] = useState({});
+  /**
+   * Errores de cada campo.
+   *
+   * Ejemplo:
+   *
+   * {
+   *   nombres: [
+   *     'El nombre debe tener mínimo 2 caracteres'
+   *   ]
+   * }
+   */
+  const [errors, setErrors] = useState({});
 
   /**
    * ============================================================
    * MANEJO DE MODALES
    * ============================================================
    */
+
   const {
     openModal,
     closeModal,
@@ -171,33 +167,31 @@ export default function SocioModal({
 
   /**
    * ============================================================
-   * CARGAR FORMULARIO
+   * CARGAR DATOS AL ABRIR EL MODAL
    * ============================================================
-   *
-   * CREATE:
-   * formulario vacío.
-   *
-   * EDIT:
-   * cargamos los datos recibidos del socio.
    */
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    /**
+     * Cada vez que abrimos el modal
+     * limpiamos errores y payload anterior.
+     */
     setErrors({});
-
     setPayload(null);
 
     /**
+     * ==========================================================
      * EDITAR
+     * ==========================================================
      */
     if (isEdit && socio) {
       const initialData = {
-        ci_socio:
-          String(
-            socio.ci_socio ?? '',
-          ),
+        ci_socio: String(
+          socio.ci_socio ?? '',
+        ),
 
         ci_expedido:
           socio.ci_expedido ?? '',
@@ -211,10 +205,9 @@ export default function SocioModal({
         segundo_apellido:
           socio.segundo_apellido ?? '',
 
-        numero_celular:
-          String(
-            socio.numero_celular ?? '',
-          ),
+        numero_celular: String(
+          socio.numero_celular ?? '',
+        ),
 
         genero:
           socio.genero ?? '',
@@ -223,20 +216,29 @@ export default function SocioModal({
           socio.direccion ?? '',
       };
 
+      /**
+       * Mostramos los datos actuales
+       * dentro del formulario.
+       */
       setForm(initialData);
 
+      /**
+       * Guardamos una copia original.
+       */
       setOriginalForm(initialData);
 
       return;
     }
 
     /**
+     * ==========================================================
      * CREAR
+     * ==========================================================
+     *
+     * Si no estamos editando,
+     * limpiamos completamente el formulario.
      */
-    setForm(
-      initialForm(),
-    );
-
+    setForm(initialForm());
     setOriginalForm(null);
   }, [
     open,
@@ -245,7 +247,7 @@ export default function SocioModal({
   ]);
 
   /**
-   * Si no está abierto,
+   * Si el modal está cerrado
    * no renderizamos nada.
    */
   if (!open) {
@@ -254,7 +256,7 @@ export default function SocioModal({
 
   /**
    * ============================================================
-   * CAMBIO DE CAMPOS
+   * CAMBIAR CAMPOS DEL FORMULARIO
    * ============================================================
    */
   const handleChange = (event) => {
@@ -263,38 +265,56 @@ export default function SocioModal({
       value,
     } = event.target;
 
+    /**
+     * Actualizamos únicamente
+     * el campo que cambió.
+     *
+     * Ejemplo:
+     *
+     * name = "nombres"
+     * value = "Andres"
+     */
     setForm((previous) => ({
       ...previous,
-
       [name]: value,
     }));
 
     /**
-     * Eliminamos solamente el error
-     * correspondiente al campo modificado.
+     * Cuando el usuario vuelve a escribir
+     * quitamos solamente el error de ese campo.
      */
     setErrors((previous) => ({
       ...previous,
-
       [name]: undefined,
     }));
   };
 
   /**
    * ============================================================
-   * VALIDACIÓN
+   * VALIDAR
    * ============================================================
+   *
+   * Aquí ya NO usamos:
+   *
+   * socioSchema.safeParse()
+   *
+   * porque toda esa lógica está dentro
+   * del archivo socio.schema.js.
    */
   const handleValidation = () => {
     /**
-     * CREAR:
+     * ==========================================================
+     * PASO 1
+     * OBTENER DATOS A VALIDAR
+     * ==========================================================
      *
-     * validamos todo el formulario.
+     * CREATE:
      *
-     * EDITAR:
+     * validamos TODO el formulario.
      *
-     * solamente enviamos los campos
-     * realmente modificados.
+     * EDIT:
+     *
+     * solamente campos modificados.
      */
     const dataToValidate = isEdit
       ? getChangedFields(
@@ -304,14 +324,13 @@ export default function SocioModal({
       : form;
 
     /**
-     * Si estamos editando y no cambió
-     * ningún campo, no llamamos al backend.
+     * Si estamos editando
+     * pero no cambió ningún campo,
+     * no llamamos al backend.
      */
     if (
       isEdit &&
-      Object.keys(
-        dataToValidate,
-      ).length === 0
+      Object.keys(dataToValidate).length === 0
     ) {
       toast.info(
         'No realizaste ningún cambio',
@@ -321,27 +340,40 @@ export default function SocioModal({
     }
 
     /**
-     * CREATE:
-     * socioSchema
+     * ==========================================================
+     * PASO 2
+     * VALIDAR
+     * ==========================================================
      *
-     * UPDATE:
-     * updateSocioSchema
+     * CREATE:
+     *
+     * validateSocio()
+     *
+     * EDIT:
+     *
+     * validateUpdateSocio()
      */
-    const result = isEdit
-      ? updateSocioSchema.safeParse(
+    const validation = isEdit
+      ? validateUpdateSocio(
           dataToValidate,
         )
-      : socioSchema.safeParse(
+      : validateSocio(
           dataToValidate,
         );
 
     /**
-     * Si Zod encuentra errores.
+     * ==========================================================
+     * PASO 3
+     * SI HAY ERRORES
+     * ==========================================================
      */
-    if (!result.success) {
+    if (!validation.success) {
+      /**
+       * Los errores ya vienen preparados
+       * desde el schema.
+       */
       setErrors(
-        result.error.flatten()
-          .fieldErrors,
+        validation.errors,
       );
 
       toast.error(
@@ -352,16 +384,21 @@ export default function SocioModal({
     }
 
     /**
-     * Guardamos únicamente datos
-     * que ya pasaron la validación.
+     * ==========================================================
+     * PASO 4
+     * DATOS CORRECTOS
+     * ==========================================================
+     *
+     * validation.data contiene
+     * los datos validados.
      */
     setPayload(
-      result.data,
+      validation.data,
     );
 
     /**
-     * Antes de enviar mostramos
-     * confirmación.
+     * Mostramos confirmación antes
+     * de llamar al backend.
      */
     openModal(
       MODALS.CONFIRM,
@@ -377,8 +414,8 @@ export default function SocioModal({
     /**
      * Protección adicional.
      *
-     * No debería ejecutarse si todavía
-     * no existe un payload validado.
+     * Si todavía no existe payload,
+     * significa que no pasamos la validación.
      */
     if (!payload) {
       return;
@@ -388,7 +425,11 @@ export default function SocioModal({
       setLoading(true);
 
       /**
+       * ========================================================
        * EDITAR
+       * ========================================================
+       *
+       * PATCH
        */
       const response = isEdit
         ? await Servs.update(
@@ -397,14 +438,20 @@ export default function SocioModal({
           )
 
         /**
+         * ======================================================
          * CREAR
+         * ======================================================
+         *
+         * POST
          */
         : await Servs.create(
             payload,
           );
 
       /**
-       * Error enviado por backend.
+       * ========================================================
+       * ERROR DEL BACKEND
+       * ========================================================
        */
       if (!response?.ok) {
         toast.error(
@@ -420,7 +467,9 @@ export default function SocioModal({
       }
 
       /**
-       * Éxito.
+       * ========================================================
+       * ÉXITO
+       * ========================================================
        */
       toast.success(
         response?.message ||
@@ -432,22 +481,27 @@ export default function SocioModal({
       );
 
       /**
-       * Cerramos confirmación.
+       * Cerramos la confirmación.
        */
       closeModal(
         MODALS.CONFIRM,
       );
 
       /**
-       * Avisamos a SocioPage que
-       * debe cerrar y actualizar tabla.
+       * Avisamos a SocioPage
+       * que la operación terminó correctamente.
+       *
+       * SocioPage cerrará este modal
+       * y actualizará la tabla.
        */
       onSuccess();
+
     } catch (error) {
       toast.error(
         error?.message ||
           'Error inesperado al guardar el socio',
       );
+
     } finally {
       setLoading(false);
     }
@@ -455,7 +509,7 @@ export default function SocioModal({
 
   /**
    * ============================================================
-   * CERRAR HACIENDO CLICK FUERA
+   * CERRAR AL HACER CLICK FUERA
    * ============================================================
    */
   const handleBackdropClick = (
@@ -496,8 +550,12 @@ export default function SocioModal({
 
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]"
-        onClick={handleBackdropClick}
-        onKeyDown={handleBackdropKeyDown}
+        onClick={
+          handleBackdropClick
+        }
+        onKeyDown={
+          handleBackdropKeyDown
+        }
         role="presentation"
       >
         <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -505,13 +563,17 @@ export default function SocioModal({
           {/* ================= ENCABEZADO ================= */}
 
           <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+
             <div className="flex items-start gap-4">
+
               <div className="hidden rounded-full bg-emerald-50 p-3 text-emerald-700 sm:block">
                 <UsersIcon className="h-6 w-6" />
               </div>
 
               <div>
+
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+
                   <span>
                     Socios
                   </span>
@@ -525,6 +587,7 @@ export default function SocioModal({
                       ? 'Editar'
                       : 'Nuevo'}
                   </span>
+
                 </div>
 
                 <h3 className="mt-1 text-xl font-bold text-slate-900">
@@ -536,7 +599,9 @@ export default function SocioModal({
                 <p className="mt-1 text-sm text-slate-500">
                   Complete los datos personales y de contacto.
                 </p>
+
               </div>
+
             </div>
 
             <button
@@ -548,25 +613,29 @@ export default function SocioModal({
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
+
           </div>
 
           {/* ================= CONTENIDO ================= */}
 
           <div className="max-h-[calc(92vh-90px)] overflow-y-auto">
+
             <div className="space-y-8 p-6">
 
               {/* ============================================
-                  SECCIÓN 1
                   IDENTIFICACIÓN
                   ============================================ */}
 
               <section>
+
                 <div className="mb-5 flex items-start gap-3">
+
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">
                     1
                   </span>
 
                   <div>
+
                     <h4 className="font-bold text-slate-900">
                       Identificación personal
                     </h4>
@@ -574,7 +643,9 @@ export default function SocioModal({
                     <p className="mt-0.5 text-sm text-slate-500">
                       Ingrese los datos de identificación del socio.
                     </p>
+
                   </div>
+
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -582,13 +653,8 @@ export default function SocioModal({
                   {/* CI */}
 
                   <div>
-                    <div className="mb-2 flex items-center gap-2 text-slate-500">
-                      <IdentificationIcon className="h-4 w-4" />
 
-                      <span className="text-xs font-medium">
-                        Identificación
-                      </span>
-                    </div>
+                
 
                     <InputField
                       label="Cédula de identidad"
@@ -605,6 +671,7 @@ export default function SocioModal({
                         errors.ci_socio
                       }
                     />
+
                   </div>
 
                   {/* EXPEDIDO */}
@@ -628,30 +695,20 @@ export default function SocioModal({
 
                   {/* NOMBRES */}
 
-                  <div>
-                    <div className="mb-2 flex items-center gap-2 text-slate-500">
-                      <UserIcon className="h-4 w-4" />
-
-                      <span className="text-xs font-medium">
-                        Datos personales
-                      </span>
-                    </div>
-
-                    <InputField
-                      label="Nombres"
-                      type="text"
-                      name="nombres"
-                      value={
-                        form.nombres
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      error={
-                        errors.nombres
-                      }
-                    />
-                  </div>
+                  <InputField
+                    label="Nombres"
+                    type="text"
+                    name="nombres"
+                    value={
+                      form.nombres
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    error={
+                      errors.nombres
+                    }
+                  />
 
                   {/* PRIMER APELLIDO */}
 
@@ -705,23 +762,27 @@ export default function SocioModal({
                       errors.genero
                     }
                   />
+
                 </div>
+
               </section>
 
               <div className="border-t border-slate-100" />
 
               {/* ============================================
-                  SECCIÓN 2
                   CONTACTO
                   ============================================ */}
 
               <section>
+
                 <div className="mb-5 flex items-start gap-3">
+
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">
                     2
                   </span>
 
                   <div>
+
                     <h4 className="font-bold text-slate-900">
                       Información de contacto
                     </h4>
@@ -729,7 +790,9 @@ export default function SocioModal({
                     <p className="mt-0.5 text-sm text-slate-500">
                       Registre el número de celular y la dirección actual.
                     </p>
+
                   </div>
+
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-3">
@@ -737,12 +800,15 @@ export default function SocioModal({
                   {/* CELULAR */}
 
                   <div>
+
                     <div className="mb-2 flex items-center gap-2 text-slate-500">
+
                       <PhoneIcon className="h-4 w-4" />
 
                       <span className="text-xs font-medium">
                         Contacto
                       </span>
+
                     </div>
 
                     <InputField
@@ -760,17 +826,21 @@ export default function SocioModal({
                         errors.numero_celular
                       }
                     />
+
                   </div>
 
                   {/* DIRECCIÓN */}
 
                   <div className="md:col-span-2">
+
                     <div className="mb-2 flex items-center gap-2 text-slate-500">
+
                       <MapPinIcon className="h-4 w-4" />
 
                       <span className="text-xs font-medium">
                         Ubicación
                       </span>
+
                     </div>
 
                     <InputField
@@ -787,14 +857,19 @@ export default function SocioModal({
                         errors.direccion
                       }
                     />
+
                   </div>
+
                 </div>
+
               </section>
+
             </div>
 
             {/* ================= PIE ================= */}
 
             <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
+
               <button
                 type="button"
                 disabled={loading}
@@ -828,9 +903,13 @@ export default function SocioModal({
                   </>
                 )}
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
       {/* ======================================================
@@ -838,9 +917,11 @@ export default function SocioModal({
           ====================================================== */}
 
       <ConfirmModal
-        open={isModalOpen(
-          MODALS.CONFIRM,
-        )}
+        open={
+          isModalOpen(
+            MODALS.CONFIRM,
+          )
+        }
         title={
           isEdit
             ? 'Editar socio'

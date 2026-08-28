@@ -1,4 +1,9 @@
 import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
   ArrowPathIcon,
   CheckCircleIcon,
   TagIcon,
@@ -6,23 +11,48 @@ import {
 } from '@heroicons/react/24/outline';
 
 import {
+  toast,
+} from 'react-toastify';
+
+import {
   MODALS,
   useModalManager,
 } from '../../../hooks/useModalManager';
 
-import ConfirmModal from '../../../components/ConfirmModal';
-import InputField from '../../../components/ElegantInput';
+import ConfirmModal
+  from '../../../components/ConfirmModal';
 
-import { toast } from 'react-toastify';
+import InputField
+  from '../../../components/ElegantInput';
 
-import { useEffect, useState } from 'react';
+import {
+  getChangedFields,
+} from '../../../utils/getChangedFields';
 
-import { getChangedFields } from '../../../utils/getChangedFields';
+import {
+  TipoAccionServices as Servs,
+} from '../services/tipoAccion.services';
 
-import { tipoAccionSchema } from '../tipoaccion.schema';
+/**
+ * ============================================================
+ * FUNCIONES DEL SCHEMA
+ * ============================================================
+ *
+ * El JSX NO importa los schemas directamente.
+ *
+ * Solamente funciones ya preparadas.
+ */
+import {
+  validateTipoAccion,
+  validateTipoAccionId,
+  validateUpdateTipoAccion,
+} from '../schema/tipoaccion.schema';
 
-import { TipoAccionServices as Servs } from '../tipoAccion.services';
-
+/**
+ * ============================================================
+ * FORMULARIO INICIAL
+ * ============================================================
+ */
 const initialForm = () => ({
   nombre_tipo_accion: '',
 });
@@ -35,34 +65,66 @@ export default function TipoAccionModal({
   isEdit = false,
 }) {
   /**
-   * Formulario actual.
+   * ============================================================
+   * FORMULARIO ACTUAL
+   * ============================================================
    */
-  const [form, setForm] = useState(
+  const [
+    form,
+    setForm,
+  ] = useState(
     initialForm(),
   );
 
   /**
-   * Copia de los datos originales.
+   * ============================================================
+   * FORMULARIO ORIGINAL
+   * ============================================================
    *
-   * Se utiliza para comparar cambios
-   * cuando estamos editando.
+   * Solamente lo necesitamos cuando
+   * estamos editando.
+   *
+   * Nos permitirá saber si realmente
+   * se modificó algún campo.
    */
-  const [originalForm, setOriginalForm] =
-    useState(null);
+  const [
+    originalForm,
+    setOriginalForm,
+  ] = useState(null);
 
   /**
-   * Payload validado que finalmente
-   * mandaremos al backend.
+   * ============================================================
+   * PAYLOAD VALIDADO
+   * ============================================================
+   *
+   * Aquí guardaremos solamente
+   * datos que ya pasaron Zod.
    */
-  const [payload, setPayload] =
-    useState(null);
+  const [
+    payload,
+    setPayload,
+  ] = useState(null);
 
-  const [loading, setLoading] =
-    useState(false);
+  /**
+   * ============================================================
+   * ESTADOS
+   * ============================================================
+   */
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
-  const [errors, setErrors] =
-    useState({});
+  const [
+    errors,
+    setErrors,
+  ] = useState({});
 
+  /**
+   * ============================================================
+   * MODALES
+   * ============================================================
+   */
   const {
     openModal,
     closeModal,
@@ -71,105 +133,157 @@ export default function TipoAccionModal({
 
   /**
    * ============================================================
-   * CARGAR DATOS AL ABRIR EL MODAL
+   * CARGAR DATOS
    * ============================================================
    */
   useEffect(() => {
-    if (!open) {
+    if (
+      !open
+    ) {
       return;
     }
 
+    /**
+     * Cada vez que abrimos:
+     *
+     * limpiamos errores
+     * +
+     * limpiamos payload.
+     */
     setErrors({});
 
     setPayload(null);
 
     /**
+     * ==========================================================
      * EDITAR
+     * ==========================================================
      */
-    if (isEdit && dataRow) {
+    if (
+      isEdit &&
+      dataRow
+    ) {
       const initialData = {
         nombre_tipo_accion:
-          dataRow.nombre_tipo_accion || '',
+          dataRow.nombre_tipo_accion ??
+          '',
       };
 
-      setForm(initialData);
+      /**
+       * Mostramos datos actuales.
+       */
+      setForm(
+        initialData,
+      );
 
-      setOriginalForm(initialData);
+      /**
+       * Guardamos copia original.
+       */
+      setOriginalForm(
+        initialData,
+      );
 
       return;
     }
 
     /**
+     * ==========================================================
      * CREAR
+     * ==========================================================
      */
-    setForm(initialForm());
+    setForm(
+      initialForm(),
+    );
 
-    setOriginalForm(null);
+    setOriginalForm(
+      null,
+    );
+
   }, [
     open,
     isEdit,
     dataRow,
   ]);
 
-  if (!open) {
-    return null;
-  }
-
   /**
    * ============================================================
    * CAMBIO DE INPUT
    * ============================================================
    */
-  const handleChange = (event) => {
+  const handleChange = (
+    event,
+  ) => {
     const {
       name,
       value,
     } = event.target;
 
-    setForm((previous) => ({
-      ...previous,
+    /**
+     * Actualizamos solamente
+     * el campo modificado.
+     */
+    setForm(
+      (previous) => ({
+        ...previous,
 
-      [name]: value,
-    }));
+        [name]:
+          value,
+      }),
+    );
 
-    setErrors((previous) => ({
-      ...previous,
+    /**
+     * Eliminamos solamente
+     * el error de ese campo.
+     */
+    setErrors(
+      (previous) => ({
+        ...previous,
 
-      [name]: null,
-    }));
+        [name]:
+          undefined,
+      }),
+    );
   };
 
   /**
    * ============================================================
-   * VALIDACIÓN
+   * VALIDAR
    * ============================================================
    */
   const handleValidation = () => {
     /**
+     * ==========================================================
+     * PASO 1
+     * OBTENER DATOS A VALIDAR
+     * ==========================================================
+     *
      * CREATE:
      *
-     * {
-     *   nombre_tipo_accion: '...'
-     * }
+     * utilizamos todo el formulario.
      *
      * EDIT:
      *
-     * Solo campos modificados.
+     * solamente campos modificados.
      */
-    const dataToValidate = isEdit
-      ? getChangedFields(
-          originalForm,
-          form,
-        )
-      : form;
+    const dataToValidate =
+      isEdit
+        ? getChangedFields(
+            originalForm,
+            form,
+          )
+        : form;
 
     /**
-     * No tiene sentido llamar al backend
-     * si no hubo cambios.
+     * ==========================================================
+     * PASO 2
+     * VERIFICAR CAMBIOS
+     * ==========================================================
      */
     if (
       isEdit &&
-      Object.keys(dataToValidate).length === 0
+      Object.keys(
+        dataToValidate,
+      ).length === 0
     ) {
       toast.info(
         'No realizaste ningún cambio',
@@ -179,16 +293,35 @@ export default function TipoAccionModal({
     }
 
     /**
-     * Validación con Zod.
+     * ==========================================================
+     * PASO 3
+     * VALIDAR MEDIANTE FUNCIÓN DEL SCHEMA
+     * ==========================================================
+     *
+     * Ya NO hacemos:
+     *
+     * tipoAccionSchema.safeParse()
      */
-    const result =
-      tipoAccionSchema.safeParse(
-        dataToValidate,
-      );
+    const validation =
+      isEdit
+        ? validateUpdateTipoAccion(
+            dataToValidate,
+          )
+        : validateTipoAccion(
+            dataToValidate,
+          );
 
-    if (!result.success) {
+    /**
+     * ==========================================================
+     * PASO 4
+     * ERROR DE VALIDACIÓN
+     * ==========================================================
+     */
+    if (
+      !validation.isValid
+    ) {
       setErrors(
-        result.error.flatten().fieldErrors,
+        validation.errors,
       );
 
       toast.error(
@@ -199,14 +332,33 @@ export default function TipoAccionModal({
     }
 
     /**
-     * Guardamos los datos ya validados.
+     * ==========================================================
+     * PASO 5
+     * PAYLOAD CORRECTO
+     * ==========================================================
+     *
+     * validation.data contiene:
+     *
+     * {
+     *   nombre_tipo_accion:
+     *     'Tipo Acción'
+     * }
+     *
+     * ya limpio y validado.
      */
-    setPayload(result.data);
+    setPayload(
+      validation.data,
+    );
 
     /**
-     * Abrimos confirmación.
+     * ==========================================================
+     * PASO 6
+     * CONFIRMACIÓN
+     * ==========================================================
      */
-    openModal(MODALS.CONFIRM);
+    openModal(
+      MODALS.CONFIRM,
+    );
   };
 
   /**
@@ -215,23 +367,80 @@ export default function TipoAccionModal({
    * ============================================================
    */
   const handleSubmit = async () => {
-    if (!payload) {
+    /**
+     * Protección.
+     *
+     * Si no existe payload,
+     * todavía no se validó.
+     */
+    if (
+      !payload
+    ) {
       return;
     }
 
+    /**
+     * ==========================================================
+     * VALIDAR ID EN EDICIÓN
+     * ==========================================================
+     */
+    let tipoAccionId =
+      null;
+
+    if (
+      isEdit
+    ) {
+      const idValidation =
+        validateTipoAccionId(
+          dataRow?.id,
+        );
+
+      if (
+        !idValidation.isValid
+      ) {
+        toast.error(
+          idValidation.error,
+        );
+
+        closeModal(
+          MODALS.CONFIRM,
+        );
+
+        return;
+      }
+
+      tipoAccionId =
+        idValidation.data;
+    }
+
     try {
-      setLoading(true);
+      setLoading(
+        true,
+      );
 
-      const response = isEdit
-        ? await Servs.update(
-            dataRow.id,
-            payload,
-          )
-        : await Servs.create(
-            payload,
-          );
+      /**
+       * ========================================================
+       * CREATE / UPDATE
+       * ========================================================
+       */
+      const response =
+        isEdit
+          ? await Servs.update(
+              tipoAccionId,
+              payload,
+            )
+          : await Servs.create(
+              payload,
+            );
 
-      if (!response?.ok) {
+      /**
+       * ========================================================
+       * ERROR DEL BACKEND
+       * ========================================================
+       */
+      if (
+        !response?.ok
+      ) {
         toast.error(
           response?.message ||
             'Error al guardar el tipo de acción',
@@ -244,31 +453,48 @@ export default function TipoAccionModal({
         return;
       }
 
+      /**
+       * ========================================================
+       * ÉXITO
+       * ========================================================
+       */
       toast.success(
         response?.message ||
-          (isEdit
-            ? 'Tipo de acción actualizado correctamente'
-            : 'Tipo de acción registrado correctamente'),
+          (
+            isEdit
+              ? 'Tipo de acción actualizado correctamente'
+              : 'Tipo de acción registrado correctamente'
+          ),
       );
 
+      /**
+       * Cerramos confirmación.
+       */
       closeModal(
         MODALS.CONFIRM,
       );
 
-      onSuccess();
+      /**
+       * Avisamos al Page.
+       */
+      onSuccess?.();
+
     } catch (error) {
       toast.error(
         error?.message ||
           'Error inesperado al guardar',
       );
+
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   };
 
   /**
    * ============================================================
-   * CERRAR HACIENDO CLICK FUERA
+   * CLICK FUERA
    * ============================================================
    */
   const handleBackdropClick = (
@@ -285,14 +511,15 @@ export default function TipoAccionModal({
 
   /**
    * ============================================================
-   * TECLADO
+   * ESCAPE
    * ============================================================
    */
   const handleBackdropKeyDown = (
     event,
   ) => {
     if (
-      event.key === 'Escape' &&
+      event.key ===
+        'Escape' &&
       !loading
     ) {
       event.preventDefault();
@@ -301,36 +528,66 @@ export default function TipoAccionModal({
     }
   };
 
+  /**
+   * ============================================================
+   * SI ESTÁ CERRADO
+   * ============================================================
+   */
+  if (
+    !open
+  ) {
+    return null;
+  }
+
   return (
     <>
+      {/* ======================================================
+          MODAL PRINCIPAL
+          ====================================================== */}
+
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]"
-        onClick={handleBackdropClick}
-        onKeyDown={handleBackdropKeyDown}
+        onClick={
+          handleBackdropClick
+        }
+        onKeyDown={
+          handleBackdropKeyDown
+        }
+        role="presentation"
       >
+
         <div className="max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
 
           {/* ================= ENCABEZADO ================= */}
 
           <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+
             <div className="flex items-start gap-4">
+
               <div className="hidden rounded-full bg-emerald-50 p-3 text-emerald-700 sm:block">
+
                 <TagIcon className="h-6 w-6" />
+
               </div>
 
               <div>
+
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+
                   <span>
                     Tipos de acción
                   </span>
 
-                  <span>/</span>
+                  <span>
+                    /
+                  </span>
 
                   <span className="text-emerald-700">
                     {isEdit
                       ? 'Editar'
                       : 'Nuevo'}
                   </span>
+
                 </div>
 
                 <h3 className="mt-1 text-xl font-bold text-slate-900">
@@ -340,28 +597,39 @@ export default function TipoAccionModal({
                 </h3>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Ingrese el nombre que identificará
-                  al tipo de acción.
+                  Ingrese el nombre que identificará al tipo de acción.
                 </p>
+
               </div>
+
             </div>
 
             <button
               type="button"
-              onClick={onClose}
-              disabled={loading}
+              onClick={
+                onClose
+              }
+              disabled={
+                loading
+              }
               className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
               aria-label="Cerrar"
             >
+
               <XMarkIcon className="h-5 w-5" />
+
             </button>
+
           </div>
 
           {/* ================= CONTENIDO ================= */}
 
           <div className="max-h-[calc(92vh-90px)] overflow-y-auto">
+
             <div className="space-y-6 p-6">
+
               <section>
+
                 <InputField
                   label="Nombre del tipo de acción"
                   type="text"
@@ -369,21 +637,31 @@ export default function TipoAccionModal({
                   value={
                     form.nombre_tipo_accion
                   }
-                  onChange={handleChange}
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Ej. Acción domiciliaria"
                   error={
                     errors.nombre_tipo_accion
                   }
                 />
+
               </section>
+
             </div>
 
             {/* ================= BOTONES ================= */}
 
             <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
+
               <button
                 type="button"
-                disabled={loading}
-                onClick={onClose}
+                disabled={
+                  loading
+                }
+                onClick={
+                  onClose
+                }
                 className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancelar
@@ -391,10 +669,15 @@ export default function TipoAccionModal({
 
               <button
                 type="button"
-                disabled={loading}
-                onClick={handleValidation}
+                disabled={
+                  loading
+                }
+                onClick={
+                  handleValidation
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
               >
+
                 {loading ? (
                   <>
                     <ArrowPathIcon className="h-5 w-5 animate-spin" />
@@ -410,18 +693,27 @@ export default function TipoAccionModal({
                       : 'Registrar tipo'}
                   </>
                 )}
+
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* ================= CONFIRMACIÓN ================= */}
+      {/* ======================================================
+          CONFIRMACIÓN
+          ====================================================== */}
 
       <ConfirmModal
-        open={isModalOpen(
-          MODALS.CONFIRM,
-        )}
+        open={
+          isModalOpen(
+            MODALS.CONFIRM,
+          )
+        }
         title={
           isEdit
             ? 'Editar tipo de acción'
@@ -438,7 +730,9 @@ export default function TipoAccionModal({
             : 'Sí, registrar'
         }
         cancelText="Cancelar"
-        loading={loading}
+        loading={
+          loading
+        }
         onClose={() =>
           closeModal(
             MODALS.CONFIRM,

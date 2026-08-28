@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import {
   ArrowPathIcon,
@@ -19,15 +23,28 @@ import { toast } from 'react-toastify';
 import DataTable from '../../../components/DataTable';
 import Select from '../../../components/Select';
 import ConfirmModal from '../../../components/ConfirmModal';
+
 import SocioModal from '../components/SocioModal';
 
-import { SocioServices as Servs } from '../services/socio.services';
+import {
+  SocioServices as Servs,
+} from '../services/socio.services';
 
 import {
   MODALS,
   useModalManager,
 } from '../../../hooks/useModalManager';
 
+import {
+  validateSocioId,
+  validateSocioParams,
+} from '../schema/socio.schema';
+
+/**
+ * ============================================================
+ * OPCIONES DE ESTADO
+ * ============================================================
+ */
 const opcionesEstadoSocio = [
   {
     value: '',
@@ -44,9 +61,13 @@ const opcionesEstadoSocio = [
 ];
 
 /**
- * Obtener nombre completo.
+ * ============================================================
+ * OBTENER NOMBRE COMPLETO
+ * ============================================================
  */
-const getNombreCompleto = (socio) =>
+const getNombreCompleto = (
+  socio,
+) =>
   [
     socio?.nombres,
     socio?.primer_apellido,
@@ -56,24 +77,37 @@ const getNombreCompleto = (socio) =>
     .join(' ');
 
 /**
- * Estado booleano.
+ * ============================================================
+ * OBTENER ESTADO
+ * ============================================================
  */
-const getEstado = (socio) =>
-  Boolean(socio?.estado);
+const getEstado = (
+  socio,
+) =>
+  Boolean(
+    socio?.estado,
+  );
 
 export default function SocioPage() {
   /**
    * ============================================================
-   * DATOS
+   * DATOS DE LA TABLA
    * ============================================================
    */
 
   const [filas, setFilas] =
     useState([]);
 
+  /**
+   * Loading para cargar tabla.
+   */
   const [loading, setLoading] =
     useState(false);
 
+  /**
+   * Loading para acciones como
+   * habilitar/deshabilitar.
+   */
   const [
     loadingAction,
     setLoadingAction,
@@ -125,19 +159,32 @@ export default function SocioPage() {
   });
 
   /**
-   * Convierte el select:
+   * ============================================================
+   * CONVERTIR ESTADO DEL SELECT
+   * ============================================================
    *
-   * ''      -> undefined
-   * 'true'  -> true
-   * 'false' -> false
+   * Select devuelve strings:
+   *
+   * ''
+   * 'true'
+   * 'false'
+   *
+   * Pero queremos enviar al backend:
+   *
+   * undefined
+   * true
+   * false
    */
   const getEstadoValue = () => {
-    if (selectEstadoSocio === '') {
+    if (
+      selectEstadoSocio === ''
+    ) {
       return undefined;
     }
 
     return (
-      selectEstadoSocio === 'true'
+      selectEstadoSocio ===
+      'true'
     );
   };
 
@@ -150,15 +197,89 @@ export default function SocioPage() {
     try {
       setLoading(true);
 
-      const response =
-        await Servs.getAll(
+      /**
+       * ========================================================
+       * PASO 1
+       * CONSTRUIR PARÁMETROS
+       * ========================================================
+       */
+      const params = {
+        page:
           pagination.page,
+
+        limit:
           pagination.limit,
+
+        search:
           searchInput,
+
+        estado:
           getEstadoValue(),
+      };
+
+      /**
+       * ========================================================
+       * PASO 2
+       * VALIDAR LOS PARÁMETROS
+       * ========================================================
+       *
+       * Ya NO usamos aquí:
+       *
+       * socioParamsSchema.safeParse()
+       *
+       * porque la función ya vive
+       * dentro del schema.
+       */
+      const validation =
+        validateSocioParams(
+          params,
         );
 
-      if (!response?.ok) {
+      /**
+       * Si los parámetros son incorrectos,
+       * detenemos la petición.
+       */
+      if (
+        !validation.success
+      ) {
+        toast.error(
+          'Los parámetros de búsqueda no son válidos',
+        );
+
+        return;
+      }
+
+      /**
+       * ========================================================
+       * PASO 3
+       * LLAMAR AL SERVICIO
+       * ========================================================
+       *
+       * validation.data contiene:
+       *
+       * {
+       *   page,
+       *   limit,
+       *   search,
+       *   estado
+       * }
+       *
+       * ya validados.
+       */
+      const response =
+        await Servs.getAll(
+          validation.data,
+        );
+
+      /**
+       * ========================================================
+       * PASO 4
+       * VALIDAR RESPUESTA DEL BACKEND
+       * ========================================================
+       */
+      if (
+        !response?.ok
+      ) {
         toast.error(
           response?.message ||
             'Error al cargar los socios',
@@ -169,45 +290,71 @@ export default function SocioPage() {
         return;
       }
 
+      /**
+       * ========================================================
+       * PASO 5
+       * GUARDAR FILAS
+       * ========================================================
+       */
       setFilas(
-        Array.isArray(response.data)
+        Array.isArray(
+          response.data,
+        )
           ? response.data
           : [],
       );
 
-      setPagination((previous) => ({
-        ...previous,
+      /**
+       * ========================================================
+       * PASO 6
+       * ACTUALIZAR PAGINACIÓN
+       * ========================================================
+       */
+      setPagination(
+        (previous) => ({
+          ...previous,
 
-        page: Number(
-          response.page ||
-            previous.page,
-        ),
+          page: Number(
+            response.page ??
+              previous.page,
+          ),
 
-        totalItems: Number(
-          response.total || 0,
-        ),
+          totalItems: Number(
+            response.total ??
+              0,
+          ),
 
-        totalPages: Number(
-          response.totalPages || 1,
-        ),
-      }));
+          totalPages: Number(
+            response.totalPages ??
+              1,
+          ),
+        }),
+      );
+
     } catch (error) {
       toast.error(
         error?.message ||
           'Error al cargar los socios',
       );
+
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Consultamos nuevamente cuando cambia:
+   * ============================================================
+   * ACTUALIZAR AUTOMÁTICAMENTE
+   * ============================================================
+   *
+   * Cada vez que cambia:
    *
    * - página
-   * - cantidad por página
+   * - límite
    * - búsqueda
    * - estado
+   *
+   * volvemos a consultar al backend.
    */
   useEffect(() => {
     fetchFilas();
@@ -220,7 +367,7 @@ export default function SocioPage() {
 
   /**
    * ============================================================
-   * CAMBIAR ESTADO
+   * CAMBIAR ESTADO DEL SOCIO
    * ============================================================
    */
   const handleChangeEstado =
@@ -228,23 +375,55 @@ export default function SocioPage() {
       try {
         setLoadingAction(true);
 
+        /**
+         * El socio seleccionado
+         * está guardado en modalState.data.
+         */
         const socio =
           modalState?.data;
 
-        if (!socio?.id) {
+        /**
+         * ======================================================
+         * VALIDAR ID
+         * ======================================================
+         *
+         * Igual que antes:
+         *
+         * el componente no usa
+         * socioIdSchema.safeParse().
+         *
+         * Llama directamente a:
+         *
+         * validateSocioId()
+         */
+        const validation =
+          validateSocioId(
+            socio?.id,
+          );
+
+        if (
+          !validation.success
+        ) {
           toast.error(
-            'No se encontró el socio seleccionado',
+            validation.error ||
+              'No se encontró el socio seleccionado',
           );
 
           return;
         }
 
+        /**
+         * validation.data
+         * contiene el ID ya validado.
+         */
         const response =
           await Servs.changeEstado(
-            socio.id,
+            validation.data,
           );
 
-        if (!response?.ok) {
+        if (
+          !response?.ok
+        ) {
           toast.error(
             response?.message ||
               'Error al actualizar el estado',
@@ -258,16 +437,24 @@ export default function SocioPage() {
             'Estado actualizado correctamente',
         );
 
+        /**
+         * Cerramos confirmación.
+         */
         closeModal(
           MODALS.DELETE,
         );
 
+        /**
+         * Actualizamos la tabla.
+         */
         await fetchFilas();
+
       } catch (error) {
         toast.error(
           error?.message ||
             'Error inesperado',
         );
+
       } finally {
         setLoadingAction(false);
       }
@@ -275,15 +462,20 @@ export default function SocioPage() {
 
   /**
    * ============================================================
-   * COLUMNAS
+   * COLUMNAS DE LA TABLA
    * ============================================================
    */
   const columns = useMemo(
     () => [
+      /**
+       * SOCIO
+       */
       {
-        accessorKey: 'ci_socio',
+        accessorKey:
+          'ci_socio',
 
-        header: 'Socio',
+        header:
+          'Socio',
 
         cell: (info) => {
           const socio =
@@ -291,11 +483,13 @@ export default function SocioPage() {
 
           return (
             <div className="flex min-w-56 items-center gap-3">
+
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                 <UserIcon className="h-5 w-5" />
               </span>
 
               <span>
+
                 <span className="block font-bold text-slate-900">
                   {getNombreCompleto(
                     socio,
@@ -303,61 +497,90 @@ export default function SocioPage() {
                 </span>
 
                 <span className="mt-0.5 block text-xs text-slate-500">
-                  CI: {socio.ci_socio}{' '}
+                  CI:{' '}
+                  {socio.ci_socio}{' '}
                   {socio.ci_expedido ||
                     ''}
                 </span>
+
               </span>
+
             </div>
           );
         },
       },
 
+      /**
+       * CONTACTO
+       */
       {
         accessorKey:
           'numero_celular',
 
-        header: 'Contacto',
+        header:
+          'Contacto',
 
         cell: (info) => (
           <div className="flex items-center gap-2 text-slate-600">
+
             <PhoneIcon className="h-4 w-4 text-slate-400" />
 
             {info.row.original
-              .numero_celular || '-'}
+              .numero_celular ||
+              '-'}
+
           </div>
         ),
       },
 
+      /**
+       * GÉNERO
+       */
       {
-        accessorKey: 'genero',
+        accessorKey:
+          'genero',
 
-        header: 'Género',
+        header:
+          'Género',
 
         cell: (info) =>
-          info.row.original.genero ||
+          info.row.original
+            .genero ||
           '-',
       },
 
+      /**
+       * DIRECCIÓN
+       */
       {
-        accessorKey: 'direccion',
+        accessorKey:
+          'direccion',
 
-        header: 'Dirección',
+        header:
+          'Dirección',
 
         cell: (info) => (
           <div className="flex max-w-72 items-start gap-2 whitespace-normal wrap-break-words text-slate-600">
+
             <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
 
             {info.row.original
-              .direccion || '-'}
+              .direccion ||
+              '-'}
+
           </div>
         ),
       },
 
+      /**
+       * ESTADO
+       */
       {
-        accessorKey: 'estado',
+        accessorKey:
+          'estado',
 
-        header: 'Estado',
+        header:
+          'Estado',
 
         cell: (info) => {
           const estado =
@@ -389,12 +612,19 @@ export default function SocioPage() {
         },
       },
 
+      /**
+       * ACCIONES
+       */
       {
-        id: 'acciones',
+        id:
+          'acciones',
 
-        header: 'Acciones',
+        header:
+          'Acciones',
 
-        cell: ({ row }) => {
+        cell: ({
+          row,
+        }) => {
           const estado =
             getEstado(
               row.original,
@@ -402,6 +632,9 @@ export default function SocioPage() {
 
           return (
             <div className="flex justify-end gap-2">
+
+              {/* EDITAR */}
+
               <button
                 type="button"
                 onClick={() =>
@@ -416,6 +649,8 @@ export default function SocioPage() {
 
                 Editar
               </button>
+
+              {/* HABILITAR / DESHABILITAR */}
 
               <button
                 type="button"
@@ -438,50 +673,66 @@ export default function SocioPage() {
               >
                 <PowerIcon className="h-4 w-4" />
               </button>
+
             </div>
           );
         },
       },
     ],
-    [openModal],
+    [
+      openModal,
+    ],
   );
 
   /**
    * ============================================================
-   * RESUMEN
+   * MÉTRICAS
    * ============================================================
    */
-  const resumen = useMemo(() => {
-    const activos =
-      filas.filter(
-        (socio) =>
-          getEstado(socio),
-      ).length;
+  const resumen = useMemo(
+    () => {
+      const activos =
+        filas.filter(
+          (socio) =>
+            getEstado(
+              socio,
+            ),
+        ).length;
 
-    const inactivos =
-      filas.length - activos;
+      const inactivos =
+        filas.length -
+        activos;
 
-    return {
-      visibles: filas.length,
+      return {
+        visibles:
+          filas.length,
 
-      activos,
+        activos,
 
-      inactivos,
+        inactivos,
 
-      total:
-        pagination.totalItems,
-    };
-  }, [
-    filas,
-    pagination.totalItems,
-  ]);
+        total:
+          pagination.totalItems,
+      };
+    },
+    [
+      filas,
+      pagination.totalItems,
+    ],
+  );
 
+  /**
+   * Socio seleccionado para
+   * habilitar/deshabilitar.
+   */
   const selectedSocio =
     modalState?.data;
 
   const selectedEstado =
     selectedSocio
-      ? getEstado(selectedSocio)
+      ? getEstado(
+          selectedSocio,
+        )
       : true;
 
   return (
@@ -490,15 +741,17 @@ export default function SocioPage() {
       {/* ================= ENCABEZADO ================= */}
 
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+
         <div>
+
           <h2 className="text-xl font-bold text-slate-900">
             Socios registrados
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Administra la información
-            y el estado de los socios.
+            Administra la información y el estado de los socios.
           </p>
+
         </div>
 
         <button
@@ -514,56 +767,88 @@ export default function SocioPage() {
 
           Nuevo socio
         </button>
+
       </div>
 
       {/* ================= MÉTRICAS ================= */}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
         <MetricCard
           label="Total de socios"
-          value={resumen.total}
-          icon={UserGroupIcon}
+          value={
+            resumen.total
+          }
+          icon={
+            UserGroupIcon
+          }
         />
 
         <MetricCard
           label="Visibles"
-          value={resumen.visibles}
-          icon={UserIcon}
+          value={
+            resumen.visibles
+          }
+          icon={
+            UserIcon
+          }
         />
 
         <MetricCard
           label="Activos"
-          value={resumen.activos}
-          icon={CheckCircleIcon}
+          value={
+            resumen.activos
+          }
+          icon={
+            CheckCircleIcon
+          }
         />
 
         <MetricCard
           label="Inactivos"
-          value={resumen.inactivos}
-          icon={PowerIcon}
+          value={
+            resumen.inactivos
+          }
+          icon={
+            PowerIcon
+          }
         />
+
       </div>
 
       {/* ================= FILTROS ================= */}
 
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+
+          {/* BÚSQUEDA */}
+
           <div className="w-full lg:max-w-md">
+
             <label className="mb-2 block text-sm font-semibold text-slate-700">
               Buscar socio
             </label>
 
             <div className="relative">
+
               <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
               <input
                 type="text"
-                value={searchInput}
-                onChange={(event) => {
+                value={
+                  searchInput
+                }
+                onChange={(
+                  event,
+                ) => {
+                  /**
+                   * Si cambia búsqueda,
+                   * regresamos a página 1.
+                   */
                   setPagination(
                     (previous) => ({
                       ...previous,
-
                       page: 1,
                     }),
                   );
@@ -585,7 +870,6 @@ export default function SocioPage() {
                     setPagination(
                       (previous) => ({
                         ...previous,
-
                         page: 1,
                       }),
                     );
@@ -595,25 +879,31 @@ export default function SocioPage() {
                   <XMarkIcon className="h-4 w-4" />
                 </button>
               )}
+
             </div>
+
           </div>
 
+          {/* ESTADO + ACTUALIZAR */}
+
           <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+
             <div className="w-full sm:w-64">
+
               <Select
                 label="Estado"
-                placeholder="Seleccione un valor"
                 value={
                   selectEstadoSocio
                 }
                 options={
                   opcionesEstadoSocio
                 }
-                onChange={(event) => {
+                onChange={(
+                  event,
+                ) => {
                   setPagination(
                     (previous) => ({
                       ...previous,
-
                       page: 1,
                     }),
                   );
@@ -623,12 +913,17 @@ export default function SocioPage() {
                   );
                 }}
               />
+
             </div>
 
             <button
               type="button"
-              onClick={fetchFilas}
-              disabled={loading}
+              onClick={
+                fetchFilas
+              }
+              disabled={
+                loading
+              }
               className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
             >
               <ArrowPathIcon
@@ -641,34 +936,60 @@ export default function SocioPage() {
 
               Actualizar
             </button>
+
           </div>
+
         </div>
+
       </div>
 
       {/* ================= TABLA ================= */}
 
       <DataTable
-        data={filas}
-        columns={columns}
-        loading={loading}
-        page={pagination.page}
+        data={
+          filas
+        }
+        columns={
+          columns
+        }
+        loading={
+          loading
+        }
+        page={
+          pagination.page
+        }
         totalPages={
           pagination.totalPages
         }
         totalItems={
           pagination.totalItems
         }
-        limit={pagination.limit}
-        onPageChange={(newPage) =>
+        limit={
+          pagination.limit
+        }
+
+        /**
+         * Cambiar página.
+         */
+        onPageChange={(
+          newPage,
+        ) =>
           setPagination(
             (previous) => ({
               ...previous,
 
-              page: newPage,
+              page:
+                newPage,
             }),
           )
         }
-        onLimitChange={(newLimit) =>
+
+        /**
+         * Cambiar cantidad por página.
+         */
+        onLimitChange={(
+          newLimit,
+        ) =>
           setPagination(
             (previous) => ({
               ...previous,
@@ -676,7 +997,9 @@ export default function SocioPage() {
               page: 1,
 
               limit:
-                Number(newLimit),
+                Number(
+                  newLimit,
+                ),
             }),
           )
         }
@@ -685,19 +1008,27 @@ export default function SocioPage() {
       {/* ================= CREAR ================= */}
 
       <SocioModal
-        open={isModalOpen(
-          MODALS.CREATE,
-        )}
+        open={
+          isModalOpen(
+            MODALS.CREATE,
+          )
+        }
         onClose={() =>
           closeModal(
             MODALS.CREATE,
           )
         }
         onSuccess={() => {
+          /**
+           * Cerramos modal.
+           */
           closeModal(
             MODALS.CREATE,
           );
 
+          /**
+           * Actualizamos tabla.
+           */
           fetchFilas();
         }}
       />
@@ -705,11 +1036,15 @@ export default function SocioPage() {
       {/* ================= EDITAR ================= */}
 
       <SocioModal
-        open={isModalOpen(
-          MODALS.EDIT,
-        )}
+        open={
+          isModalOpen(
+            MODALS.EDIT,
+          )
+        }
         isEdit
-        socio={modalState?.data}
+        socio={
+          modalState?.data
+        }
         onClose={() =>
           closeModal(
             MODALS.EDIT,
@@ -727,9 +1062,11 @@ export default function SocioPage() {
       {/* ================= CAMBIAR ESTADO ================= */}
 
       <ConfirmModal
-        open={isModalOpen(
-          MODALS.DELETE,
-        )}
+        open={
+          isModalOpen(
+            MODALS.DELETE,
+          )
+        }
         title={
           selectedEstado
             ? '¿Deseas deshabilitar este socio?'
@@ -754,10 +1091,16 @@ export default function SocioPage() {
           handleChangeEstado
         }
       />
+
     </section>
   );
 }
 
+/**
+ * ============================================================
+ * TARJETA DE MÉTRICAS
+ * ============================================================
+ */
 function MetricCard({
   label,
   value,
@@ -765,8 +1108,11 @@ function MetricCard({
 }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
       <div className="flex items-center justify-between">
+
         <div>
+
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {label}
           </p>
@@ -774,12 +1120,17 @@ function MetricCard({
           <p className="mt-2 text-2xl font-bold text-slate-900">
             {value}
           </p>
+
         </div>
 
         <div className="rounded-full bg-emerald-50 p-3 text-emerald-700">
+
           <Icon className="h-6 w-6" />
+
         </div>
+
       </div>
+
     </article>
   );
 }

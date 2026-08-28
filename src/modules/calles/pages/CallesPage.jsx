@@ -10,13 +10,15 @@ import {
   PencilSquareIcon,
   PlusIcon,
   PowerIcon,
-  TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 import CalleModal from '../components/CalleModal';
 import { CallesServices } from '../services/calles.services';
-
+import {
+  validateCalleId,
+  validateCalleParams,
+} from '../schema/calles.schema';
 const statusStyles = {
   active: {
     badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -43,42 +45,149 @@ export default function CallesPage() {
   const [selectedCalle, setSelectedCalle] = useState(null);
   const [message, setMessage] = useState('');
 
-  const fetchCalles = async () => {
+ const fetchCalles = async () => {
+  try {
     setLoading(true);
+
     setMessage('');
 
-    const response = await CallesServices.getAll(
+    /**
+     * ==========================================================
+     * PASO 1
+     * PREPARAMOS QUERY PARAMS
+     * ==========================================================
+     */
+    const params = {
       page,
       limit,
       search,
       estado,
-    );
+    };
 
-    setLoading(false);
+    /**
+     * ==========================================================
+     * PASO 2
+     * VALIDAMOS CON FUNCIÓN DEL SCHEMA
+     * ==========================================================
+     */
+    const validation =
+      validateCalleParams(
+        params,
+      );
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al cargar calles');
+    if (
+      !validation.isValid
+    ) {
+      setMessage(
+        'Los parámetros de búsqueda no son válidos',
+      );
+
       setCalles([]);
+
       return;
     }
 
-    const data =
-      response.data ||
-      response.calles ||
-      response.items ||
-      [];
+    /**
+     * ==========================================================
+     * PASO 3
+     * SERVICE
+     * ==========================================================
+     *
+     * Mandamos:
+     *
+     * {
+     *   page,
+     *   limit,
+     *   search,
+     *   estado
+     * }
+     */
+    const response =
+      await CallesServices.getAll(
+        validation.data,
+      );
 
-    const paginationData =
-      response.pagination ||
-      response.meta || {
-        totalPages: response.totalPages,
-        totalItems: response.total,
-        page: response.page,
-      };
+    /**
+     * ==========================================================
+     * PASO 4
+     * ERROR BACKEND
+     * ==========================================================
+     */
+    if (
+      !response?.ok
+    ) {
+      setMessage(
+        response?.message ||
+          'Error al cargar calles',
+      );
 
-    setCalles(data);
-    setPagination(paginationData);
-  };
+      setCalles([]);
+
+      return;
+    }
+
+    /**
+     * ==========================================================
+     * PASO 5
+     * DATOS
+     * ==========================================================
+     */
+    setCalles(
+      Array.isArray(
+        response.data,
+      )
+        ? response.data
+        : [],
+    );
+
+    /**
+     * Tu API devuelve directamente:
+     *
+     * total
+     * page
+     * limit
+     * totalPages
+     *
+     * según la captura de tu documentación.
+     */
+    setPagination({
+      page:
+        Number(
+          response.page ??
+            page,
+        ),
+
+      limit:
+        Number(
+          response.limit ??
+            limit,
+        ),
+
+      totalItems:
+        Number(
+          response.total ??
+            0,
+        ),
+
+      totalPages:
+        Number(
+          response.totalPages ??
+            1,
+        ),
+    });
+
+  } catch (error) {
+    setMessage(
+      error?.message ||
+        'Error inesperado al cargar calles',
+    );
+
+  } finally {
+    setLoading(
+      false,
+    );
+  }
+};
 
   useEffect(() => {
     fetchCalles();
@@ -110,42 +219,97 @@ export default function CallesPage() {
     fetchCalles();
   };
 
-  const handleDelete = async (calle) => {
-    const confirmDelete = window.confirm(
-      `¿Seguro que deseas eliminar la calle "${calle.nombre_calle}"?`,
-    );
+  
 
-    if (!confirmDelete) return;
+  const handleToggleStatus =
+  async (
+    calle,
+  ) => {
+    /**
+     * ==========================================================
+     * PASO 1
+     * VALIDAMOS ID
+     * ==========================================================
+     */
+    const validation =
+      validateCalleId(
+        calle?.id,
+      );
 
-    const response = await CallesServices.delete(calle.id);
+    if (
+      !validation.isValid
+    ) {
+      setMessage(
+        validation.error,
+      );
 
-    if (!response.ok) {
-      setMessage(response.message || 'Error al eliminar calle');
       return;
     }
 
-    setMessage('Calle eliminada correctamente');
-    fetchCalles();
-  };
+    const accion =
+      calle.estado
+        ? 'deshabilitar'
+        : 'habilitar';
 
-  const handleToggleStatus = async (calle) => {
-    const accion = calle.estado ? 'deshabilitar' : 'habilitar';
+    const confirmToggle =
+      window.confirm(
+        `¿Seguro que deseas ${accion} la calle "${calle.nombre_calle}"?`,
+      );
 
-    const confirmToggle = window.confirm(
-      `¿Seguro que deseas ${accion} la calle "${calle.nombre_calle}"?`,
-    );
-
-    if (!confirmToggle) return;
-
-    const response = await CallesServices.toggleStatus(calle.id);
-
-    if (!response.ok) {
-      setMessage(response.message || 'Error al cambiar estado');
+    if (
+      !confirmToggle
+    ) {
       return;
     }
 
-    setMessage('Estado actualizado correctamente');
-    fetchCalles();
+    try {
+      /**
+       * ========================================================
+       * PASO 2
+       * SERVICE
+       * ========================================================
+       */
+      const response =
+        await CallesServices.toggleStatus(
+          validation.data,
+        );
+
+      if (
+        !response?.ok
+      ) {
+        setMessage(
+          response?.message ||
+            'Error al cambiar estado',
+        );
+
+        return;
+      }
+
+      /**
+       * ========================================================
+       * PASO 3
+       * ÉXITO
+       * ========================================================
+       */
+      setMessage(
+        response?.message ||
+          'Estado actualizado correctamente',
+      );
+
+      /**
+       * ========================================================
+       * PASO 4
+       * ACTUALIZAR TABLA
+       * ========================================================
+       */
+      await fetchCalles();
+
+    } catch (error) {
+      setMessage(
+        error?.message ||
+          'Error inesperado al cambiar el estado',
+      );
+    }
   };
 
   const clearFilters = () => {
@@ -427,14 +591,7 @@ export default function CallesPage() {
                               <PowerIcon className="h-4 w-4" />
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(calle)}
-                              className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                              title="Eliminar calle"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
+                            
                           </div>
                         </td>
                       </tr>

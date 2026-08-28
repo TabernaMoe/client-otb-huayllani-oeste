@@ -1,24 +1,63 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
-  PlusIcon,
-  PencilSquareIcon,
-  MagnifyingGlassIcon,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
   CreditCardIcon,
+  IdentificationIcon,
+  MagnifyingGlassIcon,
   MapPinIcon,
+  PencilSquareIcon,
+  PlusIcon,
   SignalIcon,
   UsersIcon,
-  CheckCircleIcon,
-  FunnelIcon,
-  ArrowPathIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  IdentificationIcon,
 } from '@heroicons/react/24/outline';
 
-import { AccionesServices } from '../services/acciones.services';
-import AccionModal from '../components/AccionModal';
+import {
+  toast,
+} from 'react-toastify';
 
-const getSocioName = (accion) =>
+import {
+  AccionesServices as Servs,
+} from '../services/acciones.services';
+
+import AccionModal
+  from '../components/AccionModal';
+import {
+  CallesServices
+} from '../../calles/services/calles.services';
+
+/**
+ * ============================================================
+ * FUNCIONES DE VALIDACIÓN
+ * ============================================================
+ *
+ * El Page no importa schemas directamente.
+ *
+ * Solamente funciones.
+ */
+import {
+  validateAccionId,
+  validateAccionParams,
+} from '../schema/acciones.schema';
+
+/**
+ * ============================================================
+ * OBTENER NOMBRE DEL SOCIO
+ * ============================================================
+ *
+ * El listado de tu backend devuelve:
+ *
+ * nombre_completo
+ */
+const getSocioName = (
+  accion,
+) =>
+  accion?.nombre_completo ||
   accion?.socio?.nombre_completo ||
   [
     accion?.socio?.nombres,
@@ -27,545 +66,1188 @@ const getSocioName = (accion) =>
   ]
     .filter(Boolean)
     .join(' ') ||
-  accion?.nombre_completo ||
-  accion?.nombre_socio ||
-  accion?.socio_nombre ||
   'Socio sin nombre';
 
-const getSocioInitials = (accion) => {
-  const nombre = getSocioName(accion);
-
-  return nombre
+/**
+ * ============================================================
+ * OBTENER INICIALES
+ * ============================================================
+ */
+const getSocioInitials = (
+  accion,
+) =>
+  getSocioName(
+    accion,
+  )
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-    .map((palabra) => palabra.charAt(0).toUpperCase())
+    .map(
+      (palabra) =>
+        palabra
+          .charAt(0)
+          .toUpperCase(),
+    )
     .join('');
-};
 
-const getSocioCode = (accion) =>
-  accion?.socio?.codigo_socio ||
-  accion?.codigo_socio ||
-  accion?.socio_codigo ||
-  `SOC-${String(accion?.socio_id || accion?.id || '').padStart(4, '0')}`;
-
-const getCalleName = (accion) =>
-  accion?.calle?.nombre_calle ||
-  accion?.calle?.nombre ||
+/**
+ * ============================================================
+ * CALLE
+ * ============================================================
+ */
+const getCalleName = (
+  accion,
+) =>
   accion?.nombre_calle ||
+  accion?.calle?.nombre_calle ||
   '-';
 
-const getTarifaName = (accion) =>
-  accion?.tarifa?.nombre_tarifa ||
-  accion?.tarifa?.nombre ||
+/**
+ * ============================================================
+ * TARIFA
+ * ============================================================
+ */
+const getTarifaName = (
+  accion,
+) =>
   accion?.nombre_tarifa ||
+  accion?.tarifa?.nombre_tarifa ||
   '-';
 
+/**
+ * ============================================================
+ * ESTILOS
+ * ============================================================
+ */
 const estadoStyles = {
   ACTIVO: {
-    badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    dot: 'bg-emerald-500',
+    badge:
+      'border-emerald-200 bg-emerald-50 text-emerald-700',
+
+    dot:
+      'bg-emerald-500',
   },
+
   PASIVO: {
-    badge: 'border-amber-200 bg-amber-50 text-amber-700',
-    dot: 'bg-amber-500',
+    badge:
+      'border-amber-200 bg-amber-50 text-amber-700',
+
+    dot:
+      'bg-amber-500',
   },
+
   ANULADO: {
-    badge: 'border-red-200 bg-red-50 text-red-700',
-    dot: 'bg-red-500',
+    badge:
+      'border-red-200 bg-red-50 text-red-700',
+
+    dot:
+      'bg-red-500',
   },
 };
 
 export default function AccionesPage() {
-  const [acciones, setAcciones] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  /**
+   * ============================================================
+   * DATOS
+   * ============================================================
+   */
 
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [
+    acciones,
+    setAcciones,
+  ] = useState([]);
 
-  const [search, setSearch] = useState('');
-  const [estado, setEstado] = useState('ACTIVO');
+  /**
+   * Acción seleccionada
+   * para editar.
+   */
+  const [
+    selected,
+    setSelected,
+  ] = useState(null);
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  /**
+   * Control del modal.
+   */
+  const [
+    modalOpen,
+    setModalOpen,
+  ] = useState(false);
 
-  const fetchAcciones = async () => {
-    setLoading(true);
-    setMessage('');
+  /**
+   * ============================================================
+   * PAGINACIÓN
+   * ============================================================
+   */
+  const [
+    pagination,
+    setPagination,
+  ] = useState({
+    page: 1,
 
-    const res = await AccionesServices.getAll(
-      page,
-      limit,
-      search,
-      estado,
-    );
+    limit: 10,
 
-    setLoading(false);
+    totalItems: 0,
 
-    if (!res.ok) {
-      setMessage(res.message || 'Error al cargar las acciones');
-      setAcciones([]);
-      setTotalPages(1);
-      setTotalItems(0);
-      return;
-    }
+    totalPages: 1,
+  });
 
-    const responseData = Array.isArray(res.data)
-      ? res.data
-      : res.data?.data || res.data?.rows || [];
+  /**
+   * ============================================================
+   * FILTROS
+   * ============================================================
+   */
+  const [
+    search,
+    setSearch,
+  ] = useState('');
 
-    const pagination = res.pagination || res.data?.pagination || {};
+  const [
+    estado,
+    setEstado,
+  ] = useState(
+    'ACTIVO',
+  );
 
-    setAcciones(responseData);
-    setTotalPages(
-      Number(
-        res.totalPages ||
-          pagination.totalPages ||
-          pagination.total_pages ||
-          1,
-      ),
-    );
+  /**
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
-    setTotalItems(
-      Number(
-        res.total ||
-          res.totalItems ||
-          pagination.total ||
-          pagination.totalItems ||
-          pagination.total_items ||
-          responseData.length,
-      ),
-    );
-  };
+  /**
+   * ============================================================
+   * OBTENER ACCIONES
+   * ============================================================
+   */
+  const fetchAcciones =
+    async () => {
+      try {
+        setLoading(
+          true,
+        );
 
+        /**
+         * ======================================================
+         * PASO 1
+         * PREPARAMOS LOS PARÁMETROS
+         * ======================================================
+         */
+        const params = {
+          page:
+            pagination.page,
+
+          limit:
+            pagination.limit,
+
+          search,
+
+          estado,
+        };
+
+        /**
+         * ======================================================
+         * PASO 2
+         * VALIDAMOS
+         * ======================================================
+         *
+         * El Page solamente utiliza:
+         *
+         * validateAccionParams()
+         *
+         * No usa safeParse().
+         */
+        const validation =
+          validateAccionParams(
+            params,
+          );
+
+        /**
+         * Si algo está incorrecto,
+         * detenemos la petición.
+         */
+        if (
+          !validation.isValid
+        ) {
+          toast.error(
+            'Los parámetros de búsqueda no son válidos',
+          );
+
+          return;
+        }
+
+        /**
+         * ======================================================
+         * PASO 3
+         * SERVICE
+         * ======================================================
+         *
+         * IMPORTANTE:
+         *
+         * getAll recibe UN OBJETO.
+         *
+         * No:
+         *
+         * getAll(
+         *   page,
+         *   limit,
+         *   search,
+         *   estado
+         * )
+         */
+        const response =
+          await Servs.getAll(
+            validation.data,
+          );
+
+        /**
+         * ======================================================
+         * PASO 4
+         * ERROR DEL BACKEND
+         * ======================================================
+         */
+        if (
+          !response?.ok
+        ) {
+          toast.error(
+            response?.message ||
+              'Error al cargar las acciones',
+          );
+
+          setAcciones([]);
+
+          setPagination(
+            (previous) => ({
+              ...previous,
+
+              totalItems:
+                0,
+
+              totalPages:
+                1,
+            }),
+          );
+
+          return;
+        }
+
+        /**
+         * ======================================================
+         * PASO 5
+         * GUARDAMOS LOS REGISTROS
+         * ======================================================
+         */
+        setAcciones(
+          Array.isArray(
+            response.data,
+          )
+            ? response.data
+            : [],
+        );
+
+        /**
+         * ======================================================
+         * PASO 6
+         * PAGINACIÓN
+         * ======================================================
+         *
+         * Según tu backend:
+         *
+         * {
+         *   total,
+         *   page,
+         *   limit,
+         *   totalPages,
+         *   data
+         * }
+         */
+        setPagination(
+          (previous) => ({
+            ...previous,
+
+            page:
+              Number(
+                response.page ??
+                  previous.page,
+              ),
+
+            limit:
+              Number(
+                response.limit ??
+                  previous.limit,
+              ),
+
+            totalItems:
+              Number(
+                response.total ??
+                  0,
+              ),
+
+            totalPages:
+              Number(
+                response.totalPages ??
+                  1,
+              ),
+          }),
+        );
+
+      } catch (error) {
+        toast.error(
+          error?.message ||
+            'Error inesperado al cargar las acciones',
+        );
+
+      } finally {
+        setLoading(
+          false,
+        );
+      }
+    };
+
+  /**
+   * ============================================================
+   * CARGA AUTOMÁTICA
+   * ============================================================
+   *
+   * Se vuelve a consultar cuando cambia:
+   *
+   * - página
+   * - límite
+   * - búsqueda
+   * - estado
+   */
   useEffect(() => {
     fetchAcciones();
-  }, [page, search, estado]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    search,
+    estado,
+  ]);
 
-  const resumen = useMemo(() => {
-    const activos = acciones.filter(
-      (accion) => accion.estado === 'ACTIVO',
-    ).length;
-
-    const pasivos = acciones.filter(
-      (accion) => accion.estado === 'PASIVO',
-    ).length;
-
-    const anulados = acciones.filter(
-      (accion) => accion.estado === 'ANULADO',
-    ).length;
-
-    return {
-      visibles: acciones.length,
-      activos,
-      pasivos,
-      anulados,
-    };
-  }, [acciones]);
-
+  /**
+   * ============================================================
+   * NUEVA ACCIÓN
+   * ============================================================
+   */
   const openCreate = () => {
-    setSelected(null);
-    setModalOpen(true);
+    /**
+     * No tenemos acción seleccionada.
+     */
+    setSelected(
+      null,
+    );
+
+    /**
+     * Abrimos modal.
+     */
+    setModalOpen(
+      true,
+    );
   };
 
-  const openEdit = async (accion) => {
-    setMessage('');
+  /**
+   * ============================================================
+   * EDITAR
+   * ============================================================
+   *
+   * Primero hacemos GET /accion/:id
+   *
+   * porque necesitamos:
+   *
+   * detallesAccion
+   */
+  const openEdit = async (
+    accion,
+  ) => {
+    try {
+      /**
+       * ========================================================
+       * PASO 1
+       * VALIDAR ID
+       * ========================================================
+       */
+      const validation =
+        validateAccionId(
+          accion?.id,
+        );
 
-    const res = await AccionesServices.getById(accion.id);
+      if (
+        !validation.isValid
+      ) {
+        toast.error(
+          validation.error,
+        );
 
-    if (!res.ok) {
-      setMessage(res.message || 'Error al obtener la acción');
-      return;
+        return;
+      }
+
+      /**
+       * ========================================================
+       * PASO 2
+       * CONSULTAR ACCIÓN COMPLETA
+       * ========================================================
+       */
+      const response =
+        await Servs.getById(
+          validation.data,
+        );
+
+      if (
+        !response?.ok
+      ) {
+        toast.error(
+          response?.message ||
+            'Error al obtener la acción',
+        );
+
+        return;
+      }
+
+      /**
+       * ========================================================
+       * PASO 3
+       * GUARDAMOS LA ACCIÓN
+       * ========================================================
+       */
+      setSelected(
+        response.data,
+      );
+
+      /**
+       * Abrimos modal.
+       */
+      setModalOpen(
+        true,
+      );
+
+    } catch (error) {
+      toast.error(
+        error?.message ||
+          'Error inesperado al obtener la acción',
+      );
     }
-
-    setSelected(res.data);
-    setModalOpen(true);
   };
 
-  const handleSaved = () => {
-    setModalOpen(false);
-    setSelected(null);
-    fetchAcciones();
+  /**
+   * ============================================================
+   * OPERACIÓN EXITOSA DEL MODAL
+   * ============================================================
+   */
+  const handleSaved = async () => {
+    /**
+     * Cerramos modal.
+     */
+    setModalOpen(
+      false,
+    );
+
+    /**
+     * Limpiamos selección.
+     */
+    setSelected(
+      null,
+    );
+
+    /**
+     * Recargamos tabla.
+     */
+    await fetchAcciones();
   };
 
-  const handleSearchChange = (event) => {
-    setPage(1);
-    setSearch(event.target.value);
+  /**
+   * ============================================================
+   * BUSCAR
+   * ============================================================
+   */
+  const handleSearchChange = (
+    event,
+  ) => {
+    /**
+     * Si cambia búsqueda,
+     * regresamos a página 1.
+     */
+    setPagination(
+      (previous) => ({
+        ...previous,
+
+        page: 1,
+      }),
+    );
+
+    setSearch(
+      event.target.value,
+    );
   };
 
-  const handleEstadoChange = (event) => {
-    setPage(1);
-    setEstado(event.target.value);
+  /**
+   * ============================================================
+   * CAMBIAR ESTADO DEL FILTRO
+   * ============================================================
+   */
+  const handleEstadoChange = (
+    event,
+  ) => {
+    setPagination(
+      (previous) => ({
+        ...previous,
+
+        page: 1,
+      }),
+    );
+
+    setEstado(
+      event.target.value,
+    );
   };
 
+  /**
+   * ============================================================
+   * LIMPIAR FILTROS
+   * ============================================================
+   */
   const clearFilters = () => {
-    setPage(1);
+    setPagination(
+      (previous) => ({
+        ...previous,
+
+        page: 1,
+      }),
+    );
+
     setSearch('');
-    setEstado('ACTIVO');
+
+    setEstado(
+      'ACTIVO',
+    );
   };
 
-  const renderTableBody = () => {
-    if (loading) {
-      return (
-        <tr>
-          <td colSpan="7" className="px-6 py-16">
-            <div className="flex flex-col items-center justify-center">
-              <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
-              <p className="mt-3 text-sm font-medium text-slate-500">
-                Cargando acciones...
-              </p>
-            </div>
-          </td>
-        </tr>
-      );
-    }
+  /**
+   * ============================================================
+   * MÉTRICAS
+   * ============================================================
+   *
+   * Estos valores corresponden
+   * solamente a las filas visibles.
+   */
+  const resumen =
+    useMemo(() => {
+      const activos =
+        acciones.filter(
+          (accion) =>
+            accion.estado ===
+            'ACTIVO',
+        ).length;
 
-    if (acciones.length === 0) {
-      return (
-        <tr>
-          <td colSpan="7" className="px-6 py-16">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="rounded-full bg-slate-100 p-4 text-slate-400">
-                <CreditCardIcon className="h-8 w-8" />
-              </div>
+      const pasivos =
+        acciones.filter(
+          (accion) =>
+            accion.estado ===
+            'PASIVO',
+        ).length;
 
-              <h3 className="mt-4 font-bold text-slate-700">
-                No se encontraron acciones
-              </h3>
+      const anulados =
+        acciones.filter(
+          (accion) =>
+            accion.estado ===
+            'ANULADO',
+        ).length;
 
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
-                No existen registros con los filtros seleccionados.
-              </p>
-            </div>
-          </td>
-        </tr>
-      );
-    }
+      return {
+        visibles:
+          acciones.length,
 
-    return acciones.map((accion) => {
-      const styles = estadoStyles[accion.estado] || estadoStyles.ANULADO;
+        activos,
 
-      return (
-        <tr key={accion.id} className="transition hover:bg-slate-50/80">
-          <td className="px-6 py-4">
-            <div className="flex min-w-60 items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
-                {getSocioInitials(accion) || 'S'}
-              </div>
+        pasivos,
 
-              <div>
-                <p className="font-bold text-slate-900">
-                  {getSocioName(accion)}
-                </p>
-
-                <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                  <IdentificationIcon className="h-3.5 w-3.5" />
-                  {getSocioCode(accion)}
-                </div>
-              </div>
-            </div>
-          </td>
-
-          <td className="px-4 py-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-700">
-                <SignalIcon className="h-4 w-4" />
-              </span>
-
-              <span className="font-semibold text-slate-700">
-                {accion.nro_medidor || '-'}
-              </span>
-            </div>
-          </td>
-
-          <td className="px-4 py-4 text-slate-600">
-            {getCalleName(accion)}
-          </td>
-
-          <td className="px-4 py-4">
-            <div className="flex max-w-56 items-start gap-2 text-slate-600">
-              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-              <span>{accion.direccion || '-'}</span>
-            </div>
-          </td>
-
-          <td className="px-4 py-4 text-slate-600">
-            {getTarifaName(accion)}
-          </td>
-
-          <td className="px-4 py-4">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${styles.badge}`}
-            >
-              <span className={`h-2 w-2 rounded-full ${styles.dot}`} />
-              {accion.estado}
-            </span>
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => openEdit(accion)}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                title="Editar acción"
-              >
-                <PencilSquareIcon className="h-4 w-4" />
-                Editar
-              </button>
-            </div>
-          </td>
-        </tr>
-      );
-    });
-  };
+        anulados,
+      };
+    }, [
+      acciones,
+    ]);
 
   return (
-    <section className="min-h-screen bg-slate-50">
-      <div className="space-y-5">
-        {/* Encabezado */}
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-              <span>Inicio</span>
-              <span>/</span>
-              <span>Socios</span>
-              <span>/</span>
-              <span className="text-emerald-700">
-                Gestión de acciones
-              </span>
-            </div>
+    <section className="space-y-5">
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Gestión de acciones
-            </h1>
+      {/* ======================================================
+          ENCABEZADO
+          ====================================================== */}
 
-            <p className="mt-1 text-sm text-slate-500">
-              Administra las conexiones, medidores y datos asociados a
-              cada socio.
-            </p>
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+
+        <div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Gestión de acciones
+          </h1>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Administra las conexiones, medidores y datos asociados a cada socio.
+          </p>
+
+        </div>
+
+        <button
+          type="button"
+          onClick={
+            openCreate
+          }
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+        >
+
+          <PlusIcon className="h-5 w-5" />
+
+          Nueva acción
+
+        </button>
+
+      </div>
+
+      {/* ======================================================
+          MÉTRICAS
+          ====================================================== */}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+        <MetricCard
+          label="Total acciones"
+          value={
+            pagination.totalItems
+          }
+          icon={
+            CreditCardIcon
+          }
+        />
+
+        <MetricCard
+          label="Visibles"
+          value={
+            resumen.visibles
+          }
+          icon={
+            UsersIcon
+          }
+        />
+
+        <MetricCard
+          label="Activas visibles"
+          value={
+            resumen.activos
+          }
+          icon={
+            CheckCircleIcon
+          }
+        />
+
+        <MetricCard
+          label="Filtro actual"
+          value={
+            estado
+          }
+          icon={
+            SignalIcon
+          }
+        />
+
+      </div>
+
+      {/* ======================================================
+          FILTROS
+          ====================================================== */}
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <div className="flex flex-col gap-3 lg:flex-row">
+
+          {/* BÚSQUEDA */}
+
+          <div className="relative flex-1">
+
+            <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+            <input
+              type="text"
+              value={
+                search
+              }
+              onChange={
+                handleSearchChange
+              }
+              placeholder="Buscar socio, medidor o dirección"
+              className="w-full rounded-lg border border-slate-200 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
+            />
+
           </div>
+
+          {/* ESTADO */}
+
+          <select
+            value={
+              estado
+            }
+            onChange={
+              handleEstadoChange
+            }
+            className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-600"
+          >
+
+            <option value="ACTIVO">
+              Activas
+            </option>
+
+            <option value="PASIVO">
+              Pasivas
+            </option>
+
+            <option value="ANULADO">
+              Anuladas
+            </option>
+
+          </select>
+
+          {/* LIMPIAR */}
 
           <button
             type="button"
-            onClick={openCreate}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+            onClick={
+              clearFilters
+            }
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
           >
-            <PlusIcon className="h-5 w-5" />
-            Nueva acción
+
+            <ArrowPathIcon className="h-4 w-4" />
+
+            Limpiar
+
           </button>
+
         </div>
 
-        {/* Tarjetas resumen */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Total de acciones
-                </p>
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {totalItems}
-                </p>
-              </div>
-
-              <div className="rounded-full bg-slate-100 p-3 text-slate-700">
-                <CreditCardIcon className="h-6 w-6" />
-              </div>
-            </div>
-          </article>
-
-          <article className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Activas en esta página
-                </p>
-                <p className="mt-2 text-2xl font-bold text-emerald-700">
-                  {resumen.activos}
-                </p>
-              </div>
-
-              <div className="rounded-full bg-emerald-50 p-3 text-emerald-700">
-                <CheckCircleIcon className="h-6 w-6" />
-              </div>
-            </div>
-          </article>
-
-          <article className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Registros visibles
-                </p>
-                <p className="mt-2 text-2xl font-bold text-blue-800">
-                  {resumen.visibles}
-                </p>
-              </div>
-
-              <div className="rounded-full bg-blue-50 p-3 text-blue-800">
-                <UsersIcon className="h-6 w-6" />
-              </div>
-            </div>
-          </article>
-
-          <article className="rounded-xl border border-amber-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Estado seleccionado
-                </p>
-                <p className="mt-2 text-lg font-bold text-slate-900">
-                  {estado}
-                </p>
-              </div>
-
-              <div className="rounded-full bg-amber-50 p-3 text-amber-700">
-                <FunnelIcon className="h-6 w-6" />
-              </div>
-            </div>
-          </article>
-        </div>
-
-        {message && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {message}
-          </div>
-        )}
-
-        {/* Contenedor principal */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          {/* Título y filtros */}
-          <div className="border-b border-slate-200 px-5 py-5 lg:px-6">
-            <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
-                    1
-                  </span>
-
-                  <h2 className="text-base font-bold text-slate-900">
-                    Acciones registradas
-                  </h2>
-                </div>
-
-                <p className="ml-10 mt-1 text-sm text-slate-500">
-                  Busque una acción por socio, número de medidor o
-                  dirección.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative w-full sm:w-80">
-                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={handleSearchChange}
-                    placeholder="Buscar socio, medidor o dirección"
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
-                  />
-                </div>
-
-                <select
-                  value={estado}
-                  onChange={handleEstadoChange}
-                  className="min-w-40 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
-                >
-                  <option value="ACTIVO">Activas</option>
-                  <option value="PASIVO">Pasivas</option>
-                  <option value="ANULADO">Anuladas</option>
-                </select>
-
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                >
-                  <ArrowPathIcon className="h-4 w-4" />
-                  Limpiar
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabla */}
-          <div className="overflow-x-auto">
-            <table className="min-w-262.5 w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50/80">
-                <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-4">Socio</th>
-                  <th className="px-4 py-4">Medidor</th>
-                  <th className="px-4 py-4">Calle</th>
-                  <th className="px-4 py-4">Dirección</th>
-                  <th className="px-4 py-4">Tarifa</th>
-                  <th className="px-4 py-4">Estado</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {renderTableBody()}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pie y paginación */}
-          <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-            <p className="text-sm text-slate-500">
-              Mostrando{' '}
-              <span className="font-semibold text-slate-700">
-                {acciones.length}
-              </span>{' '}
-              registros
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((prev) => prev - 1)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Página anterior"
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-
-              <span className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700">
-                {page}
-              </span>
-
-              <span className="px-1 text-sm text-slate-400">
-                de {totalPages}
-              </span>
-
-              <button
-                type="button"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((prev) => prev + 1)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Página siguiente"
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
+      {/* ======================================================
+          TABLA
+          ====================================================== */}
+
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+        <div className="overflow-x-auto">
+
+          <table className="w-full min-w-250 text-left text-sm">
+
+            {/* CABECERA */}
+
+            <thead className="border-b border-slate-200 bg-slate-50">
+
+              <tr>
+
+                <th className="px-6 py-4">
+                  Socio
+                </th>
+
+                <th className="px-4 py-4">
+                  Medidor
+                </th>
+
+                <th className="px-4 py-4">
+                  Calle
+                </th>
+
+                <th className="px-4 py-4">
+                  Dirección
+                </th>
+
+                <th className="px-4 py-4">
+                  Tarifa
+                </th>
+
+                <th className="px-4 py-4">
+                  Estado
+                </th>
+
+                <th className="px-6 py-4 text-right">
+                  Acciones
+                </th>
+
+              </tr>
+
+            </thead>
+
+            {/* CUERPO */}
+
+            <tbody className="divide-y divide-slate-100">
+
+              {/* LOADING */}
+
+              {loading && (
+                <tr>
+
+                  <td
+                    colSpan={7}
+                    className="px-6 py-16 text-center"
+                  >
+
+                    <ArrowPathIcon className="mx-auto h-7 w-7 animate-spin text-emerald-700" />
+
+                    <p className="mt-3 text-sm text-slate-500">
+                      Cargando acciones...
+                    </p>
+
+                  </td>
+
+                </tr>
+              )}
+
+              {/* SIN RESULTADOS */}
+
+              {!loading &&
+                acciones.length ===
+                  0 && (
+                  <tr>
+
+                    <td
+                      colSpan={7}
+                      className="px-6 py-16 text-center text-slate-500"
+                    >
+                      No se encontraron acciones
+                    </td>
+
+                  </tr>
+                )}
+
+              {/* REGISTROS */}
+
+              {!loading &&
+                acciones.map(
+                  (
+                    accion,
+                  ) => {
+                    const styles =
+                      estadoStyles[
+                        accion.estado
+                      ] ||
+                      estadoStyles.ANULADO;
+
+                    return (
+                      <tr
+                        key={
+                          accion.id
+                        }
+                        className="transition hover:bg-slate-50"
+                      >
+
+                        {/* SOCIO */}
+
+                        <td className="px-6 py-4">
+
+                          <div className="flex min-w-60 items-center gap-3">
+
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
+                              {getSocioInitials(
+                                accion,
+                              ) ||
+                                'S'}
+                            </div>
+
+                            <div>
+
+                              <p className="font-bold text-slate-900">
+                                {getSocioName(
+                                  accion,
+                                )}
+                              </p>
+
+                              <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+
+                                <IdentificationIcon className="h-3.5 w-3.5" />
+
+                                Código interno:{' '}
+
+                                {accion.codigo_interno ??
+                                  '-'}
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </td>
+
+                        {/* MEDIDOR */}
+
+                        <td className="px-4 py-4">
+
+                          <div className="flex items-center gap-2">
+
+                            <SignalIcon className="h-4 w-4 text-slate-400" />
+
+                            <span className="font-semibold text-slate-700">
+                              {accion.nro_medidor ||
+                                '-'}
+                            </span>
+
+                          </div>
+
+                        </td>
+
+                        {/* CALLE */}
+
+                        <td className="px-4 py-4 text-slate-600">
+                          {getCalleName(
+                            accion,
+                          )}
+                        </td>
+
+                        {/* DIRECCIÓN */}
+
+                        <td className="px-4 py-4">
+
+                          <div className="flex max-w-60 items-start gap-2 text-slate-600">
+
+                            <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+
+                            {accion.direccion ||
+                              '-'}
+
+                          </div>
+
+                        </td>
+
+                        {/* TARIFA */}
+
+                        <td className="px-4 py-4 text-slate-600">
+                          {getTarifaName(
+                            accion,
+                          )}
+                        </td>
+
+                        {/* ESTADO */}
+
+                        <td className="px-4 py-4">
+
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${styles.badge}`}
+                          >
+
+                            <span
+                              className={`h-2 w-2 rounded-full ${styles.dot}`}
+                            />
+
+                            {accion.estado}
+
+                          </span>
+
+                        </td>
+
+                        {/* ACCIONES */}
+
+                        <td className="px-6 py-4">
+
+                          <div className="flex justify-end">
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openEdit(
+                                  accion,
+                                )
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+
+                              <PencilSquareIcon className="h-4 w-4" />
+
+                              Editar
+
+                            </button>
+
+                          </div>
+
+                        </td>
+
+                      </tr>
+                    );
+                  },
+                )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {/* ====================================================
+            PAGINACIÓN
+            ==================================================== */}
+
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+
+          <p className="text-sm text-slate-500">
+
+            Mostrando{' '}
+
+            <strong className="text-slate-700">
+              {acciones.length}
+            </strong>
+
+            {' '}de{' '}
+
+            <strong className="text-slate-700">
+              {
+                pagination.totalItems
+              }
+            </strong>
+
+          </p>
+
+          <div className="flex items-center gap-3">
+
+            {/* ANTERIOR */}
+
+            <button
+              type="button"
+              disabled={
+                pagination.page <=
+                  1 ||
+                loading
+              }
+              onClick={() =>
+                setPagination(
+                  (
+                    previous,
+                  ) => ({
+                    ...previous,
+
+                    page:
+                      previous.page -
+                      1,
+                  }),
+                )
+              }
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+
+            {/* INFORMACIÓN */}
+
+            <span className="text-sm font-semibold text-slate-700">
+
+              Página{' '}
+
+              {
+                pagination.page
+              }
+
+              {' '}de{' '}
+
+              {
+                pagination.totalPages
+              }
+
+            </span>
+
+            {/* SIGUIENTE */}
+
+            <button
+              type="button"
+              disabled={
+                pagination.page >=
+                  pagination.totalPages ||
+                loading
+              }
+              onClick={() =>
+                setPagination(
+                  (
+                    previous,
+                  ) => ({
+                    ...previous,
+
+                    page:
+                      previous.page +
+                      1,
+                  }),
+                )
+              }
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ======================================================
+          MODAL
+          ====================================================== */}
+
       <AccionModal
-        open={modalOpen}
-        selected={selected}
+        open={
+          modalOpen
+        }
+        selected={
+          selected
+        }
         onClose={() => {
-          setModalOpen(false);
-          setSelected(null);
+          setModalOpen(
+            false,
+          );
+
+          setSelected(
+            null,
+          );
         }}
-        onSaved={handleSaved}
+        onSaved={
+          handleSaved
+        }
       />
+
     </section>
+  );
+}
+
+/**
+ * ============================================================
+ * COMPONENTE DE MÉTRICA
+ * ============================================================
+ */
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+}) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+      <div className="flex items-center justify-between">
+
+        <div>
+
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {label}
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {value}
+          </p>
+
+        </div>
+
+        <div className="rounded-full bg-emerald-50 p-3 text-emerald-700">
+          <Icon className="h-6 w-6" />
+        </div>
+
+      </div>
+
+    </article>
   );
 }

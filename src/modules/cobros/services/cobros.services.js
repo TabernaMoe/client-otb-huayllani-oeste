@@ -1,46 +1,135 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
+import {
+  api,
+} from '../../../services/api';
 
+import {
+  toServiceError,
+} from '../../../services/error';
+
+/**
+ * ============================================================
+ * SERVICES DE COBROS
+ * ============================================================
+ *
+ * Este archivo solamente se comunica
+ * con el backend.
+ *
+ * NO contiene:
+ *
+ * - Zod
+ * - useState
+ * - reglas visuales
+ */
 export class CobrosServices {
- 
-  static async getCobros(params = {}) {
+  /**
+   * ==========================================================
+   * OBTENER SOCIOS
+   * ==========================================================
+   *
+   * GET
+   *
+   * /admin/cobro
+   *
+   * Según tu documentación este endpoint
+   * devuelve los socios con sus acciones.
+   *
+   * Ejemplo de params:
+   *
+   * {
+   *   page: 1,
+   *   limit: 10,
+   *   search: ''
+   * }
+   */
+  static async getSocios(
+    params = {},
+  ) {
     try {
-      const response = await api.get('/admin/cobro', {
-        params,
-      });
+      const {
+        data,
+      } = await api.get(
+        '/admin/cobro',
+        {
+          params,
+        },
+      );
 
-      return response.data;
+      return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
 
-  
-  static async getSocioCobros(socioId) {
+  /**
+   * ==========================================================
+   * OBTENER COBROS DE UN SOCIO
+   * ==========================================================
+   *
+   * GET
+   *
+   * /admin/cobro/:socioId
+   *
+   * Ejemplo:
+   *
+   * /admin/cobro/1
+   */
+  static async getSocioCobros(
+    socioId,
+  ) {
     try {
-      
-
-      const response = await api.get(
+      const {
+        data,
+      } = await api.get(
         `/admin/cobro/${socioId}`,
       );
 
-      return response.data;
+      return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
 
-  static async pagar(payload) {
+  /**
+   * ==========================================================
+   * REGISTRAR PAGO
+   * ==========================================================
+   *
+   * POST
+   *
+   * /admin/cobro
+   *
+   * payload:
+   *
+   * {
+   *   socio_id: 2,
+   *   monto: 100,
+   *   cobros: [2],
+   *   metodo_pago: 'QR'
+   * }
+   */
+  static async pagar(
+    payload,
+  ) {
     try {
-    
-      const response = await api.post(
+      const {
+        data,
+      } = await api.post(
         '/admin/cobro',
         payload,
       );
 
-      return response.data;
+      return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
 }

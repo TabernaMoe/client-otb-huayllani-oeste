@@ -1,5 +1,10 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
+import {
+  api,
+} from '../../../services/api';
+
+import {
+  toServiceError,
+} from '../../../services/error';
 
 import {
   normalizeBlobError,
@@ -8,71 +13,133 @@ import {
 
 export class CobrosAguaServices {
   /**
+   * ==========================================================
+   * LISTAR COBROS
+   * ==========================================================
+   *
    * GET /admin/pago-agua
    */
-  static async getAll(params = {}) {
+  static async getAll(
+    params = {},
+  ) {
     try {
-      const { data } = await api.get('/admin/pago-agua', {
-        params,
-      });
+      const {
+        data,
+      } =
+        await api.get(
+          '/admin/pago-agua',
+          {
+            params,
+          },
+        );
 
       return data;
     } catch (error) {
-      throw toServiceError(error);
+      throw toServiceError(
+        error,
+      );
     }
   }
 
   /**
+   * ==========================================================
+   * DETALLE POR ACCIÓN
+   * ==========================================================
+   *
    * GET /admin/pago-agua/:accionId
    */
-  static async getByAccionId(accionId) {
+  static async getByAccionId(
+    accionId,
+  ) {
     try {
-      const { data } = await api.get(
-        `/admin/pago-agua/${accionId}`,
-      );
+      const {
+        data,
+      } =
+        await api.get(
+          `/admin/pago-agua/${accionId}`,
+        );
 
       return data;
     } catch (error) {
-      throw toServiceError(error);
+      throw toServiceError(
+        error,
+      );
     }
   }
 
   /**
+   * ==========================================================
+   * HISTORIAL
+   * ==========================================================
+   *
    * GET /admin/pago-agua/historial/:accionId
    */
-  static async getHistorial(accionId) {
+  static async getHistorial(
+    accionId,
+  ) {
     try {
-      const { data } = await api.get(
-        `/admin/pago-agua/historial/${accionId}`,
-      );
+      const {
+        data,
+      } =
+        await api.get(
+          `/admin/pago-agua/historial/${accionId}`,
+        );
 
       return data;
     } catch (error) {
-      throw toServiceError(error);
+      throw toServiceError(
+        error,
+      );
     }
   }
 
   /**
-   * PATCH /admin/pago-agua/pagar/:accionId
+   * ==========================================================
+   * PAGAR
+   * ==========================================================
+   *
+   * PATCH
+   *
+   * /admin/pago-agua/pagar/:accionId
    */
-  static async pagar(accionId, payload) {
+  static async pagar(
+    accionId,
+    payload,
+  ) {
     try {
-      const response = await api.patch(
-        `/admin/pago-agua/pagar/${accionId}`,
-        payload,
-        {
-          responseType: 'blob',
+      const response =
+        await api.patch(
+          `/admin/pago-agua/pagar/${accionId}`,
 
-          headers: {
-            Accept:
-              'application/pdf, application/json',
+          payload,
+
+          {
+            /**
+             * Puede responder:
+             *
+             * PDF
+             *
+             * o
+             *
+             * JSON
+             */
+            responseType:
+              'blob',
+
+            headers: {
+              Accept:
+                'application/pdf, application/json',
+            },
           },
-        },
-      );
+        );
 
-      return normalizePaymentResponse(response);
+      return normalizePaymentResponse(
+        response,
+      );
     } catch (error) {
-      throw await normalizeBlobError(error);
+      throw await normalizeBlobError(
+        error,
+      );
     }
   }
 }

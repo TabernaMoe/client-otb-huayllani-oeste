@@ -1,69 +1,173 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
+import {
+  api,
+} from '../../../services/api';
 
+import {
+  toServiceError,
+} from '../../../services/error';
+
+
+/**
+ * ============================================================
+ * SERVICIOS DE SOCIO
+ * ============================================================
+ *
+ * Este archivo se encarga únicamente
+ * de comunicarse con el backend.
+ */
 export class SocioServices {
 
-  static async getAll(params = {}) {
+  /**
+   * ==========================================================
+   * LISTAR SOCIOS
+   * ==========================================================
+   *
+   * params:
+   *
+   * {
+   *   page: 1,
+   *   limit: 5,
+   *   search: '',
+   *   estado: true
+   * }
+   */
+  static async getAll(
+    params = {},
+  ) {
+
     try {
-      const { data } = await api.get('/admin/socio',{
+
+      const {
+        data,
+      } = await api.get(
+        '/admin/socio',
+        {
           params,
-        });
+        },
+      );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+      return toServiceError(
+        error,
+      );
     }
   }
 
 
-  static async getById(id) {
+  /**
+   * ==========================================================
+   * OBTENER SOCIO POR ID
+   * ==========================================================
+   */
+  static async getById(
+    id,
+  ) {
+
     try {
-      const { data } = await api.get(`/admin/socio/${id}`);
+
+      const {
+        data,
+      } = await api.get(
+        `/admin/socio/${id}`,
+      );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+      return toServiceError(
+        error,
+      );
     }
   }
 
- 
-  static async create(payload) {
+
+  /**
+   * ==========================================================
+   * CREAR SOCIO
+   * ==========================================================
+   */
+  static async create(
+    payload,
+  ) {
+
     try {
-      
-      const { data } = await api.post(
+
+      const {
+        data,
+      } = await api.post(
         '/admin/socio',
         payload,
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+      return toServiceError(
+        error,
+      );
     }
   }
 
-  static async update(id, payload) {
+
+  /**
+   * ==========================================================
+   * ACTUALIZAR SOCIO
+   * ==========================================================
+   */
+  static async update(
+    id,
+    payload,
+  ) {
+
     try {
-      const { data } = await api.patch(
+
+      const {
+        data,
+      } = await api.patch(
         `/admin/socio/${id}`,
         payload,
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+      return toServiceError(
+        error,
+      );
     }
   }
 
- 
-  static async changeEstado(id) {
+
+  /**
+   * ==========================================================
+   * CAMBIAR ESTADO
+   * ==========================================================
+   */
+  static async changeEstado(
+    id,
+  ) {
+
     try {
-      const { data } = await api.patch(
+
+      const {
+        data,
+      } = await api.patch(
         `/admin/socio/cambiar-estado/${id}`,
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+      return toServiceError(
+        error,
+      );
     }
   }
 }

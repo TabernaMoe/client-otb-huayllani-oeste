@@ -8,29 +8,40 @@ import {
 
 /**
  * ============================================================
- * SERVICIOS DE GESTIONES
+ * SERVICIOS DE TIPOS DE ACCIÓN
  * ============================================================
  *
- * Este archivo solamente se comunica
- * con el backend.
+ * Su única responsabilidad es
+ * comunicarse con el backend.
  *
- * NO contiene Zod.
- * NO contiene useState.
- * NO contiene lógica visual.
+ * Aquí NO usamos:
+ *
+ * - Zod
+ * - useState
+ * - validaciones visuales
  */
-export class GestionesServices {
+export class TipoAccionServices {
   /**
    * ==========================================================
-   * OBTENER TODAS LAS GESTIONES
+   * OBTENER TODOS
    * ==========================================================
    *
-   * params ejemplo:
+   * Ejemplo:
    *
-   * {
+   * params = {
    *   page: 1,
-   *   limit: 10,
+   *   limit: 5,
    *   search: ''
    * }
+   *
+   * Axios genera aproximadamente:
+   *
+   * GET
+   *
+   * /admin/accion/tipo-accion
+   * ?page=1
+   * &limit=5
+   * &search=
    */
   static async getAll(
     params = {},
@@ -39,7 +50,7 @@ export class GestionesServices {
       const {
         data,
       } = await api.get(
-        '/admin/gestion',
+        '/admin/accion/tipo-accion',
         {
           params,
         },
@@ -56,21 +67,29 @@ export class GestionesServices {
 
   /**
    * ==========================================================
-   * OBTENER UNA GESTIÓN
+   * CREAR
    * ==========================================================
    *
-   * GET
+   * POST
    *
-   * /admin/gestion/:id
+   * /admin/accion/tipo-accion
+   *
+   * payload:
+   *
+   * {
+   *   nombre_tipo_accion:
+   *     'Tipo Acción Uno'
+   * }
    */
-  static async getById(
-    id,
+  static async create(
+    payload,
   ) {
     try {
       const {
         data,
-      } = await api.get(
-        `/admin/gestion/${id}`,
+      } = await api.post(
+        '/admin/accion/tipo-accion',
+        payload,
       );
 
       return data;
@@ -84,27 +103,22 @@ export class GestionesServices {
 
   /**
    * ==========================================================
-   * CREAR GESTIÓN
+   * ACTUALIZAR
    * ==========================================================
    *
-   * POST
+   * PATCH
    *
-   * /admin/gestion
-   *
-   * payload:
-   *
-   * {
-   *   anio: 2027
-   * }
+   * /admin/accion/tipo-accion/:id
    */
-  static async create(
+  static async update(
+    id,
     payload,
   ) {
     try {
       const {
         data,
-      } = await api.post(
-        '/admin/gestion',
+      } = await api.patch(
+        `/admin/accion/tipo-accion/${id}`,
         payload,
       );
 

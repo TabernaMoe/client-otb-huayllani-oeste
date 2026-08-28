@@ -1,84 +1,194 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
+import {
+  api,
+} from '../../../services/api';
 
+import {
+  toServiceError,
+} from '../../../services/error';
+
+/**
+ * ============================================================
+ * SERVICIOS DE CALLES
+ * ============================================================
+ *
+ * Este archivo solamente se comunica
+ * con el backend.
+ *
+ * NO contiene Zod.
+ * NO contiene estados React.
+ * NO contiene validaciones del formulario.
+ */
 export class CallesServices {
- 
-  static async getAll(page = 1, limit = 10, search = '', estado = '') {
+  /**
+   * ==========================================================
+   * OBTENER TODAS LAS CALLES
+   * ==========================================================
+   *
+   * params ejemplo:
+   *
+   * {
+   *   page: 1,
+   *   limit: 5,
+   *   search: '',
+   *   estado: true
+   * }
+   *
+   * Axios generará:
+   *
+   * /admin/calle
+   * ?page=1
+   * &limit=5
+   * &search=
+   * &estado=true
+   */
+  static async getAll(
+    params = {},
+  ) {
     try {
-      const params = {
-        page: Math.max(1, Number.parseInt(page, 10) || 1),
-
-        limit: Math.max(1, Number.parseInt(limit, 10) || 10),
-
-        search: String(search || '').trim(),
-      };      
-      if (estado !== '' && estado !== null && estado !== undefined) {
-        params.estado = estado;
-      }
-
-      const { data } = await api.get('/admin/calle', {
-        params,
-      });
-
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-
-  static async getById(id) {
-    try {
-      const { data } = await api.get(`/admin/calle/${id}`);
-
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async create(payload) {
-    try {
-      const cleanPayload = {
-        nombre_calle: String(payload.nombre_calle || '').trim(),
-      };
-
-      const { data } = await api.post('/admin/calle',
-        cleanPayload,
+      const {
+        data,
+      } = await api.get(
+        '/admin/calle',
+        {
+          params,
+        },
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
-  static async update(id, payload) {
-    try {
-      const cleanPayload = {
-        nombre_calle: String(payload.nombre_calle || '').trim(),
-      };
 
-      const { data } = await api.patch(
+  /**
+   * ==========================================================
+   * OBTENER CALLE POR ID
+   * ==========================================================
+   *
+   * GET
+   *
+   * /admin/calle/1
+   */
+  static async getById(
+    id,
+  ) {
+    try {
+      const {
+        data,
+      } = await api.get(
         `/admin/calle/${id}`,
-        cleanPayload,
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
 
- 
-  static async toggleStatus(id) {
+  /**
+   * ==========================================================
+   * CREAR CALLE
+   * ==========================================================
+   *
+   * POST
+   *
+   * /admin/calle
+   *
+   * payload:
+   *
+   * {
+   *   nombre_calle: 'Calle nueva'
+   * }
+   */
+  static async create(
+    payload,
+  ) {
     try {
-      const { data } = await api.patch(
+      /**
+       * Ya NO necesitamos limpiar aquí:
+       *
+       * String(...).trim()
+       *
+       * porque Zod ya entregará
+       * validation.data limpio.
+       */
+      const {
+        data,
+      } = await api.post(
+        '/admin/calle',
+        payload,
+      );
+
+      return data;
+
+    } catch (error) {
+      return toServiceError(
+        error,
+      );
+    }
+  }
+
+  /**
+   * ==========================================================
+   * ACTUALIZAR CALLE
+   * ==========================================================
+   *
+   * PATCH
+   *
+   * /admin/calle/:id
+   */
+  static async update(
+    id,
+    payload,
+  ) {
+    try {
+      const {
+        data,
+      } = await api.patch(
+        `/admin/calle/${id}`,
+        payload,
+      );
+
+      return data;
+
+    } catch (error) {
+      return toServiceError(
+        error,
+      );
+    }
+  }
+
+  /**
+   * ==========================================================
+   * CAMBIAR ESTADO
+   * ==========================================================
+   *
+   * PATCH
+   *
+   * /admin/calle/cambiar-estado/:id
+   */
+  static async toggleStatus(
+    id,
+  ) {
+    try {
+      const {
+        data,
+      } = await api.patch(
         `/admin/calle/cambiar-estado/${id}`,
       );
 
       return data;
+
     } catch (error) {
-      return toServiceError(error);
+      return toServiceError(
+        error,
+      );
     }
   }
 }

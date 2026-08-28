@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import {
   ArrowPathIcon,
@@ -15,7 +20,19 @@ import { toast } from 'react-toastify';
 
 import { PeriodosServices } from '../services/periodos.services';
 
-import { cerrarPeriodoSchema } from '../schema/peridos.schema';
+import {
+  periodoIdSchema,
+  periodoParamsSchema,
+} from '../schema/peridos.schema';
+
+/**
+ * ============================================================
+ * CONSTANTES
+ * ============================================================
+ */
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
 
 const MONTHS = {
   enero: '01',
@@ -34,6 +51,10 @@ const MONTHS = {
 };
 
 /**
+ * ============================================================
+ * FORMATEAR FECHA
+ * ============================================================
+ *
  * Convierte:
  *
  * 1 de enero de 2026
@@ -81,6 +102,7 @@ const formatDateOnly = (value) => {
  * ESTILOS SEGÚN ESTADO
  * ============================================================
  */
+
 const getStatusStyles = (estado) => {
   if (estado === 'CERRADO') {
     return {
@@ -111,6 +133,25 @@ const getStatusStyles = (estado) => {
   };
 };
 
+/**
+ * ============================================================
+ * OBTENER PRIMER MENSAJE DE ERROR DE ZOD
+ * ============================================================
+ */
+
+const getFirstZodError = (
+  zodError,
+  fallbackMessage,
+) =>
+  zodError?.issues?.[0]?.message ||
+  fallbackMessage;
+
+/**
+ * ============================================================
+ * PÁGINA
+ * ============================================================
+ */
+
 export default function PeriodosPage() {
   /**
    * ============================================================
@@ -140,10 +181,10 @@ export default function PeriodosPage() {
    */
 
   const [page, setPage] =
-    useState(1);
+    useState(DEFAULT_PAGE);
 
   const [limit] =
-    useState(10);
+    useState(DEFAULT_LIMIT);
 
   const [
     totalPages,
@@ -160,71 +201,108 @@ export default function PeriodosPage() {
    * OBTENER PERIODOS
    * ============================================================
    */
-  const fetchPeriodos = async () => {
-    try {
-      setLoading(true);
 
-      const response =
-        await PeriodosServices.getAll(
+  const fetchPeriodos =
+    useCallback(async () => {
+      /**
+       * Validamos los parámetros antes de
+       * enviarlos al service.
+       */
+      const validation =
+        periodoParamsSchema.safeParse({
           page,
           limit,
-        );
+        });
 
-      if (!response?.ok) {
+      if (!validation.success) {
         toast.error(
-          response?.message ||
-            'Error al cargar los periodos',
+          getFirstZodError(
+            validation.error,
+            'Los parámetros de paginación no son válidos',
+          ),
         );
-
-        setPeriodos([]);
-
-        setTotalPages(1);
-
-        setTotalItems(0);
 
         return;
       }
 
-      setPeriodos(
-        Array.isArray(response.data)
-          ? response.data
-          : [],
-      );
+      try {
+        setLoading(true);
 
-      setTotalPages(
-        Number(
-          response.totalPages || 1,
-        ),
-      );
+        /**
+         * validation.data devuelve:
+         *
+         * {
+         *   page: 1,
+         *   limit: 10
+         * }
+         *
+         * Ambos valores están validados por Zod.
+         */
+        const response =
+          await PeriodosServices.getAll(
+            validation.data,
+          );
 
-      setTotalItems(
-        Number(
-          response.total || 0,
-        ),
-      );
-    } catch (error) {
-      toast.error(
-        error?.message ||
-          'Error inesperado al cargar los periodos',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!response?.ok) {
+          toast.error(
+            response?.message ||
+              'Error al cargar los periodos',
+          );
+
+          setPeriodos([]);
+          setTotalPages(1);
+          setTotalItems(0);
+
+          return;
+        }
+
+        const data =
+          Array.isArray(response.data)
+            ? response.data
+            : [];
+
+        setPeriodos(data);
+
+        setTotalPages(
+          Number(response.totalPages) ||
+            1,
+        );
+
+        setTotalItems(
+          Number(response.total) || 0,
+        );
+      } catch (error) {
+        toast.error(
+          error?.message ||
+            'Error inesperado al cargar los periodos',
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, [
+      page,
+      limit,
+    ]);
 
   /**
-   * Cuando cambia la página,
-   * volvemos a consultar.
+   * ============================================================
+   * CARGAR PERIODOS
+   * ============================================================
+   *
+   * Cada vez que cambia la página,
+   * fetchPeriodos cambia y volvemos a consultar.
    */
+
   useEffect(() => {
     fetchPeriodos();
-  }, [page]);
+  }, [fetchPeriodos]);
 
   /**
    * ============================================================
    * RESUMEN
    * ============================================================
    */
+
   const resumen = useMemo(() => {
     const activos =
       periodos.filter(
@@ -248,13 +326,8 @@ export default function PeriodosPage() {
       ).length;
 
     return {
-      visibles:
-        periodos.length,
-
       activos,
-
       cerrados,
-
       pendientes,
     };
   }, [periodos]);
@@ -264,13 +337,16 @@ export default function PeriodosPage() {
    * CERRAR PERIODO
    * ============================================================
    */
+
   const handleCerrarPeriodo = async (
     periodo,
   ) => {
     /**
-     * Primera protección.
+     * Protección de interfaz.
      *
-     * Solo ACTIVO puede cerrarse.
+     * Aunque el backend también debe validar
+     * esta regla, evitamos enviar una petición
+     * innecesaria.
      */
     if (
       periodo.estado !== 'ACTIVO'
@@ -283,21 +359,35 @@ export default function PeriodosPage() {
     }
 
     /**
-     * Validamos el ID.
+     * Validamos únicamente el ID porque
+     * periodoIdSchema recibe directamente:
+     *
+     * 1
+     *
+     * y no:
+     *
+     * { id: 1 }
      */
     const validation =
-      cerrarPeriodoSchema.safeParse({
-        id: periodo.id,
-      });
+      periodoIdSchema.safeParse(
+        periodo.id,
+      );
 
     if (!validation.success) {
       toast.error(
-        'El periodo seleccionado no es válido',
+        getFirstZodError(
+          validation.error,
+          'El periodo seleccionado no es válido',
+        ),
       );
 
       return;
     }
 
+    /**
+     * Confirmación antes de ejecutar una
+     * acción irreversible/importante.
+     */
     const confirmClose =
       window.confirm(
         `¿Seguro que deseas cerrar el periodo ${periodo.mes}?`,
@@ -308,13 +398,16 @@ export default function PeriodosPage() {
     }
 
     try {
+      /**
+       * validation.data es el ID ya validado.
+       */
       setClosingId(
-        validation.data.id,
+        validation.data,
       );
 
       const response =
         await PeriodosServices.cerrar(
-          validation.data.id,
+          validation.data,
         );
 
       if (!response?.ok) {
@@ -331,6 +424,10 @@ export default function PeriodosPage() {
           'Periodo cerrado correctamente',
       );
 
+      /**
+       * Volvemos a consultar para reflejar
+       * el nuevo estado.
+       */
       await fetchPeriodos();
     } catch (error) {
       toast.error(
@@ -342,11 +439,37 @@ export default function PeriodosPage() {
     }
   };
 
+  /**
+   * ============================================================
+   * PAGINACIÓN
+   * ============================================================
+   */
+
+  const goToPreviousPage = () => {
+    setPage((previous) =>
+      Math.max(
+        previous - 1,
+        1,
+      ),
+    );
+  };
+
+  const goToNextPage = () => {
+    setPage((previous) =>
+      Math.min(
+        previous + 1,
+        totalPages,
+      ),
+    );
+  };
+
   return (
     <section className="min-h-screen bg-slate-50">
       <div className="space-y-5">
 
-        {/* ================= ENCABEZADO ================= */}
+        {/* ====================================================
+            ENCABEZADO
+        ==================================================== */}
 
         <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
@@ -374,7 +497,8 @@ export default function PeriodosPage() {
 
             <p className="mt-1 text-sm text-slate-500">
               Consulta los periodos mensuales
-              y controla el cierre del periodo activo.
+              y controla el cierre del periodo
+              activo.
             </p>
           </div>
 
@@ -396,7 +520,9 @@ export default function PeriodosPage() {
           </button>
         </header>
 
-        {/* ================= TARJETAS ================= */}
+        {/* ====================================================
+            TARJETAS DE RESUMEN
+        ==================================================== */}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
@@ -428,7 +554,9 @@ export default function PeriodosPage() {
           />
         </div>
 
-        {/* ================= TABLA ================= */}
+        {/* ====================================================
+            TABLA
+        ==================================================== */}
 
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-5 lg:px-6">
@@ -451,205 +579,218 @@ export default function PeriodosPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-225 w-full text-left text-sm">
+            <table className="w-full min-w-225 text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/80">
                 <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-4">
+                  <th
+                    scope="col"
+                    className="px-6 py-4"
+                  >
                     Periodo
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th
+                    scope="col"
+                    className="px-4 py-4"
+                  >
                     Código
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th
+                    scope="col"
+                    className="px-4 py-4"
+                  >
                     Fecha de inicio
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th
+                    scope="col"
+                    className="px-4 py-4"
+                  >
                     Fecha de finalización
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th
+                    scope="col"
+                    className="px-4 py-4"
+                  >
                     Estado
                   </th>
 
-                  <th className="px-6 py-4 text-right">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-right"
+                  >
                     Acciones
                   </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-16"
-                    >
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
-
-                        <p className="mt-3 text-sm font-medium text-slate-500">
-                          Cargando periodos...
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : periodos.length ===
-                  0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-16"
-                    >
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <CalendarDaysIcon className="h-8 w-8 text-slate-300" />
-
-                        <h3 className="mt-4 font-bold text-slate-700">
-                          No hay periodos registrados
-                        </h3>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  periodos.map(
-                    (periodo) => {
-                      const puedeCerrar =
-                        periodo.estado ===
-                        'ACTIVO';
-
-                      const cerrando =
-                        closingId ===
-                        periodo.id;
-
-                      const statusStyles =
-                        getStatusStyles(
-                          periodo.estado,
-                        );
-
-                      return (
-                        <tr
-                          key={
-                            periodo.id
-                          }
-                          className="transition hover:bg-slate-50/80"
+                {(() => {
+                  if (loading) {
+                    return [(
+                      <tr key="loading-periodos">
+                        <td
+                          colSpan={6}
+                          className="px-6 py-16"
                         >
-                          {/* PERIODO */}
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
 
-                          <td className="px-6 py-4">
-                            <div className="flex min-w-52 items-center gap-3">
-                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                                <CalendarDaysIcon className="h-5 w-5" />
-                              </div>
+                            <p className="mt-3 text-sm font-medium text-slate-500">
+                              Cargando periodos...
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )];
+                  }
 
-                              <div>
-                                <p className="font-bold text-slate-900">
-                                  {
-                                    periodo.mes
-                                  }
-                                </p>
+                  if (periodos.length === 0) {
+                    return [(
+                      <tr key="empty-periodos">
+                        <td
+                          colSpan={6}
+                          className="px-6 py-16"
+                        >
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <CalendarDaysIcon className="h-8 w-8 text-slate-300" />
 
-                                <p className="mt-0.5 text-xs text-slate-500">
-                                  Periodo mensual
-                                </p>
-                              </div>
+                            <h3 className="mt-4 font-bold text-slate-700">
+                              No hay periodos
+                              registrados
+                            </h3>
+                          </div>
+                        </td>
+                      </tr>
+                    )];
+                  }
+
+                  return periodos.map((periodo) => {
+                    /**
+                     * Un periodo solo puede cerrarse
+                     * cuando su estado es ACTIVO.
+                     */
+                    const puedeCerrar =
+                      periodo.estado === 'ACTIVO';
+
+                    /**
+                     * Determina si este registro
+                     * específico se está cerrando.
+                     */
+                    const cerrando =
+                      closingId === periodo.id;
+
+                    const statusStyles =
+                      getStatusStyles(periodo.estado);
+
+                    const actionIcon = cerrando ? (
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    ) : puedeCerrar ? (
+                      <LockClosedIcon className="h-4 w-4" />
+                    ) : (
+                      <ClockIcon className="h-4 w-4" />
+                    );
+
+                    const actionText = cerrando
+                      ? 'Cerrando...'
+                      : puedeCerrar
+                        ? 'Cerrar periodo'
+                        : periodo.estado;
+
+                    return (
+                      <tr
+                        key={periodo.id}
+                        className="transition hover:bg-slate-50/80"
+                      >
+                        {/* ================= PERIODO ================= */}
+
+                        <td className="px-6 py-4">
+                          <div className="flex min-w-52 items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                              <CalendarDaysIcon className="h-5 w-5" />
                             </div>
-                          </td>
 
-                          {/* ID */}
+                            <div>
+                              <p className="font-bold text-slate-900">
+                                {periodo.mes}
+                              </p>
 
-                          <td className="px-4 py-4">
-                            <span className="font-semibold text-slate-600">
-                              #
-                              {String(
-                                periodo.id,
-                              ).padStart(
-                                4,
-                                '0',
-                              )}
-                            </span>
-                          </td>
+                              <p className="mt-0.5 text-xs text-slate-500">
+                                Periodo mensual
+                              </p>
+                            </div>
+                          </div>
+                        </td>
 
-                          {/* INICIO */}
+                        {/* ================= ID ================= */}
 
-                          <td className="px-4 py-4 text-slate-600">
-                            {formatDateOnly(
-                              periodo.fecha_inicio,
-                            )}
-                          </td>
+                        <td className="px-4 py-4">
+                          <span className="font-semibold text-slate-600">
+                            #
+                            {String(periodo.id).padStart(4, '0')}
+                          </span>
+                        </td>
 
-                          {/* FIN */}
+                        {/* ================= FECHA INICIO ================= */}
 
-                          <td className="px-4 py-4 text-slate-600">
-                            {formatDateOnly(
-                              periodo.fecha_fin,
-                            )}
-                          </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {formatDateOnly(periodo.fecha_inicio)}
+                        </td>
 
-                          {/* ESTADO */}
+                        {/* ================= FECHA FIN ================= */}
 
-                          <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-slate-600">
+                          {formatDateOnly(periodo.fecha_fin)}
+                        </td>
+
+                        {/* ================= ESTADO ================= */}
+
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${statusStyles.badge}`}
+                          >
                             <span
-                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${statusStyles.badge}`}
-                            >
-                              <span
-                                className={`h-2 w-2 rounded-full ${statusStyles.dot}`}
-                              />
+                              className={`h-2 w-2 rounded-full ${statusStyles.dot}`}
+                            />
 
-                              {
-                                periodo.estado
+                            {periodo.estado}
+                          </span>
+                        </td>
+
+                        {/* ================= ACCIONES ================= */}
+
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              disabled={!puedeCerrar || cerrando}
+                              onClick={() =>
+                                handleCerrarPeriodo(periodo)
                               }
-                            </span>
-                          </td>
-
-                          {/* ACCIÓN */}
-
-                          <td className="px-6 py-4">
-                            <div className="flex justify-end">
-                              <button
-                                type="button"
-                                disabled={
-                                  !puedeCerrar ||
-                                  cerrando
-                                }
-                                onClick={() =>
-                                  handleCerrarPeriodo(
-                                    periodo,
-                                  )
-                                }
-                                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                                  puedeCerrar
-                                    ? 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
-                                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                                } disabled:opacity-60`}
-                              >
-                                {cerrando ? (
-                                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                                ) : puedeCerrar ? (
-                                  <LockClosedIcon className="h-4 w-4" />
-                                ) : (
-                                  <ClockIcon className="h-4 w-4" />
-                                )}
-
-                                {cerrando
-                                  ? 'Cerrando...'
-                                  : puedeCerrar
-                                    ? 'Cerrar periodo'
-                                    : periodo.estado}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    },
-                  )
-                )}
+                              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                puedeCerrar
+                                  ? 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                                  : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                              } disabled:opacity-60`}
+                            >
+                              {actionIcon}
+                              {actionText}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
           </div>
 
-          {/* ================= PAGINACIÓN ================= */}
+          {/* ==================================================
+              PAGINACIÓN
+          ================================================== */}
 
           <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
             <p className="text-sm text-slate-500">
@@ -667,17 +808,15 @@ export default function PeriodosPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                aria-label="Página anterior"
                 disabled={
                   page <= 1 ||
                   loading
                 }
-                onClick={() =>
-                  setPage(
-                    (previous) =>
-                      previous - 1,
-                  )
+                onClick={
+                  goToPreviousPage
                 }
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </button>
@@ -692,18 +831,16 @@ export default function PeriodosPage() {
 
               <button
                 type="button"
+                aria-label="Página siguiente"
                 disabled={
                   page >=
                     totalPages ||
                   loading
                 }
-                onClick={() =>
-                  setPage(
-                    (previous) =>
-                      previous + 1,
-                  )
+                onClick={
+                  goToNextPage
                 }
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRightIcon className="h-4 w-4" />
               </button>
@@ -714,6 +851,12 @@ export default function PeriodosPage() {
     </section>
   );
 }
+
+/**
+ * ============================================================
+ * TARJETA DE MÉTRICA
+ * ============================================================
+ */
 
 function MetricCard({
   label,
