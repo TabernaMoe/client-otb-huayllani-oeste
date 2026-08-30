@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
       // ''   = sin texto de búsqueda
       // true = solamente socios activos
       //
-      const response = await SocioServices.getAll(1, 5, '', true);
+      const response = await SocioServices.getAll();
 
       // Este console.log es importante durante el aprendizaje.
       // Permite revisar la respuesta real del backend en:

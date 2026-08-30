@@ -93,6 +93,7 @@ export class SocioServices {
   static async create(
     payload,
   ) {
+    console.log(payload)
 
     try {
 

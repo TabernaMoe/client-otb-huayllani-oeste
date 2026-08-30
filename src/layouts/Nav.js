@@ -302,6 +302,12 @@ export const AdminNav = [
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
       {
+        label: 'Historial cobros',
+        to: '/admin/historial-cobros',
+        icon: CreditCardIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
+      {
         label: 'Cobros de agua',
         to: '/admin/cobros-agua',
         icon: ReceiptPercentIcon,

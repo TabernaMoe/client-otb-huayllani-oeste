@@ -42,6 +42,9 @@ import ClienteAccionesPage from '../modules/client/pages/ClienteAccionesPage';
 import TipoAccionPage from '../modules/tipoAccion/pages/TipoAccionPage';
 import InventarioPage from '../modules/inventario/pages/InventarioPage';
 
+//Sebas
+import HistorialCobrosTab from '../modules/HistorialCobros/page/HistorialCobrosTab';
+
 export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
     {/* ====================================================== */}
@@ -287,6 +290,14 @@ export const privateRoutes = (
           }
         >
           <Route path="reportes" element={<ReportesPage />} />
+        </Route>
+
+        <Route
+          element={
+            <PermissionRoute permission={['reporte.ver', 'reportes.ver']} />
+          }
+        >
+          <Route path="historial-cobros" element={<HistorialCobrosTab />} />
         </Route>
 
         {/* Ruta administrativa no encontrada */}
