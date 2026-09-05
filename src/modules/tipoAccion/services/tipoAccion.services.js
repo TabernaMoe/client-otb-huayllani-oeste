@@ -21,28 +21,7 @@ import {
  * - validaciones visuales
  */
 export class TipoAccionServices {
-  /**
-   * ==========================================================
-   * OBTENER TODOS
-   * ==========================================================
-   *
-   * Ejemplo:
-   *
-   * params = {
-   *   page: 1,
-   *   limit: 5,
-   *   search: ''
-   * }
-   *
-   * Axios genera aproximadamente:
-   *
-   * GET
-   *
-   * /admin/accion/tipo-accion
-   * ?page=1
-   * &limit=5
-   * &search=
-   */
+
   static async getAll(
     params = {},
   ) {
@@ -64,23 +43,6 @@ export class TipoAccionServices {
       );
     }
   }
-
-  /**
-   * ==========================================================
-   * CREAR
-   * ==========================================================
-   *
-   * POST
-   *
-   * /admin/accion/tipo-accion
-   *
-   * payload:
-   *
-   * {
-   *   nombre_tipo_accion:
-   *     'Tipo Acción Uno'
-   * }
-   */
   static async create(
     payload,
   ) {
@@ -101,15 +63,6 @@ export class TipoAccionServices {
     }
   }
 
-  /**
-   * ==========================================================
-   * ACTUALIZAR
-   * ==========================================================
-   *
-   * PATCH
-   *
-   * /admin/accion/tipo-accion/:id
-   */
   static async update(
     id,
     payload,

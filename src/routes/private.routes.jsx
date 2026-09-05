@@ -45,6 +45,7 @@ import InventarioPage from '../modules/inventario/pages/InventarioPage';
 //Sebas
 import HistorialCobrosTab from '../modules/HistorialCobros/page/HistorialCobrosTab';
 
+import MultasPage from '../modules/multas/pages/MultasPage';
 export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
     {/* ====================================================== */}
@@ -216,7 +217,25 @@ export const privateRoutes = (
         {/* ================================================== */}
         {/* COBROS DE ACCIÓN */}
         {/* ================================================== */}
+{/* ================================================== */}
+{/* MULTAS */}
+{/* ================================================== */}
 
+<Route
+  element={
+    <PermissionRoute
+      permission={[
+        'multa.ver',
+        'multas.ver',
+      ]}
+    />
+  }
+>
+  <Route
+    path="multas"
+    element={<MultasPage />}
+  />
+</Route>
         <Route
           element={
             <PermissionRoute

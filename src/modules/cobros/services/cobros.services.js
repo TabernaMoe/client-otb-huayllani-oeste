@@ -132,4 +132,104 @@ export class CobrosServices {
       );
     }
   }
+
+  /**
+ * ==========================================================
+ * OBTENER ACCIONES PARA MULTAR
+ * ==========================================================
+ *
+ * GET /admin/cobro/acciones
+ */
+static async getAcciones(
+  params = {},
+) {
+  try {
+
+    const {
+      data,
+    } = await api.get(
+      '/admin/cobro/acciones',
+      {
+        params,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+
+    return toServiceError(
+      error,
+    );
+  }
+}
+
+
+/**
+ * ==========================================================
+ * OBTENER MULTAS PARA SELECT
+ * ==========================================================
+ *
+ * GET /admin/cobro/multas
+ */
+static async getMultas(
+  params = {},
+) {
+  try {
+
+    const {
+      data,
+    } = await api.get(
+      '/admin/cobro/multas',
+      {
+        params,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+
+    return toServiceError(
+      error,
+    );
+  }
+}
+
+
+/**
+ * ==========================================================
+ * ASIGNAR MULTA A ACCIÓN
+ * ==========================================================
+ *
+ * POST /admin/cobro/multas/:accionId
+ *
+ * body:
+ *
+ * {
+ *   multa_id: 1
+ * }
+ */
+static async asignarMulta(
+  accionId,
+  body,
+) {
+  try {
+
+    const {
+      data,
+    } = await api.post(
+      `/admin/cobro/multas/${accionId}`,
+      body,
+    );
+
+    return data;
+
+  } catch (error) {
+
+    return toServiceError(
+      error,
+    );
+  }
+}
 }

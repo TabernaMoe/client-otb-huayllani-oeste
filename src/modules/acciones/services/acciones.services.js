@@ -6,42 +6,13 @@ import {
   toServiceError,
 } from '../../../services/error';
 
-/**
- * ============================================================
- * SERVICIOS DE ACCIONES
- * ============================================================
- *
- * Este archivo solamente se encarga
- * de comunicarse con el backend.
- *
- * NO contiene Zod.
- * NO contiene useState.
- * NO contiene lógica de React.
- */
+
 export class AccionesServices {
-  /**
-   * ==========================================================
-   * OBTENER TODAS LAS ACCIONES
-   * ==========================================================
-   *
-   * params:
-   *
-   * {
-   *   page: 1,
-   *   limit: 10,
-   *   search: '',
-   *   estado: 'ACTIVO'
-   * }
-   *
-   * Axios generará algo parecido a:
-   *
-   * GET
-   * /admin/accion?page=1&limit=10&search=&estado=ACTIVO
-   */
   static async getAll(
     params = {},
   ) {
     try {
+
       const {
         data,
       } = await api.get(
@@ -54,29 +25,27 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
 
+
   /**
    * ==========================================================
-   * OBTENER UNA ACCIÓN
+   * OBTENER ACCIÓN POR ID
    * ==========================================================
    *
-   * GET
-   *
-   * /admin/accion/3
-   *
-   * Este endpoint devuelve también:
-   *
-   * detallesAccion
+   * GET /admin/accion/:id
    */
   static async getById(
     id,
   ) {
     try {
+
       const {
         data,
       } = await api.get(
@@ -86,23 +55,25 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
 
+
   /**
    * ==========================================================
-   * OBTENER TIPOS DE ACCIÓN
+   * TIPOS DE ACCIÓN
    * ==========================================================
    *
-   * GET
-   *
-   * /admin/accion/tipos-accion
+   * GET /admin/accion/tipos-accion
    */
   static async getTiposAccion() {
     try {
+
       const {
         data,
       } = await api.get(
@@ -112,25 +83,27 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
 
+
   /**
    * ==========================================================
-   * OBTENER DETALLES DE UN TIPO
+   * DETALLES SEGÚN TIPO
    * ==========================================================
    *
-   * GET
-   *
-   * /admin/accion/detalle-accion/1
+   * GET /admin/accion/detalle-accion/:tipoAccionId
    */
   static async getDetallesAccion(
     tipoAccionId,
   ) {
     try {
+
       const {
         data,
       } = await api.get(
@@ -140,30 +113,25 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
 
+
   /**
    * ==========================================================
-   * OBTENER SOCIOS
+   * SOCIOS PARA SELECT
    * ==========================================================
    *
-   * GET
-   *
-   * /admin/accion/socios
-   *
-   * Respuesta:
-   *
-   * {
-   *   value: 1,
-   *   label: '123456 - Nombre'
-   * }
+   * GET /admin/accion/socios
    */
   static async getSocios() {
     try {
+
       const {
         data,
       } = await api.get(
@@ -173,23 +141,25 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
 
+
   /**
    * ==========================================================
-   * OBTENER TARIFAS ACTIVAS
+   * TARIFAS ACTIVAS
    * ==========================================================
    *
-   * GET
-   *
-   * /admin/accion/tarifa-agua
+   * GET /admin/accion/tarifa-agua
    */
   static async getTarifas() {
     try {
+
       const {
         data,
       } = await api.get(
@@ -199,25 +169,27 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
+
 
   /**
    * ==========================================================
    * CREAR ACCIÓN
    * ==========================================================
    *
-   * POST
-   *
-   * /admin/accion
+   * POST /admin/accion
    */
   static async create(
     payload,
   ) {
     try {
+
       const {
         data,
       } = await api.post(
@@ -228,26 +200,28 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
+
 
   /**
    * ==========================================================
    * ACTUALIZAR ACCIÓN
    * ==========================================================
    *
-   * PATCH
-   *
-   * /admin/accion/:id
+   * PATCH /admin/accion/:id
    */
   static async update(
     id,
     payload,
   ) {
     try {
+
       const {
         data,
       } = await api.patch(
@@ -258,11 +232,14 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
     }
   }
+
 
   /**
    * ==========================================================
@@ -271,22 +248,18 @@ export class AccionesServices {
    *
    * IMPORTANTE:
    *
-   * Tu backend actualmente tiene:
+   * El backend tiene actualmente:
    *
    * camibiar-estado
    *
-   * y no:
-   *
-   * cambiar-estado
-   *
-   * Lo mantenemos exactamente igual
-   * porque así está definido el endpoint.
+   * Lo respetamos exactamente.
    */
   static async changeEstado(
     id,
     payload,
   ) {
     try {
+
       const {
         data,
       } = await api.patch(
@@ -297,9 +270,50 @@ export class AccionesServices {
       return data;
 
     } catch (error) {
+
       return toServiceError(
         error,
       );
+
+    }
+  }
+
+
+  /**
+   * ==========================================================
+   * CAMBIAR PROPIETARIO / NOMBRE
+   * ==========================================================
+   *
+   * PATCH /admin/accion/cambiar-nombre/:id
+   *
+   * payload:
+   *
+   * {
+   *   nuevoSocioId: 1,
+   *   tipo: 'FAMILIAR'
+   * }
+   */
+  static async changeNombre(
+    id,
+    payload,
+  ) {
+    try {
+
+      const {
+        data,
+      } = await api.patch(
+        `/admin/accion/cambiar-nombre/${id}`,
+        payload,
+      );
+
+      return data;
+
+    } catch (error) {
+
+      return toServiceError(
+        error,
+      );
+
     }
   }
 }

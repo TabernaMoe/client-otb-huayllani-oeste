@@ -2,23 +2,20 @@ import {
   useState,
 } from 'react';
 
-import CobrosTabs
-  from '../components/CobrosTabs';
+import MultasTabs
+  from '../components/MultasTabs';
 
-import CobrarAccionesView
-  from '../components/CobrarAccionesView';
+import CrearMultaView
+  from '../components/CrearMultaView';
 
-import CobrarMultasView
-  from '../components/CobrarMultasView';
+import MultarAccionView
+      from '../components/MultarAccionView';
 
-import CobrarAdicionalesView
-  from '../components/CobrarAdicionalesView';
-
-import PagosView
-  from '../components/PagosView';
+    import ListarMultasView
+  from '../components/ListarMultasView';
 
 
-export default function CobrosPage() {
+export default function MultasPage() {
 
   // =========================================================
   // VISTA ACTIVA
@@ -28,7 +25,7 @@ export default function CobrosPage() {
     activeView,
     setActiveView,
   ] = useState(
-    'acciones',
+    'crear',
   );
 
 
@@ -38,7 +35,7 @@ export default function CobrosPage() {
 
   return (
 
-    <section className="min-h-screen bg-slate-50">
+    <section className="min-h-screen">
 
       <div className="space-y-5">
 
@@ -59,7 +56,7 @@ export default function CobrosPage() {
             </span>
 
             <span className="text-emerald-700">
-              Cobros
+              Multas
             </span>
 
           </div>
@@ -67,15 +64,15 @@ export default function CobrosPage() {
 
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
 
-            Gestión de cobros
+            Gestión de multas
 
           </h1>
 
 
           <p className="mt-1 text-sm text-slate-500">
 
-            Registra cobros de acciones, multas,
-            conceptos adicionales y consulta pagos realizados.
+            Crea multas, asígnalas a las acciones
+            y administra las multas registradas.
 
           </p>
 
@@ -83,10 +80,10 @@ export default function CobrosPage() {
 
 
         {/* ===================================================
-            BOTONES SUPERIORES
+            TABS
         ==================================================== */}
 
-        <CobrosTabs
+        <MultasTabs
           activeView={
             activeView
           }
@@ -97,43 +94,37 @@ export default function CobrosPage() {
 
 
         {/* ===================================================
-            CONTENIDO
+            VISTAS
         ==================================================== */}
 
-        <div>
+        {activeView ===
+          'crear' && (
 
-          {activeView ===
-            'acciones' && (
+          <CrearMultaView
+            onCreated={() =>
+              setActiveView(
+                'listar',
+              )
+            }
+          />
 
-            <CobrarAccionesView />
-
-          )}
-
-
-          {activeView ===
-            'multas' && (
-
-            <CobrarMultasView />
-
-          )}
+        )}
 
 
-          {activeView ===
-            'adicionales' && (
+        {activeView ===
+          'multar' && (
 
-            <CobrarAdicionalesView />
+          <MultarAccionView />
 
-          )}
+        )}
 
 
-          {activeView ===
-            'pagos' && (
+        {activeView ===
+          'listar' && (
 
-            <PagosView />
+          <ListarMultasView />
 
-          )}
-
-        </div>
+        )}
 
       </div>
 

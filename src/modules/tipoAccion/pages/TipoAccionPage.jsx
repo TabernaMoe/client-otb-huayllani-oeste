@@ -16,195 +16,56 @@ import {
   toast,
 } from 'react-toastify';
 
-import {
-  TipoAccionServices as Servs,
-} from '../services/tipoAccion.services';
+import { TipoAccionServices as Servs, } from '../services/tipoAccion.services';
 
-import DataTable
-  from '../../../components/DataTable';
+import DataTable from '../../../components/DataTable';
 
-import {
-  MODALS,
-  useModalManager,
-} from '../../../hooks/useModalManager';
+import { MODALS, useModalManager,} from '../../../hooks/useModalManager';
 
-import TipoAccionModal
-  from './TipoAccionModal';
+import TipoAccionModal from './TipoAccionModal';
 
-/**
- * ============================================================
- * FUNCIÓN DEL SCHEMA
- * ============================================================
- */
-import {
-  validateTipoAccionParams,
-} from '../schema/tipoaccion.schema';
+import { validateTipoAccionParams,} from '../schema/tipoaccion.schema';
 
 export default function TipoAccion() {
-  /**
-   * ============================================================
-   * FILAS
-   * ============================================================
-   */
-  const [
-    filas,
-    setFilas,
-  ] = useState([]);
-
-  /**
-   * ============================================================
-   * LOADING
-   * ============================================================
-   */
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
-
-  /**
-   * ============================================================
-   * BÚSQUEDA
-   * ============================================================
-   */
-  const [
-    searchInput,
-    setSearchInput,
-  ] = useState('');
-
-  /**
-   * ============================================================
-   * MODALES
-   * ============================================================
-   */
-  const {
-    closeModal,
-    isModalOpen,
-    modalState,
-    openModal,
-  } = useModalManager();
-
-  /**
-   * ============================================================
-   * PAGINACIÓN
-   * ============================================================
-   */
-  const [
-    pagination,
-    setPagination,
-  ] = useState({
+ 
+const [filas,setFilas,] = useState([]);
+const [loading,setLoading,] = useState(false);
+const [searchInput,setSearchInput,] = useState('');
+const {closeModal,isModalOpen,modalState,openModal,} = useModalManager();
+const [pagination,setPagination,] = useState({
     page: 1,
-
     limit: 5,
-
     totalItems: 0,
+    totalPages: 1,});
 
-    totalPages: 1,
-  });
-
-  /**
-   * ============================================================
-   * OBTENER TIPOS DE ACCIÓN
-   * ============================================================
-   */
   const fetchFilas = async () => {
     try {
       setLoading(
         true,
       );
 
-      /**
-       * ========================================================
-       * PASO 1
-       * CONSTRUIR PARAMS
-       * ========================================================
-       */
       const params = {
-        page:
-          pagination.page,
-
-        limit:
-          pagination.limit,
-
-        search:
-          searchInput,
+        page:pagination.page,
+        limit:pagination.limit,
+        search:searchInput,
       };
 
-      /**
-       * ========================================================
-       * PASO 2
-       * VALIDAR PARAMS
-       * ========================================================
-       */
-      const validation =
-        validateTipoAccionParams(
-          params,
-        );
-
-      if (
-        !validation.isValid
-      ) {
-        toast.error(
-          'Los parámetros de búsqueda no son válidos',
-        );
-
+      const validation =validateTipoAccionParams(params,);
+      if (!validation.isValid) {
+        toast.error('Los parámetros de búsqueda no son válidos',);
         setFilas([]);
-
         return;
       }
 
-      /**
-       * ========================================================
-       * PASO 3
-       * LLAMAR AL SERVICE
-       * ========================================================
-       *
-       * IMPORTANTE:
-       *
-       * ANTES:
-       *
-       * Servs.getAll(
-       *   page,
-       *   limit,
-       *   search
-       * )
-       *
-       *
-       * AHORA:
-       *
-       * Servs.getAll({
-       *   page,
-       *   limit,
-       *   search
-       * })
-       */
-      const response =
-        await Servs.getAll(
-          validation.data,
-        );
-
-      /**
-       * ========================================================
-       * PASO 4
-       * ERROR DEL BACKEND
-       * ========================================================
-       */
-      if (
-        !response?.ok
-      ) {
-        toast.error(
-          response?.message ||
-            'Error al cargar los tipos de acción',
-        );
-
+      const response = await Servs.getAll(validation.data,);
+      if (!response?.ok) {
+        toast.error(response?.message || 'Error al cargar los tipos de acción',);
         setFilas([]);
-
         setPagination(
           (previous) => ({
             ...previous,
-
             totalItems:
               0,
-
             totalPages:
               1,
           }),
@@ -212,37 +73,11 @@ export default function TipoAccion() {
 
         return;
       }
-
-      /**
-       * ========================================================
-       * PASO 5
-       * DATOS
-       * ========================================================
-       */
-      setFilas(
-        Array.isArray(
-          response.data,
-        )
+      setFilas(Array.isArray(response.data,)
           ? response.data
           : [],
       );
 
-      /**
-       * ========================================================
-       * PASO 6
-       * PAGINACIÓN
-       * ========================================================
-       *
-       * Backend:
-       *
-       * {
-       *   total,
-       *   page,
-       *   limit,
-       *   totalPages,
-       *   data
-       * }
-       */
       setPagination(
         (previous) => ({
           ...previous,
@@ -280,25 +115,10 @@ export default function TipoAccion() {
       );
 
     } finally {
-      setLoading(
-        false,
-      );
+      setLoading(false,);
     }
   };
 
-  /**
-   * ============================================================
-   * RECARGAR AUTOMÁTICAMENTE
-   * ============================================================
-   *
-   * Cada vez que cambia:
-   *
-   * - page
-   * - limit
-   * - search
-   *
-   * consultamos nuevamente.
-   */
   useEffect(() => {
     fetchFilas();
   }, [
@@ -307,52 +127,30 @@ export default function TipoAccion() {
     searchInput,
   ]);
 
-  /**
-   * ============================================================
-   * COLUMNAS
-   * ============================================================
-   */
-  const columns =
-    useMemo(
-      () => [
-        {
-          accessorKey:
-            'nombre_tipo_accion',
 
-          header:
-            'Tipo de acción',
+  const columns =useMemo(() => [
+        {
+          accessorKey:'nombre_tipo_accion',
+          header:'Tipo de acción',
 
           cell: ({
             row,
           }) => (
             <div className="flex items-center gap-3">
-
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-
                 <TagIcon className="h-5 w-5" />
-
               </div>
-
               <span className="font-semibold text-slate-800">
-
                 {
-                  row.original
-                    .nombre_tipo_accion
+                  row.original.nombre_tipo_accion
                 }
-
               </span>
-
             </div>
           ),
         },
-
         {
-          id:
-            'acciones',
-
-          header:
-            'Acciones',
-
+          id:'acciones',
+          header:'Acciones',
           cell: ({
             row,
           }) => (
@@ -360,17 +158,10 @@ export default function TipoAccion() {
 
               <button
                 type="button"
-                onClick={() =>
-                  openModal(
-                    MODALS.EDIT,
-                    row.original,
-                  )
-                }
+                onClick={() =>openModal(MODALS.EDIT,row.original,)}
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
               >
-
                 <PencilSquareIcon className="h-4 w-4" />
-
                 Editar
 
               </button>
@@ -379,24 +170,15 @@ export default function TipoAccion() {
           ),
         },
       ],
-
       [
         openModal,
       ],
     );
 
-  /**
-   * ============================================================
-   * BUSCAR
-   * ============================================================
-   */
   const handleSearch = (
     event,
   ) => {
-    /**
-     * Cuando cambia la búsqueda
-     * volvemos a página 1.
-     */
+ 
     setPagination(
       (previous) => ({
         ...previous,
@@ -411,11 +193,7 @@ export default function TipoAccion() {
     );
   };
 
-  /**
-   * ============================================================
-   * LIMPIAR BÚSQUEDA
-   * ============================================================
-   */
+
   const clearSearch = () => {
     setSearchInput('');
 
@@ -522,32 +300,15 @@ export default function TipoAccion() {
 
         </div>
 
-        {/* ====================================================
-            TABLA
-            ==================================================== */}
-
         <DataTable
-          data={
-            filas
-          }
-          columns={
-            columns
-          }
-          loading={
-            loading
-          }
-          page={
-            pagination.page
-          }
-          totalPages={
-            pagination.totalPages
-          }
-          totalItems={
-            pagination.totalItems
-          }
-          limit={
-            pagination.limit
-          }
+          data={filas}
+          columns={columns}
+          loading={loading}
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          limit={pagination.limit}  
+          
 
           /**
            * Cambiar página.
@@ -592,11 +353,6 @@ export default function TipoAccion() {
         />
 
       </section>
-
-      {/* ======================================================
-          CREAR
-          ====================================================== */}
-
       <TipoAccionModal
         open={
           isModalOpen(
@@ -623,9 +379,6 @@ export default function TipoAccion() {
         }}
       />
 
-      {/* ======================================================
-          EDITAR
-          ====================================================== */}
 
       <TipoAccionModal
         open={

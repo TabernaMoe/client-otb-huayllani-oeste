@@ -6,16 +6,12 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import {
-  ArrowRightOnRectangleIcon,
   Bars3Icon,
   BellIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  Cog6ToothIcon,
-  HomeIcon,
   Squares2X2Icon,
   UserCircleIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 import LogoOtb from '/logo-otb.webp';

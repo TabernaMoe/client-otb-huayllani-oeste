@@ -1,73 +1,120 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
-
+import { api,} from '../../../services/api';
+import { toServiceError,} from '../../../services/error';
 export class RolesServices {
-  static async getAll(params = {}) {
+
+  static async getAllPermisos() {
+    try { const { data,
+      } = await api.get( '/admin/auth/roles/permisos',);
+     
+      return data;
+
+    } catch (error) {
+      const serviceError =
+        toServiceError(
+          error,
+        );
+      return serviceError;
+    }
+  }
+
+  static async getAllRoles(
+    params = {},
+  ) {
+    
+
+
     try {
-      const response = await api.get('/admin/auth/roles/pagination', 
-        {params,}
+
+      const {
+        data,
+      } = await api.get(
+        '/admin/auth/roles',
+        {
+          params,
+        },
+      );
+    
+      return data;
+    } catch (error) {
+      const serviceError =
+        toServiceError(
+          error,
+        );
+      return serviceError;
+    }
+  }
+
+  static async getById(
+    id,
+  ) {
+ 
+
+
+    try {
+
+      const {
+        data,
+      } = await api.get(
+        `/admin/auth/roles/${id}`,
       );
 
-      return response.data;
+
+      return data;
+
     } catch (error) {
-      return toServiceError(error);
+
+
+      const serviceError =
+        toServiceError(
+          error,
+        );
+
+
+      return serviceError;
     }
   }
 
-  static async getForSelect() {
+
+  static async create(
+    payload,
+  ) {
     try {
-      const response = await api.get('/admin/auth/roles');
-      return response.data;
+
+      const {
+        data,
+      } = await api.post(
+        '/admin/auth/roles',
+        payload,
+      );
+      return data;
+
     } catch (error) {
-      return toServiceError(error);
+      const serviceError =
+        toServiceError(
+          error,
+        );
+      return serviceError;
     }
   }
 
-  static async getPermissions() {
+  static async update(
+    id,
+    payload,
+  ) {
     try {
-      const response = await api.get('/admin/auth/roles/permisos');
-      return response.data;
+      const {
+        data,
+      } = await api.patch(
+        `/admin/auth/roles/${id}`,
+        payload,
+      );
+      return data;
     } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async getById(id) {
-    try {
-      const response = await api.get(`/admin/auth/roles/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async create(payload) {
-    try {
-      
-      const response = await api.post('/admin/auth/roles', payload);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async update(id, payload) {
-    try {
-      
-      const response = await api.patch(`/admin/auth/roles/${id}`, payload);
-      return response.data;
-    } catch (error) {
-
-      return toServiceError(error);
-    }
-  }
-
-  static async delete(id) {
-    try {
-      const response = await api.delete(`/admin/auth/roles/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
+      const serviceError =
+        toServiceError(
+          error,
+        );
+      return serviceError;
     }
   }
 }

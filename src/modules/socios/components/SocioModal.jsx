@@ -436,14 +436,6 @@ export default function SocioModal({
             socio.id,
             payload,
           )
-
-        /**
-         * ======================================================
-         * CREAR
-         * ======================================================
-         *
-         * POST
-         */
         : await Servs.create(
             payload,
           );
