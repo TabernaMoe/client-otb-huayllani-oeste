@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   ArrowPathIcon,
   CalendarDaysIcon,
@@ -16,11 +16,11 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 
-import {
-  asistenciasMock,
-  reunionesMock,
-} from '../data/asambleas.mock';
+import { asistenciasMock, reunionesMock } from '../data/asambleas.mock';
+
+import { services } from '../services/asambleas.services';
 
 const estadoStyles = {
   ASISTIO: {
@@ -93,7 +93,20 @@ export default function AsambleasPage() {
   const [selectedAsistencia, setSelectedAsistencia] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const loadData = useCallback(async () => {
+    try {
+      const response = await services.getAll();
+      //console.log(response);
+      setReuniones(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      //console.error('Error cargando reuniones:', error);
+      setReuniones([]);
+    }
+  }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   const [attendanceForm, setAttendanceForm] = useState({
     estado: 'ASISTIO',
     observacion: '',
@@ -104,7 +117,6 @@ export default function AsambleasPage() {
     titulo: '',
     fecha: '',
     hora_inicio: '',
-    hora_final: '',
     lugar: '',
     monto_multa: '',
   });
@@ -132,8 +144,7 @@ export default function AsambleasPage() {
           .includes(text);
 
       const matchEstado =
-        filterEstado === 'TODOS' ||
-        asistencia.estado === filterEstado;
+        filterEstado === 'TODOS' || asistencia.estado === filterEstado;
 
       return matchSearch && matchEstado;
     });
@@ -159,8 +170,7 @@ export default function AsambleasPage() {
       asistieron,
       faltaron,
       sinEfecto,
-      porcentaje:
-        total > 0 ? ((asistieron / total) * 100).toFixed(1) : '0.0',
+      porcentaje: total > 0 ? ((asistieron / total) * 100).toFixed(1) : '0.0',
     };
   }, [asistencias]);
 
@@ -174,58 +184,99 @@ export default function AsambleasPage() {
     setShowDrawer(true);
   };
 
-  const saveAttendance = () => {
+  const saveAttendance = async () => {
     if (!selectedAsistencia) return;
 
-    setAsistencias((previous) =>
-      previous.map((item) =>
-        item.id === selectedAsistencia.id
-          ? {
-              ...item,
-              ...attendanceForm,
-              registrado_por: 'Administrador',
-              fecha_registro: new Date().toISOString(),
-            }
-          : item,
-      ),
-    );
+    console.log(selectedAsistencia);
 
-    setShowDrawer(false);
-    setSelectedAsistencia(null);
+    try {
+      const response = await services.updateAcciones(
+        selectedAsistencia.id,
+        selectedAsistencia,
+      );
+      if (!response.ok) {
+        throw new Error(response.message || 'No se pudo crear');
+      }
+      setShowDrawer(false);
+      setSelectedAsistencia(null);
+
+      loadData();
+      toast.success('Se creo correctamente a asamblea');
+    } catch (e) {
+      toast.error(e);
+    }
+
+    // setAsistencias((previous) =>
+    //   previous.map((item) =>
+    //     item.id === selectedAsistencia.id
+    //       ? {
+    //           ...item,
+    //           ...attendanceForm,
+    //           registrado_por: 'Administrador',
+    //           fecha_registro: new Date().toISOString(),
+    //         }
+    //       : item,
+    //   ),
+    // );
+
+    // setShowDrawer(false);
+    // setSelectedAsistencia(null);
   };
 
-  const createMeeting = (event) => {
+  const createMeeting = async (event) => {
     event.preventDefault();
+    try {
+      const response = await services.create(meetingForm);
+      if (!response.ok) {
+        throw new Error(response.message || 'No se pudo crear');
+      }
+      setShowCreateModal(false);
+      loadData();
+      toast.success('Se creo correctamente a asamblea');
+    } catch (e) {
+      toast.error(e);
+    }
 
-    const newMeeting = {
-      id: Date.now(),
-      titulo: meetingForm.titulo,
-      mes: new Intl.DateTimeFormat('es-BO', {
-        month: 'long',
-        year: 'numeric',
-      }).format(new Date(`${meetingForm.fecha}T00:00:00`)),
-      fecha: meetingForm.fecha,
-      hora_inicio: meetingForm.hora_inicio,
-      hora_final: meetingForm.hora_final,
-      lugar: meetingForm.lugar,
-      estado: 'PROGRAMADA',
-      convocados: asistencias.length,
-      monto_multa: Number(meetingForm.monto_multa || 0),
-    };
+    // const newMeeting = {
+    //   id: Date.now(),
+    //   titulo: meetingForm.titulo,
+    //   mes: new Intl.DateTimeFormat('es-BO', {
+    //     month: 'long',
+    //     year: 'numeric',
+    //   }).format(new Date(`${meetingForm.fecha}T00:00:00`)),
+    //   fecha: meetingForm.fecha,
+    //   hora_inicio: meetingForm.hora_inicio,
+    //   hora_final: meetingForm.hora_final,
+    //   lugar: meetingForm.lugar,
+    //   estado: 'PROGRAMADA',
+    //   convocados: asistencias.length,
+    //   monto_multa: Number(meetingForm.monto_multa || 0),
+    // };
 
-    setReuniones((previous) => [newMeeting, ...previous]);
-    setSelectedReunion(newMeeting);
+    // setReuniones((previous) => [newMeeting, ...previous]);
+    // setSelectedReunion(newMeeting);
 
-    setMeetingForm({
-      titulo: '',
-      fecha: '',
-      hora_inicio: '',
-      hora_final: '',
-      lugar: '',
-      monto_multa: '',
-    });
+    // setMeetingForm({
+    //   titulo: '',
+    //   fecha: '',
+    //   hora_inicio: '',
+    //   hora_final: '',
+    //   lugar: '',
+    //   monto_multa: '',
+    // });
+  };
 
-    setShowCreateModal(false);
+  const seleccionarReunico = async (payload) => {
+    try {
+      setSelectedReunion(payload);
+      const response = await services.getAcciones(payload.id);
+      if (!response.ok) {
+        throw new Error('No se pudar cargar la lista');
+      }
+      setAsistencias(Array.isArray(response.data) ? response.data : []);
+    } catch (e) {
+      toast.error('No se pudo cargar la reunios');
+    }
   };
 
   const clearAttendanceFilters = () => {
@@ -251,7 +302,8 @@ export default function AsambleasPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Organiza reuniones, controla convocados y registra la asistencia de los socios.
+              Organiza reuniones, controla convocados y registra la asistencia
+              de los socios.
             </p>
           </div>
 
@@ -345,7 +397,7 @@ export default function AsambleasPage() {
                     <button
                       key={reunion.id}
                       type="button"
-                      onClick={() => setSelectedReunion(reunion)}
+                      onClick={() => seleccionarReunico(reunion)}
                       className={`w-full rounded-lg border p-3 text-left transition ${
                         active
                           ? 'border-emerald-300 bg-emerald-50'
@@ -360,8 +412,12 @@ export default function AsambleasPage() {
                               : 'bg-slate-100 text-slate-700'
                           }`}
                         >
-                          <span className="text-xl font-bold leading-none">{day}</span>
-                          <span className="mt-1 text-[10px] font-bold">{month}</span>
+                          <span className="text-xl font-bold leading-none">
+                            {day}
+                          </span>
+                          <span className="mt-1 text-[10px] font-bold">
+                            {month}
+                          </span>
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -510,8 +566,9 @@ export default function AsambleasPage() {
                           Lista de convocados
                         </h3>
                         <p className="mt-1 text-sm leading-6 text-blue-800/80">
-                          Esta sección puede conectarse con el endpoint de socios para
-                          mostrar todos los convocados de la reunión seleccionada.
+                          Esta sección puede conectarse con el endpoint de
+                          socios para mostrar todos los convocados de la reunión
+                          seleccionada.
                         </p>
                       </div>
                     </div>
@@ -558,7 +615,9 @@ export default function AsambleasPage() {
                         <input
                           type="search"
                           value={searchSocio}
-                          onChange={(event) => setSearchSocio(event.target.value)}
+                          onChange={(event) =>
+                            setSearchSocio(event.target.value)
+                          }
                           placeholder="Buscar socio por nombre o código"
                           className={`${inputClass} pl-11`}
                         />
@@ -566,7 +625,9 @@ export default function AsambleasPage() {
 
                       <select
                         value={filterEstado}
-                        onChange={(event) => setFilterEstado(event.target.value)}
+                        onChange={(event) =>
+                          setFilterEstado(event.target.value)
+                        }
                         className="min-w-44 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
                       >
                         <option value="TODOS">Todos los estados</option>
@@ -600,7 +661,10 @@ export default function AsambleasPage() {
                         <tbody className="divide-y divide-slate-100 bg-white">
                           {asistenciasFiltradas.length === 0 ? (
                             <tr>
-                              <td colSpan="5" className="px-6 py-14 text-center">
+                              <td
+                                colSpan="5"
+                                className="px-6 py-14 text-center"
+                              >
                                 <UserGroupIcon className="mx-auto h-8 w-8 text-slate-300" />
                                 <p className="mt-3 text-sm font-medium text-slate-500">
                                   No se encontraron asistencias
@@ -610,7 +674,7 @@ export default function AsambleasPage() {
                           ) : (
                             asistenciasFiltradas.map((asistencia) => {
                               const estado =
-                                estadoStyles[asistencia.estado] ||
+                                estadoStyles[asistencia.asistio] ||
                                 estadoStyles.SIN_EFECTO;
 
                               return (
@@ -621,14 +685,16 @@ export default function AsambleasPage() {
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-3">
                                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
-                                        {getInitials(asistencia.nombre_completo)}
+                                        {getInitials(
+                                          asistencia.nombre_completo,
+                                        )}
                                       </div>
                                       <div>
                                         <p className="font-bold text-slate-900">
                                           {asistencia.nombre_completo}
                                         </p>
                                         <p className="mt-0.5 text-xs text-slate-500">
-                                          {asistencia.codigo}
+                                          {asistencia.codigo_interno}
                                         </p>
                                       </div>
                                     </div>
@@ -638,30 +704,38 @@ export default function AsambleasPage() {
                                     <span
                                       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${estado.badge}`}
                                     >
-                                      <span className={`h-2 w-2 rounded-full ${estado.dot}`} />
+                                      <span
+                                        className={`h-2 w-2 rounded-full ${estado.dot}`}
+                                      />
                                       {estado.label}
                                     </span>
                                   </td>
 
                                   <td className="max-w-64 px-4 py-4 text-sm text-slate-500">
                                     <p className="line-clamp-2">
-                                      {asistencia.observacion || 'Sin observación'}
+                                      {asistencia.observacion ||
+                                        'Sin observación'}
                                     </p>
                                   </td>
 
                                   <td className="px-4 py-4">
                                     <p className="text-sm font-semibold text-slate-700">
-                                      {asistencia.registrado_por || 'Sin registrar'}
+                                      {asistencia.registrado_por ||
+                                        'Sin registrar'}
                                     </p>
                                     <p className="mt-0.5 text-xs text-slate-500">
-                                      {formatDateTime(asistencia.fecha_registro)}
+                                      {formatDateTime(
+                                        asistencia.fecha_registro,
+                                      )}
                                     </p>
                                   </td>
 
                                   <td className="px-4 py-4 text-right">
                                     <button
                                       type="button"
-                                      onClick={() => openAttendanceDrawer(asistencia)}
+                                      onClick={() =>
+                                        openAttendanceDrawer(asistencia)
+                                      }
                                       className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                                     >
                                       Editar
@@ -773,7 +847,7 @@ export default function AsambleasPage() {
 
                   <AttendanceOption
                     label="Sin efecto"
-                    selected={attendanceForm.estado === 'SIN_EFECTO'}
+                    selected={attendanceForm.estado === 'SIN EFECTO'}
                     icon={MinusCircleIcon}
                     selectedClass="border-amber-500 bg-amber-50 text-amber-700"
                     onClick={() =>
@@ -803,7 +877,7 @@ export default function AsambleasPage() {
                   className={`${inputClass} resize-none`}
                 />
               </div>
-
+              {/* 
               <label className="mt-6 flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
                 <div>
                   <span className="block text-sm font-semibold text-slate-700">
@@ -825,7 +899,7 @@ export default function AsambleasPage() {
                   }
                   className="h-5 w-5 accent-emerald-700"
                 />
-              </label>
+              </label> */}
             </div>
 
             <div className="grid grid-cols-2 gap-3 border-t border-slate-200 p-6">
@@ -967,7 +1041,8 @@ export default function AsambleasPage() {
                       Horario y multa
                     </h3>
                     <p className="text-sm text-slate-500">
-                      Establezca el horario y el monto aplicable por inasistencia.
+                      Establezca el horario y el monto aplicable por
+                      inasistencia.
                     </p>
                   </div>
                 </div>
@@ -984,24 +1059,6 @@ export default function AsambleasPage() {
                           setMeetingForm((previous) => ({
                             ...previous,
                             hora_inicio: event.target.value,
-                          }))
-                        }
-                        className={`${inputClass} pl-11`}
-                      />
-                    </div>
-                  </FormField>
-
-                  <FormField label="Hora de finalización">
-                    <div className="relative">
-                      <ClockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                      <input
-                        required
-                        type="time"
-                        value={meetingForm.hora_final}
-                        onChange={(event) =>
-                          setMeetingForm((previous) => ({
-                            ...previous,
-                            hora_final: event.target.value,
                           }))
                         }
                         className={`${inputClass} pl-11`}
