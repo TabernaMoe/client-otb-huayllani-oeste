@@ -1,90 +1,17 @@
-export const validateRoleForm = (
-  form,
-) => {
+import { z } from 'zod';
 
-  
+const roleSchema = z.object({
+  nombre_rol: z.string().trim().min(1, 'El nombre del rol es obligatorio'),
+  permisos: z.array(z.number()).min(1, 'Seleccione al menos un permiso'),
+});
 
-  const errors = {};
+export function validateRole(form) {
+  const result = roleSchema.safeParse(form);
+  if (result.success) return { success: true, data: result.data, errors: {} };
 
+  const errors = Object.fromEntries(
+    Object.entries(result.error.flatten().fieldErrors).map(([key, value]) => [key, value[0]]),
+  );
 
-  /**
-   * ==========================================
-   * VALIDAR NOMBRE
-   * ==========================================
-   */
-
- 
-
-  if (
-    !form.nombre_rol?.trim()
-  ) {
-
-    errors.nombre_rol =
-      'El nombre del rol es obligatorio';
-
-
-  } else {
-
-    console.log(
-      '✅ nombre_rol válido',
-    );
-
-  }
-
-
-  /**
-   * ==========================================
-   * VALIDAR PERMISOS
-   * ==========================================
-   */
-
-
-
-  
-
-
-  if (
-    !Array.isArray(
-      form.permisos,
-    ) ||
-    form.permisos.length === 0
-  ) {
-
-    errors.permisos =
-      'Debe seleccionar al menos un permiso';
-
-
-    console.warn(
-      '❌ permisos inválidos',
-    );
-
-  } else {
-
-    console.log(
-      '✅ permisos válidos',
-    );
-
-  }
-
-
-  /**
-   * ==========================================
-   * RESULTADO
-   * ==========================================
-   */
-
-  const result = {
-
-    isValid:
-      Object.keys(
-        errors,
-      ).length === 0,
-
-    errors,
-
-  };
-
-
-
-  return result;
-};
+  return { success: false, data: null, errors };
+}

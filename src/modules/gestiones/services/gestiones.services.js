@@ -1,119 +1,18 @@
-import {
-  api,
-} from '../../../services/api';
+import { api } from '../../../services/api';
 
-import {
-  toServiceError,
-} from '../../../services/error';
-
-/**
- * ============================================================
- * SERVICIOS DE GESTIONES
- * ============================================================
- *
- * Este archivo solamente se comunica
- * con el backend.
- *
- * NO contiene Zod.
- * NO contiene useState.
- * NO contiene lógica visual.
- */
 export class GestionesServices {
-  /**
-   * ==========================================================
-   * OBTENER TODAS LAS GESTIONES
-   * ==========================================================
-   *
-   * params ejemplo:
-   *
-   * {
-   *   page: 1,
-   *   limit: 10,
-   *   search: ''
-   * }
-   */
-  static async getAll(
-    params = {},
-  ) {
-    try {
-      const {
-        data,
-      } = await api.get(
-        '/admin/gestion',
-        {
-          params,
-        },
-      );
-
-      return data;
-
-    } catch (error) {
-      return toServiceError(
-        error,
-      );
-    }
+  static async getAll(params = {}) {
+    const { data } = await api.get('/admin/gestion', { params });
+    return data;
   }
 
-  /**
-   * ==========================================================
-   * OBTENER UNA GESTIÓN
-   * ==========================================================
-   *
-   * GET
-   *
-   * /admin/gestion/:id
-   */
-  static async getById(
-    id,
-  ) {
-    try {
-      const {
-        data,
-      } = await api.get(
-        `/admin/gestion/${id}`,
-      );
-
-      return data;
-
-    } catch (error) {
-      return toServiceError(
-        error,
-      );
-    }
+  static async getById(id) {
+    const { data } = await api.get(`/admin/gestion/${id}`);
+    return data;
   }
 
-  /**
-   * ==========================================================
-   * CREAR GESTIÓN
-   * ==========================================================
-   *
-   * POST
-   *
-   * /admin/gestion
-   *
-   * payload:
-   *
-   * {
-   *   anio: 2027
-   * }
-   */
-  static async create(
-    payload,
-  ) {
-    try {
-      const {
-        data,
-      } = await api.post(
-        '/admin/gestion',
-        payload,
-      );
-
-      return data;
-
-    } catch (error) {
-      return toServiceError(
-        error,
-      );
-    }
+  static async create(payload) {
+    const { data } = await api.post('/admin/gestion', payload);
+    return data;
   }
 }

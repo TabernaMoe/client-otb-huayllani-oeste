@@ -1,888 +1,148 @@
+import { useEffect, useMemo, useState } from 'react';
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
-import {
-  ArrowPathIcon,
   CalendarDaysIcon,
-  CheckCircleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ClockIcon,
   LockClosedIcon,
-  RectangleStackIcon,
 } from '@heroicons/react/24/outline';
-
 import { toast } from 'react-toastify';
-
+import DataTable from '../../../components/DataTable';
+import ConfirmModal from '../../../components/ConfirmModal';
+import PageHeader from '../../../components/PageHeader';
+import GestionPeriodoTabs from '../../../components/GestionPeriodoTabs';
 import { PeriodosServices } from '../services/periodos.services';
+import { periodoIdSchema } from '../schema/periodos.schema';
 
-import {
-  periodoIdSchema,
-  periodoParamsSchema,
-} from '../schema/peridos.schema';
-
-/**
- * ============================================================
- * CONSTANTES
- * ============================================================
- */
-
-const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 10;
-
-const MONTHS = {
-  enero: '01',
-  febrero: '02',
-  marzo: '03',
-  abril: '04',
-  mayo: '05',
-  junio: '06',
-  julio: '07',
-  agosto: '08',
-  septiembre: '09',
-  setiembre: '09',
-  octubre: '10',
-  noviembre: '11',
-  diciembre: '12',
+const estadoClass = {
+  ACTIVO: 'bg-emerald-100 text-emerald-700',
+  PENDIENTE: 'bg-amber-100 text-amber-700',
+  CERRADO: 'bg-slate-200 text-slate-600',
 };
-
-/**
- * ============================================================
- * FORMATEAR FECHA
- * ============================================================
- *
- * Convierte:
- *
- * 1 de enero de 2026
- *
- * en:
- *
- * 01/01/2026
- */
-const formatDateOnly = (value) => {
-  if (
-    !value ||
-    value === 'Sin fecha'
-  ) {
-    return '-';
-  }
-
-  const match = String(value)
-    .toLowerCase()
-    .match(
-      /(\d{1,2}) de ([a-záéíóúñ]+) de (\d{4})/,
-    );
-
-  if (!match) {
-    return value;
-  }
-
-  const day =
-    match[1].padStart(2, '0');
-
-  const month =
-    MONTHS[match[2]];
-
-  const year =
-    match[3];
-
-  if (!month) {
-    return value;
-  }
-
-  return `${day}/${month}/${year}`;
-};
-
-/**
- * ============================================================
- * ESTILOS SEGÚN ESTADO
- * ============================================================
- */
-
-const getStatusStyles = (estado) => {
-  if (estado === 'CERRADO') {
-    return {
-      badge:
-        'border-slate-200 bg-slate-100 text-slate-600',
-
-      dot:
-        'bg-slate-400',
-    };
-  }
-
-  if (estado === 'ACTIVO') {
-    return {
-      badge:
-        'border-emerald-200 bg-emerald-50 text-emerald-700',
-
-      dot:
-        'bg-emerald-500',
-    };
-  }
-
-  return {
-    badge:
-      'border-amber-200 bg-amber-50 text-amber-700',
-
-    dot:
-      'bg-amber-500',
-  };
-};
-
-/**
- * ============================================================
- * OBTENER PRIMER MENSAJE DE ERROR DE ZOD
- * ============================================================
- */
-
-const getFirstZodError = (
-  zodError,
-  fallbackMessage,
-) =>
-  zodError?.issues?.[0]?.message ||
-  fallbackMessage;
-
-/**
- * ============================================================
- * PÁGINA
- * ============================================================
- */
 
 export default function PeriodosPage() {
-  /**
-   * ============================================================
-   * DATOS
-   * ============================================================
-   */
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selected, setSelected] = useState(null);
+  const [closing, setClosing] = useState(false);
 
-  const [periodos, setPeriodos] =
-    useState([]);
-
-  /**
-   * ============================================================
-   * ESTADOS UI
-   * ============================================================
-   */
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [closingId, setClosingId] =
-    useState(null);
-
-  /**
-   * ============================================================
-   * PAGINACIÓN
-   * ============================================================
-   */
-
-  const [page, setPage] =
-    useState(DEFAULT_PAGE);
-
-  const [limit] =
-    useState(DEFAULT_LIMIT);
-
-  const [
-    totalPages,
-    setTotalPages,
-  ] = useState(1);
-
-  const [
-    totalItems,
-    setTotalItems,
-  ] = useState(0);
-
-  /**
-   * ============================================================
-   * OBTENER PERIODOS
-   * ============================================================
-   */
-
-  const fetchPeriodos =
-    useCallback(async () => {
-      /**
-       * Validamos los parámetros antes de
-       * enviarlos al service.
-       */
-      const validation =
-        periodoParamsSchema.safeParse({
-          page,
-          limit,
-        });
-
-      if (!validation.success) {
-        toast.error(
-          getFirstZodError(
-            validation.error,
-            'Los parámetros de paginación no son válidos',
-          ),
-        );
-
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        /**
-         * validation.data devuelve:
-         *
-         * {
-         *   page: 1,
-         *   limit: 10
-         * }
-         *
-         * Ambos valores están validados por Zod.
-         */
-        const response =
-          await PeriodosServices.getAll(
-            validation.data,
-          );
-
-        if (!response?.ok) {
-          toast.error(
-            response?.message ||
-              'Error al cargar los periodos',
-          );
-
-          setPeriodos([]);
-          setTotalPages(1);
-          setTotalItems(0);
-
-          return;
-        }
-
-        const data =
-          Array.isArray(response.data)
-            ? response.data
-            : [];
-
-        setPeriodos(data);
-
-        setTotalPages(
-          Number(response.totalPages) ||
-            1,
-        );
-
-        setTotalItems(
-          Number(response.total) || 0,
-        );
-      } catch (error) {
-        toast.error(
-          error?.message ||
-            'Error inesperado al cargar los periodos',
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [
-      page,
-      limit,
-    ]);
-
-  /**
-   * ============================================================
-   * CARGAR PERIODOS
-   * ============================================================
-   *
-   * Cada vez que cambia la página,
-   * fetchPeriodos cambia y volvemos a consultar.
-   */
+  const fetchPeriodos = async () => {
+    try {
+      setLoading(true);
+      const response = await PeriodosServices.getAll({ page, limit });
+      setData(response.data);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'No se pudieron cargar los períodos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchPeriodos();
-  }, [fetchPeriodos]);
+  }, [page, limit]);
 
-  /**
-   * ============================================================
-   * RESUMEN
-   * ============================================================
-   */
-
-  const resumen = useMemo(() => {
-    const activos =
-      periodos.filter(
-        (periodo) =>
-          periodo.estado ===
-          'ACTIVO',
-      ).length;
-
-    const cerrados =
-      periodos.filter(
-        (periodo) =>
-          periodo.estado ===
-          'CERRADO',
-      ).length;
-
-    const pendientes =
-      periodos.filter(
-        (periodo) =>
-          periodo.estado ===
-          'PENDIENTE',
-      ).length;
-
-    return {
-      activos,
-      cerrados,
-      pendientes,
-    };
-  }, [periodos]);
-
-  /**
-   * ============================================================
-   * CERRAR PERIODO
-   * ============================================================
-   */
-
-  const handleCerrarPeriodo = async (
-    periodo,
-  ) => {
-    /**
-     * Protección de interfaz.
-     *
-     * Aunque el backend también debe validar
-     * esta regla, evitamos enviar una petición
-     * innecesaria.
-     */
-    if (
-      periodo.estado !== 'ACTIVO'
-    ) {
-      toast.info(
-        'Solo se puede cerrar un periodo activo',
-      );
-
-      return;
-    }
-
-    /**
-     * Validamos únicamente el ID porque
-     * periodoIdSchema recibe directamente:
-     *
-     * 1
-     *
-     * y no:
-     *
-     * { id: 1 }
-     */
-    const validation =
-      periodoIdSchema.safeParse(
-        periodo.id,
-      );
-
-    if (!validation.success) {
-      toast.error(
-        getFirstZodError(
-          validation.error,
-          'El periodo seleccionado no es válido',
-        ),
-      );
-
-      return;
-    }
-
-    /**
-     * Confirmación antes de ejecutar una
-     * acción irreversible/importante.
-     */
-    const confirmClose =
-      window.confirm(
-        `¿Seguro que deseas cerrar el periodo ${periodo.mes}?`,
-      );
-
-    if (!confirmClose) {
-      return;
-    }
+  const closePeriodo = async () => {
+    const validation = periodoIdSchema.safeParse(selected.id);
+    if (!validation.success) return;
 
     try {
-      /**
-       * validation.data es el ID ya validado.
-       */
-      setClosingId(
-        validation.data,
-      );
-
-      const response =
-        await PeriodosServices.cerrar(
-          validation.data,
-        );
-
-      if (!response?.ok) {
-        toast.error(
-          response?.message ||
-            'No se pudo cerrar el periodo',
-        );
-
+      setClosing(true);
+      const response = await PeriodosServices.cerrar(validation.data);
+      if (!response.ok) {
+        toast.error(response.message);
         return;
       }
-
-      toast.success(
-        response?.message ||
-          'Periodo cerrado correctamente',
-      );
-
-      /**
-       * Volvemos a consultar para reflejar
-       * el nuevo estado.
-       */
-      await fetchPeriodos();
+      toast.success(response.message);
+      setSelected(null);
+      fetchPeriodos();
     } catch (error) {
-      toast.error(
-        error?.message ||
-          'Error inesperado al cerrar el periodo',
-      );
+      toast.error(error.response?.data?.message || 'No se pudo cerrar el período');
     } finally {
-      setClosingId(null);
+      setClosing(false);
     }
   };
 
-  /**
-   * ============================================================
-   * PAGINACIÓN
-   * ============================================================
-   */
-
-  const goToPreviousPage = () => {
-    setPage((previous) =>
-      Math.max(
-        previous - 1,
-        1,
-      ),
-    );
-  };
-
-  const goToNextPage = () => {
-    setPage((previous) =>
-      Math.min(
-        previous + 1,
-        totalPages,
-      ),
-    );
-  };
-
-  return (
-    <section className="min-h-screen bg-slate-50">
-      <div className="space-y-5">
-
-        {/* ====================================================
-            ENCABEZADO
-        ==================================================== */}
-
-        <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'mes',
+      header: 'Período',
+      cell: ({ row }) => (
+        <div className="flex min-w-44 items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <CalendarDaysIcon className="h-5 w-5" />
+          </span>
           <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-              <span>
-                Inicio
-              </span>
-
-              <span>/</span>
-
-              <span>
-                Agua
-              </span>
-
-              <span>/</span>
-
-              <span className="text-emerald-700">
-                Periodos
-              </span>
-            </div>
-
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Gestión de periodos
-            </h1>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Consulta los periodos mensuales
-              y controla el cierre del periodo
-              activo.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchPeriodos}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowPathIcon
-              className={`h-5 w-5 ${
-                loading
-                  ? 'animate-spin'
-                  : ''
-              }`}
-            />
-
-            Actualizar periodos
-          </button>
-        </header>
-
-        {/* ====================================================
-            TARJETAS DE RESUMEN
-        ==================================================== */}
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            label="Total de periodos"
-            value={totalItems}
-            icon={RectangleStackIcon}
-            iconClass="bg-slate-100 text-slate-700"
-          />
-
-          <MetricCard
-            label="Activos visibles"
-            value={resumen.activos}
-            icon={CheckCircleIcon}
-            iconClass="bg-emerald-50 text-emerald-700"
-          />
-
-          <MetricCard
-            label="Pendientes visibles"
-            value={resumen.pendientes}
-            icon={ClockIcon}
-            iconClass="bg-amber-50 text-amber-700"
-          />
-
-          <MetricCard
-            label="Cerrados visibles"
-            value={resumen.cerrados}
-            icon={LockClosedIcon}
-            iconClass="bg-blue-50 text-blue-700"
-          />
-        </div>
-
-        {/* ====================================================
-            TABLA
-        ==================================================== */}
-
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-5 lg:px-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700">
-                1
-              </span>
-
-              <div>
-                <h2 className="font-bold text-slate-900">
-                  Periodos registrados
-                </h2>
-
-                <p className="mt-0.5 text-sm text-slate-500">
-                  Solamente el periodo ACTIVO
-                  puede ser cerrado.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-225 text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50/80">
-                <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th
-                    scope="col"
-                    className="px-6 py-4"
-                  >
-                    Periodo
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-4 py-4"
-                  >
-                    Código
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-4 py-4"
-                  >
-                    Fecha de inicio
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-4 py-4"
-                  >
-                    Fecha de finalización
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-4 py-4"
-                  >
-                    Estado
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-6 py-4 text-right"
-                  >
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {(() => {
-                  if (loading) {
-                    return [(
-                      <tr key="loading-periodos">
-                        <td
-                          colSpan={6}
-                          className="px-6 py-16"
-                        >
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-700" />
-
-                            <p className="mt-3 text-sm font-medium text-slate-500">
-                              Cargando periodos...
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    )];
-                  }
-
-                  if (periodos.length === 0) {
-                    return [(
-                      <tr key="empty-periodos">
-                        <td
-                          colSpan={6}
-                          className="px-6 py-16"
-                        >
-                          <div className="flex flex-col items-center justify-center text-center">
-                            <CalendarDaysIcon className="h-8 w-8 text-slate-300" />
-
-                            <h3 className="mt-4 font-bold text-slate-700">
-                              No hay periodos
-                              registrados
-                            </h3>
-                          </div>
-                        </td>
-                      </tr>
-                    )];
-                  }
-
-                  return periodos.map((periodo) => {
-                    /**
-                     * Un periodo solo puede cerrarse
-                     * cuando su estado es ACTIVO.
-                     */
-                    const puedeCerrar =
-                      periodo.estado === 'ACTIVO';
-
-                    /**
-                     * Determina si este registro
-                     * específico se está cerrando.
-                     */
-                    const cerrando =
-                      closingId === periodo.id;
-
-                    const statusStyles =
-                      getStatusStyles(periodo.estado);
-
-                    const actionIcon = cerrando ? (
-                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                    ) : puedeCerrar ? (
-                      <LockClosedIcon className="h-4 w-4" />
-                    ) : (
-                      <ClockIcon className="h-4 w-4" />
-                    );
-
-                    const actionText = cerrando
-                      ? 'Cerrando...'
-                      : puedeCerrar
-                        ? 'Cerrar periodo'
-                        : periodo.estado;
-
-                    return (
-                      <tr
-                        key={periodo.id}
-                        className="transition hover:bg-slate-50/80"
-                      >
-                        {/* ================= PERIODO ================= */}
-
-                        <td className="px-6 py-4">
-                          <div className="flex min-w-52 items-center gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                              <CalendarDaysIcon className="h-5 w-5" />
-                            </div>
-
-                            <div>
-                              <p className="font-bold text-slate-900">
-                                {periodo.mes}
-                              </p>
-
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                Periodo mensual
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* ================= ID ================= */}
-
-                        <td className="px-4 py-4">
-                          <span className="font-semibold text-slate-600">
-                            #
-                            {String(periodo.id).padStart(4, '0')}
-                          </span>
-                        </td>
-
-                        {/* ================= FECHA INICIO ================= */}
-
-                        <td className="px-4 py-4 text-slate-600">
-                          {formatDateOnly(periodo.fecha_inicio)}
-                        </td>
-
-                        {/* ================= FECHA FIN ================= */}
-
-                        <td className="px-4 py-4 text-slate-600">
-                          {formatDateOnly(periodo.fecha_fin)}
-                        </td>
-
-                        {/* ================= ESTADO ================= */}
-
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${statusStyles.badge}`}
-                          >
-                            <span
-                              className={`h-2 w-2 rounded-full ${statusStyles.dot}`}
-                            />
-
-                            {periodo.estado}
-                          </span>
-                        </td>
-
-                        {/* ================= ACCIONES ================= */}
-
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              disabled={!puedeCerrar || cerrando}
-                              onClick={() =>
-                                handleCerrarPeriodo(periodo)
-                              }
-                              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                                puedeCerrar
-                                  ? 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
-                                  : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                              } disabled:opacity-60`}
-                            >
-                              {actionIcon}
-                              {actionText}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  });
-                })()}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ==================================================
-              PAGINACIÓN
-          ================================================== */}
-
-          <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-            <p className="text-sm text-slate-500">
-              Mostrando{' '}
-              <span className="font-semibold text-slate-700">
-                {periodos.length}
-              </span>{' '}
-              de{' '}
-              <span className="font-semibold text-slate-700">
-                {totalItems}
-              </span>{' '}
-              periodos
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Página anterior"
-                disabled={
-                  page <= 1 ||
-                  loading
-                }
-                onClick={
-                  goToPreviousPage
-                }
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-
-              <span className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700">
-                {page}
-              </span>
-
-              <span className="text-sm text-slate-400">
-                de {totalPages}
-              </span>
-
-              <button
-                type="button"
-                aria-label="Página siguiente"
-                disabled={
-                  page >=
-                    totalPages ||
-                  loading
-                }
-                onClick={
-                  goToNextPage
-                }
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-            </div>
+            <p className="font-bold text-slate-900">{row.original.mes}</p>
+            <p className="text-xs text-slate-500">Mes {row.original.numero_mes}</p>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-/**
- * ============================================================
- * TARJETA DE MÉTRICA
- * ============================================================
- */
-
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-  iconClass,
-}) {
-  return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {label}
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {value}
-          </p>
-        </div>
-
-        <div
-          className={`rounded-full p-3 ${iconClass}`}
+      ),
+    },
+    { accessorKey: 'fecha_inicio', header: 'Inicio' },
+    { accessorKey: 'fecha_fin', header: 'Fin' },
+    {
+      accessorKey: 'estado',
+      header: 'Estado',
+      cell: ({ getValue }) => (
+        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${estadoClass[getValue()]}`}>
+          {getValue()}
+        </span>
+      ),
+    },
+    { accessorKey: 'fecha_cierre', header: 'Cierre' },
+    {
+      id: 'acciones',
+      header: 'Acciones',
+      cell: ({ row }) => row.original.estado === 'ACTIVO' ? (
+        <button
+          onClick={() => setSelected(row.original)}
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
         >
-          <Icon className="h-6 w-6" />
-        </div>
-      </div>
-    </article>
+          <LockClosedIcon className="h-4 w-4" /> Cerrar
+        </button>
+      ) : (
+        <span className="text-slate-400">—</span>
+      ),
+    },
+  ], []);
+
+  return (
+    <section className="space-y-5">
+      <PageHeader
+        title="Períodos"
+        description="Consulta los meses de la gestión y cierra el período activo."
+      />
+
+      <GestionPeriodoTabs />
+
+      <DataTable
+        data={data}
+        columns={columns}
+        loading={loading}
+        page={page}
+        limit={limit}
+        totalPages={totalPages}
+        totalItems={total}
+        onPageChange={setPage}
+        onLimitChange={(value) => {
+          setLimit(value);
+          setPage(1);
+        }}
+      />
+
+      <ConfirmModal
+        open={Boolean(selected)}
+        title="Cerrar período"
+        message={`¿Deseas cerrar ${selected?.mes || ''}?`}
+        confirmText="Cerrar período"
+        loading={closing}
+        onConfirm={closePeriodo}
+        onClose={() => setSelected(null)}
+      />
+    </section>
   );
 }

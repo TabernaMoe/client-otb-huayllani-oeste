@@ -1,35 +1,49 @@
-export class AsambleasServices {
-  static async getAll() {
-    return {
-      ok: true,
-      data: [],
-    };
-  }
+import { api } from '../../../services/api';
+import { toServiceError } from '../../../services/error';
 
-  static async getById(id) {
-    return {
-      ok: true,
-      data: null,
-    };
+export class AsambleasServices {
+  static async getAll(params = {}) {
+    try {
+      const { data } = await api.get('/admin/asamblea', { params });
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 
   static async create(payload) {
-    return {
-      ok: true,
-      message: 'Asamblea creada correctamente',
-      data: payload,
-    };
+    try {
+      const { data } = await api.post('/admin/asamblea', payload);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 
-  static async updateAsistencia(asambleaId, socioId, payload) {
-    return {
-      ok: true,
-      message: 'Asistencia actualizada correctamente',
-      data: {
-        asambleaId,
-        socioId,
-        ...payload,
-      },
-    };
+  static async update(id, payload) {
+    try {
+      const { data } = await api.patch(`/admin/asamblea/${id}`, payload);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async getAcciones(asambleaId) {
+    try {
+      const { data } = await api.get(`/admin/asamblea/acciones/${asambleaId}`);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async updateAsistencia(id, payload) {
+    try {
+      const { data } = await api.patch(`/admin/asamblea/accion/${id}`, payload);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 }

@@ -1,133 +1,41 @@
-import {
-  useState,
-} from 'react';
+import { useState } from 'react';
+import CrearMultaView from '../components/CrearMultaView';
+import ListarMultasView from '../components/ListarMultasView';
+import MultarAccionView from '../components/MultarAccionView';
+import MultasTabs from '../components/MultasTabs';
 
-import MultasTabs
-  from '../components/MultasTabs';
-
-import CrearMultaView
-  from '../components/CrearMultaView';
-
-import MultarAccionView
-      from '../components/MultarAccionView';
-
-    import ListarMultasView
-  from '../components/ListarMultasView';
-
+const views = {
+  crear: CrearMultaView,
+  multar: MultarAccionView,
+  listar: ListarMultasView,
+};
 
 export default function MultasPage() {
-
-  // =========================================================
-  // VISTA ACTIVA
-  // =========================================================
-
-  const [
-    activeView,
-    setActiveView,
-  ] = useState(
-    'crear',
-  );
-
-
-  // =========================================================
-  // RETURN
-  // =========================================================
+  const [activeView, setActiveView] = useState('crear');
+  const ActiveView = views[activeView];
 
   return (
+    <section className="space-y-5">
+      <header>
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+          <span>Inicio</span>
+          <span>/</span>
+          <span className="text-emerald-700">Multas</span>
+        </div>
 
-    <section className="min-h-screen">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          Gestión de multas
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Crea, asigna y administra las multas registradas.
+        </p>
+      </header>
 
-      <div className="space-y-5">
+      <MultasTabs activeView={activeView} onChange={setActiveView} />
 
-        {/* ===================================================
-            HEADER
-        ==================================================== */}
-
-        <header>
-
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-
-            <span>
-              Inicio
-            </span>
-
-            <span>
-              /
-            </span>
-
-            <span className="text-emerald-700">
-              Multas
-            </span>
-
-          </div>
-
-
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-
-            Gestión de multas
-
-          </h1>
-
-
-          <p className="mt-1 text-sm text-slate-500">
-
-            Crea multas, asígnalas a las acciones
-            y administra las multas registradas.
-
-          </p>
-
-        </header>
-
-
-        {/* ===================================================
-            TABS
-        ==================================================== */}
-
-        <MultasTabs
-          activeView={
-            activeView
-          }
-          onChange={
-            setActiveView
-          }
-        />
-
-
-        {/* ===================================================
-            VISTAS
-        ==================================================== */}
-
-        {activeView ===
-          'crear' && (
-
-          <CrearMultaView
-            onCreated={() =>
-              setActiveView(
-                'listar',
-              )
-            }
-          />
-
-        )}
-
-
-        {activeView ===
-          'multar' && (
-
-          <MultarAccionView />
-
-        )}
-
-
-        {activeView ===
-          'listar' && (
-
-          <ListarMultasView />
-
-        )}
-
-      </div>
-
+      <ActiveView
+        onCreated={() => setActiveView('listar')}
+      />
     </section>
   );
 }

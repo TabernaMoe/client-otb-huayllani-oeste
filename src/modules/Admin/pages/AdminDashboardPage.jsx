@@ -1,889 +1,141 @@
+import { useEffect, useMemo, useState } from 'react';
 import {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
-import {
-  Link,
-} from 'react-router-dom';
-
-import {
-  ArrowRightIcon,
-  BanknotesIcon,
-  ClipboardDocumentListIcon,
-  UsersIcon,
+  RectangleStackIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
-
-import DashboardCard from '../components/DashboardCard';
+import { toast } from 'react-toastify';
 
 import DataTable from '../../../components/DataTable';
+import PageHeader from '../../../components/PageHeader';
+import DashboardCard from '../components/DashboardCard';
+import { DashboardServices } from '../services/dashboard.services';
 
-import {
-  SocioServices,
-} from '../../socios/services/socio.services';
-
-import {
-  AccionesServices,
-} from '../../acciones/services/acciones.services';
-
-
-// =========================================================
-// MAPEAR SOCIO
-// =========================================================
-
-const mapSocio =
-  (socio) => ({
-
-    id:
-      socio.id,
-
-    nombreCompleto:
-      socio.nombre_completo
-      ||
-      [
-        socio.nombres,
-        socio.primer_apellido,
-        socio.segundo_apellido,
-      ]
-        .filter(Boolean)
-        .join(' ')
-      ||
-      'Socio sin nombre',
-
-    documento:
-      socio.ci_socio
-      || 'Sin documento',
-
-    estado:
-      socio.estado ?? true,
-  });
-
+const nombreCompleto = (socio) =>
+  [socio.nombres, socio.primer_apellido, socio.segundo_apellido]
+    .filter(Boolean)
+    .join(' ');
 
 export default function AdminDashboardPage() {
-
-  // =========================================================
-  // SOCIOS
-  // =========================================================
-
-  const [
-    socios,
-    setSocios,
-  ] = useState([]);
-
-  const [
-    totalSocios,
-    setTotalSocios,
-  ] = useState(0);
-
-  const [
-    loadingSocios,
-    setLoadingSocios,
-  ] = useState(true);
-
-  const [
-    errorSocios,
-    setErrorSocios,
-  ] = useState('');
-
-
-  // =========================================================
-  // PAGINACIÓN SOCIOS
-  // =========================================================
-
-  const [
-    paginationSocios,
-    setPaginationSocios,
-  ] = useState({
-
-    page: 1,
-
-    limit: 5,
-
-    totalItems: 0,
-
-    totalPages: 1,
-  });
-
-
-  // =========================================================
-  // ACCIONES
-  // =========================================================
-
-  const [
-    totalAcciones,
-    setTotalAcciones,
-  ] = useState(0);
-
-  const [
-    loadingAcciones,
-    setLoadingAcciones,
-  ] = useState(true);
-
-  const [
-    errorAcciones,
-    setErrorAcciones,
-  ] = useState('');
-
-
-  // =========================================================
-  // CARGAR SOCIOS
-  // =========================================================
-
-  const fetchSocios =
-    async () => {
-
-      try {
-
-        setLoadingSocios(true);
-
-        setErrorSocios('');
-
-
-        const response =
-          await SocioServices.getAll({
-
-            page:
-              paginationSocios.page,
-
-            limit:
-              paginationSocios.limit,
-          });
-
-
-        if (!response?.ok) {
-
-          setErrorSocios(
-            response?.message
-            ||
-            'No se pudieron cargar los socios',
-          );
-
-          return;
-        }
-
-
-        const sociosMapeados =
-          Array.isArray(
-            response.data,
-          )
-            ? response.data.map(
-                mapSocio,
-              )
-            : [];
-
-
-        setSocios(
-          sociosMapeados,
-        );
-
-
-        setTotalSocios(
-          response?.total ?? 0,
-        );
-
-
-        setPaginationSocios(
-          (prev) => ({
-
-            ...prev,
-
-            page:
-              response?.page
-              ?? prev.page,
-
-            limit:
-              response?.limit
-              ?? prev.limit,
-
-            totalItems:
-              response?.total
-              ?? 0,
-
-            totalPages:
-              response?.totalPages
-              ?? 1,
-          }),
-        );
-
-      } catch (error) {
-
-        console.error(
-          'ERROR AL CARGAR SOCIOS:',
-          error,
-        );
-
-
-        setErrorSocios(
-          'Ocurrió un error inesperado al obtener los socios',
-        );
-
-      } finally {
-
-        setLoadingSocios(false);
-      }
-    };
-
-
-  // =========================================================
-  // TOTAL ACCIONES
-  // =========================================================
-
-  const fetchTotalAcciones =
-    async () => {
-
-      try {
-
-        setLoadingAcciones(true);
-
-        setErrorAcciones('');
-
-
-        const response =
-          await AccionesServices.getAll();
-
-
-        if (!response?.ok) {
-
-          setErrorAcciones(
-            response?.message
-            ||
-            'No se pudieron cargar las acciones',
-          );
-
-          return;
-        }
-
-
-        setTotalAcciones(
-          response?.total ?? 0,
-        );
-
-      } catch (error) {
-
-        console.error(
-          'ERROR AL CARGAR TOTAL DE ACCIONES:',
-          error,
-        );
-
-
-        setErrorAcciones(
-          'Ocurrió un error inesperado al obtener las acciones',
-        );
-
-      } finally {
-
-        setLoadingAcciones(false);
-      }
-    };
-
-
-  // =========================================================
-  // COLUMNAS DE LA TABLA
-  // =========================================================
-
-  const columns =
-    useMemo(
-      () => [
-
-        // -------------------------------------------------
-        // NÚMERO
-        // -------------------------------------------------
-
-        {
-          id:
-            'numero',
-
-          header:
-            'N.º',
-
-          cell:
-            ({ row }) => (
-
-              <span className="text-slate-500">
-
-                {
-                  (
-                    paginationSocios.page - 1
-                  )
-                  *
-                  paginationSocios.limit
-                  +
-                  row.index
-                  +
-                  1
-                }
-
-              </span>
-
-            ),
-        },
-
-
-        // -------------------------------------------------
-        // SOCIO
-        // -------------------------------------------------
-
-        {
-          accessorKey:
-            'nombreCompleto',
-
-          header:
-            'Nombre del socio',
-
-          cell:
-            ({ row }) => {
-
-              const socio =
-                row.original;
-
-
-              return (
-
-                <div className="flex items-center gap-3">
-
-                  <div
-                    className="
-                      flex h-10 w-10
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-full
-                      bg-sky-100
-                      font-bold
-                      text-sky-800
-                    "
-                  >
-
-                    {
-                      socio.nombreCompleto
-                        .charAt(0)
-                        .toUpperCase()
-                    }
-
-                  </div>
-
-
-                  <div>
-
-                    <p className="font-semibold text-slate-800">
-
-                      {socio.nombreCompleto}
-
-                    </p>
-
-
-                    <p className="mt-0.5 text-xs text-slate-400">
-
-                      ID: {socio.id}
-
-                    </p>
-
-                  </div>
-
-                </div>
-
-              );
-            },
-        },
-
-
-        // -------------------------------------------------
-        // DOCUMENTO
-        // -------------------------------------------------
-
-        {
-          accessorKey:
-            'documento',
-
-          header:
-            'Documento',
-
-          cell:
-            ({ row }) => (
-
-              <span className="text-slate-600">
-
-                {row.original.documento}
-
-              </span>
-
-            ),
-        },
-
-
-        // -------------------------------------------------
-        // ESTADO
-        // -------------------------------------------------
-
-        {
-          accessorKey:
-            'estado',
-
-          header:
-            'Estado',
-
-          cell:
-            ({ row }) => {
-
-              const activo =
-                row.original.estado
-                !== false;
-
-
-              return (
-
-                <span
-                  className={`
-                    inline-flex
-                    rounded-full
-                    px-3 py-1
-                    text-xs
-                    font-semibold
-
-                    ${
-                      activo
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-red-50 text-red-700'
-                    }
-                  `}
-                >
-
-                  {
-                    activo
-                      ? 'Activo'
-                      : 'Inactivo'
-                  }
-
-                </span>
-
-              );
-            },
-        },
-
-      ],
-      [
-        paginationSocios.page,
-        paginationSocios.limit,
-      ],
-    );
-
-
-  // =========================================================
-  // CAMBIAR PÁGINA
-  // =========================================================
-
-  const handleSocioPageChange =
-    (page) => {
-
-      setPaginationSocios(
-        (prev) => ({
-          ...prev,
-          page,
-        }),
-      );
-    };
-
-
-  // =========================================================
-  // CAMBIAR CANTIDAD DE FILAS
-  // =========================================================
-
-  const handleSocioLimitChange =
-    (limit) => {
-
-      setPaginationSocios(
-        (prev) => ({
-
-          ...prev,
-
-          page: 1,
-
-          limit,
-        }),
-      );
-    };
-
-
-  // =========================================================
-  // USE EFFECT
-  // =========================================================
+  const [socios, setSocios] = useState([]);
+  const [totalSocios, setTotalSocios] = useState(0);
+  const [totalAcciones, setTotalAcciones] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+
+      const [sociosResponse, accionesResponse] = await Promise.all([
+        DashboardServices.getSocios({ page, limit }),
+        DashboardServices.getAcciones({ page: 1, limit: 1 }),
+      ]);
+
+      setSocios(sociosResponse.data);
+      setTotalSocios(sociosResponse.total);
+      setTotalPages(sociosResponse.totalPages);
+      setTotalAcciones(accionesResponse.total);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'No se pudo cargar el dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    load();
+  }, [page, limit]);
 
-    fetchSocios();
-
-  }, [
-    paginationSocios.page,
-    paginationSocios.limit,
-  ]);
-
-
-  useEffect(() => {
-
-    fetchTotalAcciones();
-
-  }, []);
-
-
-  // =========================================================
-  // FECHA
-  // =========================================================
-
-  const currentDate =
-    new Intl.DateTimeFormat(
-      'es-BO',
+  const columns = useMemo(
+    () => [
       {
-        weekday:
-          'long',
-
-        day:
-          'numeric',
-
-        month:
-          'long',
-
-        year:
-          'numeric',
+        accessorKey: 'ci_socio',
+        header: 'Socio',
+        cell: ({ row }) => (
+          <div>
+            <p className="font-semibold text-slate-900">{nombreCompleto(row.original)}</p>
+            <p className="text-xs text-slate-500">
+              CI {row.original.ci_socio} {row.original.ci_expedido}
+            </p>
+          </div>
+        ),
       },
-    )
-      .format(
-        new Date(),
-      );
-
-
-  // =========================================================
-  // CARDS
-  // =========================================================
-
-  const dashboardStats = [
-
-    {
-      title:
-        'Socios registrados',
-
-      value:
-        totalSocios,
-
-      description:
-        errorSocios
-        ||
-        'Socios activos registrados',
-
-      icon:
-        UsersIcon,
-
-      to:
-        '/admin/socios',
-
-      loading:
-        loadingSocios,
-    },
-
-    {
-      title:
-        'Acciones',
-
-      value:
-        totalAcciones,
-
-      description:
-        errorAcciones
-        ||
-        'Acciones de agua registradas',
-
-      icon:
-        ClipboardDocumentListIcon,
-
-      to:
-        '/admin/acciones',
-
-      loading:
-        loadingAcciones,
-    },
-
-    {
-      title:
-        'Recaudación mensual',
-
-      value:
-        'Bs 12.450',
-
-      description:
-        'Cobros registrados este mes',
-
-      icon:
-        BanknotesIcon,
-
-      to:
-        '/admin/cobros-agua',
-
-      loading:
-        false,
-    },
-  ];
-
-
-  // =========================================================
-  // RETURN
-  // =========================================================
+      { accessorKey: 'numero_celular', header: 'Celular' },
+      { accessorKey: 'direccion', header: 'Dirección' },
+      {
+        accessorKey: 'estado',
+        header: 'Estado',
+        cell: ({ getValue }) => (
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+              getValue()
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-slate-200 text-slate-600'
+            }`}
+          >
+            {getValue() ? 'Activo' : 'Inactivo'}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
+    <section className="space-y-5">
+      <PageHeader
+        title="Dashboard"
+        description="Resumen general de socios y acciones registradas."
+      />
 
-    <section className="space-y-6">
-
-
-      {/* =====================================================
-          BIENVENIDA
-      ====================================================== */}
-
-      <div
-        className="
-          rounded-3xl
-          bg-linear-to-r
-          from-sky-900
-          via-sky-800
-          to-cyan-700
-          p-6
-          text-white
-          shadow-lg
-          shadow-sky-900/20
-          sm:p-8
-        "
-      >
-
-        <div
-          className="
-            flex flex-col
-            gap-6
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-          "
-        >
-
-          <div>
-
-            <p
-              className="
-                text-sm
-                font-semibold
-                uppercase
-                tracking-[0.2em]
-                text-sky-200
-              "
-            >
-
-              Panel administrativo
-
-            </p>
-
-
-            <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
-
-              Bienvenido al sistema OTB
-
-            </h1>
-
-
-            
-
-
-            <p className="mt-4 text-sm capitalize text-white/70">
-
-              {currentDate}
-
-            </p>
-
-          </div>
-
-
-          
-
-        </div>
-
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DashboardCard
+          title="Socios"
+          value={totalSocios}
+          description="Socios registrados"
+          icon={UserGroupIcon}
+        />
+        <DashboardCard
+          title="Acciones"
+          value={totalAcciones}
+          description="Acciones registradas"
+          icon={RectangleStackIcon}
+        />
       </div>
-
-
-      {/* =====================================================
-          RESUMEN
-      ====================================================== */}
 
       <div>
-
-        <div className="mb-4">
-
-          <h2 className="text-xl font-bold text-slate-800">
-
-            Resumen general
-
-          </h2>
-
-
-          <p className="mt-1 text-sm text-slate-500">
-
-            Información correspondiente al periodo actual.
-
-          </p>
-
-        </div>
-
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-          {dashboardStats.map(
-            (stat) => (
-
-              <DashboardCard
-                key={stat.title}
-                title={stat.title}
-                value={stat.value}
-                description={stat.description}
-                icon={stat.icon}
-                to={stat.to}
-                loading={stat.loading}
-              />
-
-            ),
-          )}
-
-        </div>
-
-      </div>
-
-
-      {/* =====================================================
-          SOCIOS
-      ====================================================== */}
-
-      <div
-        className="
-          rounded-3xl
-          bg-white
-          p-5
-          shadow-sm
-          sm:p-6
-        "
-      >
-
-        <div
-          className="
-            mb-5
-            flex flex-col
-            gap-3
-            sm:flex-row
-            sm:items-center
-            sm:justify-between
-          "
-        >
-
+        <div className="flex items-center justify-between gap-4">
           <div>
-
-            <h2 className="text-xl font-bold text-slate-800">
-
-              Socios registrados
-
-            </h2>
-
-
-            <p className="mt-1 text-sm text-slate-500">
-
-              Socios obtenidos desde el endpoint.
-
-            </p>
-
+            <h2 className="text-lg font-bold text-slate-900">Socios registrados</h2>
+            <p className="text-sm text-slate-500">Vista rápida de los socios del sistema.</p>
           </div>
-
-
-          <Link
-            to="/admin/socios"
-            className="
-              inline-flex
-              items-center
-              gap-2
-              text-sm
-              font-semibold
-              text-sky-800
-              transition
-              hover:text-sky-950
-            "
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
-
-            Ver todos los socios
-
-            <ArrowRightIcon className="h-4 w-4" />
-
-          </Link>
-
+            Actualizar
+          </button>
         </div>
 
-
-        {/* ERROR */}
-
-        {errorSocios && (
-
-          <div
-            className="
-              mb-4
-              rounded-2xl
-              border border-red-200
-              bg-red-50
-              p-4
-            "
-          >
-
-            <p className="text-sm font-semibold text-red-700">
-
-              {errorSocios}
-
-            </p>
-
-
-            <button
-              type="button"
-              onClick={fetchSocios}
-              className="
-                mt-3
-                rounded-xl
-                bg-red-100
-                px-4 py-2
-                text-sm
-                font-semibold
-                text-red-700
-                transition
-                hover:bg-red-200
-              "
-            >
-
-              Intentar nuevamente
-
-            </button>
-
-          </div>
-
-        )}
-
-
-        {/* DATATABLE */}
-
-        {!errorSocios && (
-
-          <DataTable
-            data={socios}
-            columns={columns}
-            loading={loadingSocios}
-            page={paginationSocios.page}
-            limit={paginationSocios.limit}
-            totalPages={paginationSocios.totalPages}
-            totalItems={paginationSocios.totalItems}
-            onPageChange={handleSocioPageChange}
-            onLimitChange={handleSocioLimitChange}
-          />
-
-        )}
-
+        <DataTable
+          data={socios}
+          columns={columns}
+          loading={loading}
+          page={page}
+          limit={limit}
+          totalPages={totalPages}
+          totalItems={totalSocios}
+          onPageChange={setPage}
+          onLimitChange={(value) => {
+            setLimit(value);
+            setPage(1);
+          }}
+        />
       </div>
-
     </section>
   );
 }

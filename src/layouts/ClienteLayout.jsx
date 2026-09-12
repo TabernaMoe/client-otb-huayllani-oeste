@@ -3,12 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  BeakerIcon,
-  BellIcon,
-  BuildingOffice2Icon,
   ChevronRightIcon,
-  CreditCardIcon,
-  DocumentTextIcon,
   HomeIcon,
   UserIcon,
   XMarkIcon,
@@ -20,72 +15,42 @@ import { AuthService } from '../modules/auth/services/auth.services';
 const menuItems = [
   {
     label: 'Inicio',
-    description: 'Resumen general',
+    description: 'Resumen de tu cuenta',
     to: '/cliente/dashboard',
     icon: HomeIcon,
   },
   {
-    label: 'Mi consumo',
-    description: 'Lecturas y consumo',
-    to: '/cliente/consumo',
-    icon: BeakerIcon,
-  },
-  {
-    label: 'Pagos',
-    description: 'Pagos pendientes',
-    to: '/cliente/pagos',
-    icon: CreditCardIcon,
-  },
-  {
-    label: 'Recibos',
-    description: 'Historial de recibos',
-    to: '/cliente/recibos',
-    icon: DocumentTextIcon,
-  },
-  {
-    label: 'Avisos',
-    description: 'Comunicados importantes',
-    to: '/cliente/avisos',
-    icon: BellIcon,
-  },
-  {
-    label: 'Perfil',
-    description: 'Datos personales',
+    label: 'Mi perfil',
+    description: 'Datos de acceso',
     to: '/cliente/perfil',
     icon: UserIcon,
   },
-  {
-    label: 'Mis acciones',
-    description: 'Acciones registradas',
-    to: '/cliente/acciones',
-    icon: BuildingOffice2Icon,
-  },
 ];
 
-function getInitials(name = '') {
+function getInitials(name) {
   return name
     .split(' ')
+    .filter(Boolean)
     .map((word) => word[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
 }
 
-function Sidebar({
-  open,
-  onClose,
-  onLogout,
-  displayName,
-  displayRole,
-  initials,
-}) {
+function formatRole(role) {
+  return role.replaceAll('_', ' ');
+}
+
+function Sidebar({ open, onClose, onLogout, user }) {
+  const initials = getInitials(user.nombre_usuario);
+
   return (
     <>
-      <div
+      <button
+        type="button"
+        aria-label="Cerrar menú"
         className={`fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm transition-opacity lg:hidden ${
-          open
-            ? 'opacity-100'
-            : 'pointer-events-none opacity-0'
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
       />
@@ -133,13 +98,12 @@ function Sidebar({
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-white font-black text-emerald-700 shadow-sm">
                 {initials}
               </div>
-
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-slate-900">
-                  {displayName}
+                  {user.nombre_usuario}
                 </p>
-                <p className="truncate text-xs text-slate-500">
-                  {displayRole}
+                <p className="truncate text-xs capitalize text-slate-500">
+                  {formatRole(user.rol)}
                 </p>
               </div>
             </div>
@@ -161,10 +125,10 @@ function Sidebar({
                   to={item.to}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `group flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                    `group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
                       isActive
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm'
-                        : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                        : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50'
                     }`
                   }
                 >
@@ -174,12 +138,11 @@ function Sidebar({
                         className={`rounded-xl p-2.5 ${
                           isActive
                             ? 'bg-white text-emerald-700'
-                            : 'bg-slate-100 text-slate-500 group-hover:bg-white'
+                            : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
                       </span>
-
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-bold">
                           {item.label}
@@ -188,14 +151,7 @@ function Sidebar({
                           {item.description}
                         </span>
                       </span>
-
-                      <ChevronRightIcon
-                        className={`h-4 w-4 ${
-                          isActive
-                            ? 'text-emerald-600'
-                            : 'text-slate-300'
-                        }`}
-                      />
+                      <ChevronRightIcon className="h-4 w-4 text-slate-300" />
                     </>
                   )}
                 </NavLink>
@@ -223,28 +179,12 @@ export default function ClienteLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const user = AuthService.getUser();
-
-  const displayName =
-    user?.nombre_usuario ||
-    user?.nombre ||
-    user?.name ||
-    'Usuario';
-
-  const displayRole =
-    user?.rol?.nombre_rol ||
-    user?.rol ||
-    user?.role ||
-    'Usuario normal';
-
-  const initials = getInitials(displayName);
 
   const currentItem = useMemo(
     () =>
-      menuItems.find((item) =>
-        location.pathname.startsWith(item.to),
-      ) || menuItems[0],
+      menuItems.find((item) => location.pathname.startsWith(item.to)) ||
+      menuItems[0],
     [location.pathname],
   );
 
@@ -260,63 +200,32 @@ export default function ClienteLayout() {
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           onLogout={handleLogout}
-          displayName={displayName}
-          displayRole={displayRole}
-          initials={initials}
+          user={user}
         />
 
         <main className="min-w-0 flex-1">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm transition hover:bg-slate-50 lg:hidden"
-                  onClick={() => setSidebarOpen(true)}
-                  aria-label="Abrir menú"
-                >
-                  <Bars3Icon className="h-6 w-6" />
-                </button>
+            <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+              <button
+                type="button"
+                className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm transition hover:bg-slate-50 lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Abrir menú"
+              >
+                <Bars3Icon className="h-6 w-6" />
+              </button>
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                    <span>Portal del socio</span>
-                    <span>/</span>
-                    <span className="truncate text-emerald-700">
-                      {currentItem.label}
-                    </span>
-                  </div>
-
-                  <h2 className="mt-1 truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                  <span>Portal del socio</span>
+                  <span>/</span>
+                  <span className="truncate text-emerald-700">
                     {currentItem.label}
-                  </h2>
+                  </span>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="relative rounded-xl border border-slate-200 bg-white p-3 text-slate-600 shadow-sm transition hover:bg-slate-50"
-                  aria-label="Notificaciones"
-                >
-                  <BellIcon className="h-5 w-5" />
-                  <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-                </button>
-
-                <div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:flex">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 font-black text-emerald-700">
-                    {initials}
-                  </div>
-
-                  <div className="min-w-0 leading-tight">
-                    <p className="max-w-40 truncate text-sm font-black">
-                      {displayName}
-                    </p>
-                    <p className="max-w-40 truncate text-xs text-slate-500">
-                      {displayRole}
-                    </p>
-                  </div>
-                </div>
+                <h2 className="mt-1 truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+                  {currentItem.label}
+                </h2>
               </div>
             </div>
           </header>

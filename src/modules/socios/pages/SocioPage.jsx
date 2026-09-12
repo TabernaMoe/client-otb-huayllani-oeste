@@ -1,1136 +1,168 @@
+import { useEffect, useMemo, useState } from 'react';
 import {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
-import {
-  ArrowPathIcon,
-  CheckCircleIcon,
+  EyeIcon,
   MagnifyingGlassIcon,
-  MapPinIcon,
   PencilSquareIcon,
-  PhoneIcon,
   PlusIcon,
   PowerIcon,
-  UserGroupIcon,
   UserIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
-
 import { toast } from 'react-toastify';
-
 import DataTable from '../../../components/DataTable';
-import Select from '../../../components/Select';
+import SelectComponent from '../../../components/Select';
 import ConfirmModal from '../../../components/ConfirmModal';
-
+import PageHeader from '../../../components/PageHeader';
 import SocioModal from '../components/SocioModal';
+import SocioDetalleModal from '../components/SocioDetalleModal';
+import { SocioServices } from '../services/socio.services';
 
-import {
-  SocioServices as Servs,
-} from '../services/socio.services';
-
-import {
-  MODALS,
-  useModalManager,
-} from '../../../hooks/useModalManager';
-
-import {
-  validateSocioId,
-  validateSocioParams,
-} from '../schema/socio.schema';
-
-/**
- * ============================================================
- * OPCIONES DE ESTADO
- * ============================================================
- */
-const opcionesEstadoSocio = [
-  {
-    value: '',
-    label: 'Todos',
-  },
-  {
-    value: 'true',
-    label: 'Activos',
-  },
-  {
-    value: 'false',
-    label: 'Inactivos',
-  },
+const estados = [
+  { value: '', label: 'Todos' },
+  { value: 'true', label: 'Activos' },
+  { value: 'false', label: 'Inactivos' },
 ];
 
-/**
- * ============================================================
- * OBTENER NOMBRE COMPLETO
- * ============================================================
- */
-const getNombreCompleto = (
-  socio,
-) =>
-  [
-    socio?.nombres,
-    socio?.primer_apellido,
-    socio?.segundo_apellido,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-/**
- * ============================================================
- * OBTENER ESTADO
- * ============================================================
- */
-const getEstado = (
-  socio,
-) =>
-  Boolean(
-    socio?.estado,
-  );
+const nombreCompleto = (socio) => [socio.nombres, socio.primer_apellido, socio.segundo_apellido].filter(Boolean).join(' ');
 
 export default function SocioPage() {
-  /**
-   * ============================================================
-   * DATOS DE LA TABLA
-   * ============================================================
-   */
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [estado, setEstado] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [formSocio, setFormSocio] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [detalleId, setDetalleId] = useState(null);
+  const [confirmSocio, setConfirmSocio] = useState(null);
+  const [changing, setChanging] = useState(false);
 
-  const [filas, setFilas] =
-    useState([]);
-
-  /**
-   * Loading para cargar tabla.
-   */
-  const [loading, setLoading] =
-    useState(false);
-
-  /**
-   * Loading para acciones como
-   * habilitar/deshabilitar.
-   */
-  const [
-    loadingAction,
-    setLoadingAction,
-  ] = useState(false);
-
-  /**
-   * ============================================================
-   * FILTROS
-   * ============================================================
-   */
-
-  const [
-    searchInput,
-    setSearchInput,
-  ] = useState('');
-
-  const [
-    selectEstadoSocio,
-    setSelectEstadoSocio,
-  ] = useState('');
-
-  /**
-   * ============================================================
-   * MODALES
-   * ============================================================
-   */
-
-  const {
-    closeModal,
-    isModalOpen,
-    modalState,
-    openModal,
-  } = useModalManager();
-
-  /**
-   * ============================================================
-   * PAGINACIÓN
-   * ============================================================
-   */
-
-  const [
-    pagination,
-    setPagination,
-  ] = useState({
-    page: 1,
-    limit: 5,
-    totalItems: 0,
-    totalPages: 1,
-  });
-
-  /**
-   * ============================================================
-   * CONVERTIR ESTADO DEL SELECT
-   * ============================================================
-   *
-   * Select devuelve strings:
-   *
-   * ''
-   * 'true'
-   * 'false'
-   *
-   * Pero queremos enviar al backend:
-   *
-   * undefined
-   * true
-   * false
-   */
-  const getEstadoValue = () => {
-    if (
-      selectEstadoSocio === ''
-    ) {
-      return undefined;
-    }
-
-    return (
-      selectEstadoSocio ===
-      'true'
-    );
-  };
-
-  /**
-   * ============================================================
-   * OBTENER SOCIOS
-   * ============================================================
-   */
-  const fetchFilas = async () => {
+  const fetchSocios = async () => {
     try {
       setLoading(true);
+      const params = { page, limit, search };
+      if (estado !== '') params.estado = estado === 'true';
 
-      /**
-       * ========================================================
-       * PASO 1
-       * CONSTRUIR PARÁMETROS
-       * ========================================================
-       */
-      const params = {
-        page:
-          pagination.page,
-
-        limit:
-          pagination.limit,
-
-        search:
-          searchInput,
-
-        estado:
-          getEstadoValue(),
-      };
-
-      /**
-       * ========================================================
-       * PASO 2
-       * VALIDAR LOS PARÁMETROS
-       * ========================================================
-       *
-       * Ya NO usamos aquí:
-       *
-       * socioParamsSchema.safeParse()
-       *
-       * porque la función ya vive
-       * dentro del schema.
-       */
-      const validation =
-        validateSocioParams(
-          params,
-        );
-
-      /**
-       * Si los parámetros son incorrectos,
-       * detenemos la petición.
-       */
-      if (
-        !validation.success
-      ) {
-        toast.error(
-          'Los parámetros de búsqueda no son válidos',
-        );
-
-        return;
-      }
-
-      /**
-       * ========================================================
-       * PASO 3
-       * LLAMAR AL SERVICIO
-       * ========================================================
-       *
-       * validation.data contiene:
-       *
-       * {
-       *   page,
-       *   limit,
-       *   search,
-       *   estado
-       * }
-       *
-       * ya validados.
-       */
-      const response =
-        await Servs.getAll(
-          validation.data,
-        );
-
-      /**
-       * ========================================================
-       * PASO 4
-       * VALIDAR RESPUESTA DEL BACKEND
-       * ========================================================
-       */
-      if (
-        !response?.ok
-      ) {
-        toast.error(
-          response?.message ||
-            'Error al cargar los socios',
-        );
-
-        setFilas([]);
-
-        return;
-      }
-
-      /**
-       * ========================================================
-       * PASO 5
-       * GUARDAR FILAS
-       * ========================================================
-       */
-      setFilas(
-        Array.isArray(
-          response.data,
-        )
-          ? response.data
-          : [],
-      );
-
-      /**
-       * ========================================================
-       * PASO 6
-       * ACTUALIZAR PAGINACIÓN
-       * ========================================================
-       */
-      setPagination(
-        (previous) => ({
-          ...previous,
-
-          page: Number(
-            response.page ??
-              previous.page,
-          ),
-
-          totalItems: Number(
-            response.total ??
-              0,
-          ),
-
-          totalPages: Number(
-            response.totalPages ??
-              1,
-          ),
-        }),
-      );
-
+      const response = await SocioServices.getAll(params);
+      setData(response.data);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
     } catch (error) {
-      toast.error(
-        error?.message ||
-          'Error al cargar los socios',
-      );
-
+      toast.error(error.response?.data?.message || 'No se pudieron cargar los socios');
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * ============================================================
-   * ACTUALIZAR AUTOMÁTICAMENTE
-   * ============================================================
-   *
-   * Cada vez que cambia:
-   *
-   * - página
-   * - límite
-   * - búsqueda
-   * - estado
-   *
-   * volvemos a consultar al backend.
-   */
   useEffect(() => {
-    fetchFilas();
-  }, [
-    pagination.page,
-    pagination.limit,
-    searchInput,
-    selectEstadoSocio,
-  ]);
+    fetchSocios();
+  }, [page, limit, search, estado]);
 
-  /**
-   * ============================================================
-   * CAMBIAR ESTADO DEL SOCIO
-   * ============================================================
-   */
-  const handleChangeEstado =
-    async () => {
-      try {
-        setLoadingAction(true);
+  const changeEstado = async () => {
+    try {
+      setChanging(true);
+      const response = await SocioServices.changeEstado(confirmSocio.id);
+      toast.success(response.message);
+      setConfirmSocio(null);
+      fetchSocios();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'No se pudo cambiar el estado');
+    } finally {
+      setChanging(false);
+    }
+  };
 
-        /**
-         * El socio seleccionado
-         * está guardado en modalState.data.
-         */
-        const socio =
-          modalState?.data;
-
-        /**
-         * ======================================================
-         * VALIDAR ID
-         * ======================================================
-         *
-         * Igual que antes:
-         *
-         * el componente no usa
-         * socioIdSchema.safeParse().
-         *
-         * Llama directamente a:
-         *
-         * validateSocioId()
-         */
-        const validation =
-          validateSocioId(
-            socio?.id,
-          );
-
-        if (
-          !validation.success
-        ) {
-          toast.error(
-            validation.error ||
-              'No se encontró el socio seleccionado',
-          );
-
-          return;
-        }
-
-        /**
-         * validation.data
-         * contiene el ID ya validado.
-         */
-        const response =
-          await Servs.changeEstado(
-            validation.data,
-          );
-
-        if (
-          !response?.ok
-        ) {
-          toast.error(
-            response?.message ||
-              'Error al actualizar el estado',
-          );
-
-          return;
-        }
-
-        toast.success(
-          response?.message ||
-            'Estado actualizado correctamente',
-        );
-
-        /**
-         * Cerramos confirmación.
-         */
-        closeModal(
-          MODALS.DELETE,
-        );
-
-        /**
-         * Actualizamos la tabla.
-         */
-        await fetchFilas();
-
-      } catch (error) {
-        toast.error(
-          error?.message ||
-            'Error inesperado',
-        );
-
-      } finally {
-        setLoadingAction(false);
-      }
-    };
-
-  /**
-   * ============================================================
-   * COLUMNAS DE LA TABLA
-   * ============================================================
-   */
-  const columns = useMemo(
-    () => [
-      /**
-       * SOCIO
-       */
-      {
-        accessorKey:
-          'ci_socio',
-
-        header:
-          'Socio',
-
-        cell: (info) => {
-          const socio =
-            info.row.original;
-
-          return (
-            <div className="flex min-w-56 items-center gap-3">
-
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                <UserIcon className="h-5 w-5" />
-              </span>
-
-              <span>
-
-                <span className="block font-bold text-slate-900">
-                  {getNombreCompleto(
-                    socio,
-                  ) || 'Sin nombre'}
-                </span>
-
-                <span className="mt-0.5 block text-xs text-slate-500">
-                  CI:{' '}
-                  {socio.ci_socio}{' '}
-                  {socio.ci_expedido ||
-                    ''}
-                </span>
-
-              </span>
-
-            </div>
-          );
-        },
-      },
-
-      /**
-       * CONTACTO
-       */
-      {
-        accessorKey:
-          'numero_celular',
-
-        header:
-          'Contacto',
-
-        cell: (info) => (
-          <div className="flex items-center gap-2 text-slate-600">
-
-            <PhoneIcon className="h-4 w-4 text-slate-400" />
-
-            {info.row.original
-              .numero_celular ||
-              '-'}
-
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'ci_socio',
+      header: 'Socio',
+      cell: ({ row }) => (
+        <div className="flex min-w-56 items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <UserIcon className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-bold text-slate-900">{nombreCompleto(row.original)}</p>
+            <p className="text-xs text-slate-500">CI {row.original.ci_socio} {row.original.ci_expedido}</p>
           </div>
-        ),
-      },
-
-      /**
-       * GÉNERO
-       */
-      {
-        accessorKey:
-          'genero',
-
-        header:
-          'Género',
-
-        cell: (info) =>
-          info.row.original
-            .genero ||
-          '-',
-      },
-
-      /**
-       * DIRECCIÓN
-       */
-      {
-        accessorKey:
-          'direccion',
-
-        header:
-          'Dirección',
-
-        cell: (info) => (
-          <div className="flex max-w-72 items-start gap-2 whitespace-normal wrap-break-words text-slate-600">
-
-            <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-
-            {info.row.original
-              .direccion ||
-              '-'}
-
-          </div>
-        ),
-      },
-
-      /**
-       * ESTADO
-       */
-      {
-        accessorKey:
-          'estado',
-
-        header:
-          'Estado',
-
-        cell: (info) => {
-          const estado =
-            getEstado(
-              info.row.original,
-            );
-
-          return (
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${
-                estado
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-200 bg-slate-100 text-slate-600'
-              }`}
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  estado
-                    ? 'bg-emerald-500'
-                    : 'bg-slate-400'
-                }`}
-              />
-
-              {estado
-                ? 'Activo'
-                : 'Inactivo'}
-            </span>
-          );
-        },
-      },
-
-      /**
-       * ACCIONES
-       */
-      {
-        id:
-          'acciones',
-
-        header:
-          'Acciones',
-
-        cell: ({
-          row,
-        }) => {
-          const estado =
-            getEstado(
-              row.original,
-            );
-
-          return (
-            <div className="flex justify-end gap-2">
-
-              {/* EDITAR */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  openModal(
-                    MODALS.EDIT,
-                    row.original,
-                  )
-                }
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <PencilSquareIcon className="h-4 w-4" />
-
-                Editar
-              </button>
-
-              {/* HABILITAR / DESHABILITAR */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  openModal(
-                    MODALS.DELETE,
-                    row.original,
-                  )
-                }
-                className={`rounded-lg border p-2 transition ${
-                  estado
-                    ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                    : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-                }`}
-                title={
-                  estado
-                    ? 'Deshabilitar'
-                    : 'Habilitar'
-                }
-              >
-                <PowerIcon className="h-4 w-4" />
-              </button>
-
-            </div>
-          );
-        },
-      },
-    ],
-    [
-      openModal,
-    ],
-  );
-
-  /**
-   * ============================================================
-   * MÉTRICAS
-   * ============================================================
-   */
-  const resumen = useMemo(
-    () => {
-      const activos =
-        filas.filter(
-          (socio) =>
-            getEstado(
-              socio,
-            ),
-        ).length;
-
-      const inactivos =
-        filas.length -
-        activos;
-
-      return {
-        visibles:
-          filas.length,
-
-        activos,
-
-        inactivos,
-
-        total:
-          pagination.totalItems,
-      };
+        </div>
+      ),
     },
-    [
-      filas,
-      pagination.totalItems,
-    ],
-  );
-
-  /**
-   * Socio seleccionado para
-   * habilitar/deshabilitar.
-   */
-  const selectedSocio =
-    modalState?.data;
-
-  const selectedEstado =
-    selectedSocio
-      ? getEstado(
-          selectedSocio,
-        )
-      : true;
+    { accessorKey: 'numero_celular', header: 'Celular' },
+    { accessorKey: 'direccion', header: 'Dirección' },
+    {
+      accessorKey: 'estado',
+      header: 'Estado',
+      cell: ({ getValue }) => (
+        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getValue() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+          {getValue() ? 'Activo' : 'Inactivo'}
+        </span>
+      ),
+    },
+    {
+      id: 'acciones',
+      header: 'Acciones',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <button onClick={() => setDetalleId(row.original.id)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100" title="Ver detalle"><EyeIcon className="h-5 w-5" /></button>
+          <button onClick={() => { setFormSocio(row.original); setFormOpen(true); }} className="rounded-lg p-2 text-blue-600 hover:bg-blue-50" title="Editar"><PencilSquareIcon className="h-5 w-5" /></button>
+          <button onClick={() => setConfirmSocio(row.original)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" title="Cambiar estado"><PowerIcon className="h-5 w-5" /></button>
+        </div>
+      ),
+    },
+  ], []);
 
   return (
     <section className="space-y-5">
+      <PageHeader
+        title="Socios"
+        description="Administra la información, estado y acciones de los socios registrados."
+        action={(
+          <button onClick={() => { setFormSocio(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
+            <PlusIcon className="h-5 w-5" /> Nuevo socio
+          </button>
+        )}
+      />
 
-      {/* ================= ENCABEZADO ================= */}
-
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-
-        <div>
-
-          <h2 className="text-xl font-bold text-slate-900">
-            Socios registrados
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Administra la información y el estado de los socios.
-          </p>
-
+      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px]">
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Buscar por CI o nombre..."
+            className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-4 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+          />
         </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            openModal(
-              MODALS.CREATE,
-            )
-          }
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
-        >
-          <PlusIcon className="h-5 w-5" />
-
-          Nuevo socio
-        </button>
-
+        <SelectComponent label="Estado" name="estado" value={estado} options={estados} onChange={(e) => { setEstado(e.target.value ?? ''); setPage(1); }} />
       </div>
-
-      {/* ================= MÉTRICAS ================= */}
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-        <MetricCard
-          label="Total de socios"
-          value={
-            resumen.total
-          }
-          icon={
-            UserGroupIcon
-          }
-        />
-
-        <MetricCard
-          label="Visibles"
-          value={
-            resumen.visibles
-          }
-          icon={
-            UserIcon
-          }
-        />
-
-        <MetricCard
-          label="Activos"
-          value={
-            resumen.activos
-          }
-          icon={
-            CheckCircleIcon
-          }
-        />
-
-        <MetricCard
-          label="Inactivos"
-          value={
-            resumen.inactivos
-          }
-          icon={
-            PowerIcon
-          }
-        />
-
-      </div>
-
-      {/* ================= FILTROS ================= */}
-
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-
-          {/* BÚSQUEDA */}
-
-          <div className="w-full lg:max-w-md">
-
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
-              Buscar socio
-            </label>
-
-            <div className="relative">
-
-              <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-
-              <input
-                type="text"
-                value={
-                  searchInput
-                }
-                onChange={(
-                  event,
-                ) => {
-                  /**
-                   * Si cambia búsqueda,
-                   * regresamos a página 1.
-                   */
-                  setPagination(
-                    (previous) => ({
-                      ...previous,
-                      page: 1,
-                    }),
-                  );
-
-                  setSearchInput(
-                    event.target.value,
-                  );
-                }}
-                placeholder="Nombre, CI o número de celular"
-                className="w-full rounded-lg border border-slate-200 py-3 pl-11 pr-11 text-sm outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
-              />
-
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchInput('');
-
-                    setPagination(
-                      (previous) => ({
-                        ...previous,
-                        page: 1,
-                      }),
-                    );
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
-              )}
-
-            </div>
-
-          </div>
-
-          {/* ESTADO + ACTUALIZAR */}
-
-          <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-
-            <div className="w-full sm:w-64">
-
-              <Select
-                label="Estado"
-                value={
-                  selectEstadoSocio
-                }
-                options={
-                  opcionesEstadoSocio
-                }
-                onChange={(
-                  event,
-                ) => {
-                  setPagination(
-                    (previous) => ({
-                      ...previous,
-                      page: 1,
-                    }),
-                  );
-
-                  setSelectEstadoSocio(
-                    event.target.value,
-                  );
-                }}
-              />
-
-            </div>
-
-            <button
-              type="button"
-              onClick={
-                fetchFilas
-              }
-              disabled={
-                loading
-              }
-              className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`h-4 w-4 ${
-                  loading
-                    ? 'animate-spin'
-                    : ''
-                }`}
-              />
-
-              Actualizar
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ================= TABLA ================= */}
 
       <DataTable
-        data={
-          filas
-        }
-        columns={
-          columns
-        }
-        loading={
-          loading
-        }
-        page={
-          pagination.page
-        }
-        totalPages={
-          pagination.totalPages
-        }
-        totalItems={
-          pagination.totalItems
-        }
-        limit={
-          pagination.limit
-        }
-
-        /**
-         * Cambiar página.
-         */
-        onPageChange={(
-          newPage,
-        ) =>
-          setPagination(
-            (previous) => ({
-              ...previous,
-
-              page:
-                newPage,
-            }),
-          )
-        }
-
-        /**
-         * Cambiar cantidad por página.
-         */
-        onLimitChange={(
-          newLimit,
-        ) =>
-          setPagination(
-            (previous) => ({
-              ...previous,
-
-              page: 1,
-
-              limit:
-                Number(
-                  newLimit,
-                ),
-            }),
-          )
-        }
+        data={data}
+        columns={columns}
+        loading={loading}
+        page={page}
+        limit={limit}
+        totalPages={totalPages}
+        totalItems={total}
+        onPageChange={setPage}
+        onLimitChange={(value) => { setLimit(value); setPage(1); }}
       />
 
-      {/* ================= CREAR ================= */}
-
-      <SocioModal
-        open={
-          isModalOpen(
-            MODALS.CREATE,
-          )
-        }
-        onClose={() =>
-          closeModal(
-            MODALS.CREATE,
-          )
-        }
-        onSuccess={() => {
-          /**
-           * Cerramos modal.
-           */
-          closeModal(
-            MODALS.CREATE,
-          );
-
-          /**
-           * Actualizamos tabla.
-           */
-          fetchFilas();
-        }}
-      />
-
-      {/* ================= EDITAR ================= */}
-
-      <SocioModal
-        open={
-          isModalOpen(
-            MODALS.EDIT,
-          )
-        }
-        isEdit
-        socio={
-          modalState?.data
-        }
-        onClose={() =>
-          closeModal(
-            MODALS.EDIT,
-          )
-        }
-        onSuccess={() => {
-          closeModal(
-            MODALS.EDIT,
-          );
-
-          fetchFilas();
-        }}
-      />
-
-      {/* ================= CAMBIAR ESTADO ================= */}
+      <SocioModal open={formOpen} socio={formSocio} onClose={() => setFormOpen(false)} onSuccess={fetchSocios} />
+      <SocioDetalleModal open={Boolean(detalleId)} socioId={detalleId} onClose={() => setDetalleId(null)} />
 
       <ConfirmModal
-        open={
-          isModalOpen(
-            MODALS.DELETE,
-          )
-        }
-        title={
-          selectedEstado
-            ? '¿Deseas deshabilitar este socio?'
-            : '¿Deseas habilitar este socio?'
-        }
-        message="Esta acción cambiará el estado del socio."
-        confirmText={
-          selectedEstado
-            ? 'Sí, deshabilitar'
-            : 'Sí, habilitar'
-        }
-        cancelText="Cancelar"
-        loading={
-          loadingAction
-        }
-        onClose={() =>
-          closeModal(
-            MODALS.DELETE,
-          )
-        }
-        onConfirm={
-          handleChangeEstado
-        }
+        open={Boolean(confirmSocio)}
+        title={confirmSocio?.estado ? 'Deshabilitar socio' : 'Habilitar socio'}
+        message={`¿Deseas ${confirmSocio?.estado ? 'deshabilitar' : 'habilitar'} a ${confirmSocio ? nombreCompleto(confirmSocio) : ''}?`}
+        confirmText="Confirmar"
+        loading={changing}
+        onConfirm={changeEstado}
+        onClose={() => setConfirmSocio(null)}
       />
-
     </section>
-  );
-}
-
-/**
- * ============================================================
- * TARJETA DE MÉTRICAS
- * ============================================================
- */
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-}) {
-  return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-      <div className="flex items-center justify-between">
-
-        <div>
-
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {label}
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {value}
-          </p>
-
-        </div>
-
-        <div className="rounded-full bg-emerald-50 p-3 text-emerald-700">
-
-          <Icon className="h-6 w-6" />
-
-        </div>
-
-      </div>
-
-    </article>
   );
 }

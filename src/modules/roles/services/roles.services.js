@@ -1,120 +1,28 @@
-import { api,} from '../../../services/api';
-import { toServiceError,} from '../../../services/error';
+import { api } from '../../../services/api';
+
 export class RolesServices {
-
   static async getAllPermisos() {
-    try { const { data,
-      } = await api.get( '/admin/auth/roles/permisos',);
-     
-      return data;
-
-    } catch (error) {
-      const serviceError =
-        toServiceError(
-          error,
-        );
-      return serviceError;
-    }
+    const { data } = await api.get('/admin/auth/roles/permisos');
+    return data;
   }
 
-  static async getAllRoles(
-    params = {},
-  ) {
-    
-
-
-    try {
-
-      const {
-        data,
-      } = await api.get(
-        '/admin/auth/roles',
-        {
-          params,
-        },
-      );
-    
-      return data;
-    } catch (error) {
-      const serviceError =
-        toServiceError(
-          error,
-        );
-      return serviceError;
-    }
+  static async getAllRoles(params = {}) {
+    const { data } = await api.get('/admin/auth/roles', { params });
+    return data;
   }
 
-  static async getById(
-    id,
-  ) {
- 
-
-
-    try {
-
-      const {
-        data,
-      } = await api.get(
-        `/admin/auth/roles/${id}`,
-      );
-
-
-      return data;
-
-    } catch (error) {
-
-
-      const serviceError =
-        toServiceError(
-          error,
-        );
-
-
-      return serviceError;
-    }
+  static async getById(id) {
+    const { data } = await api.get(`/admin/auth/roles/${id}`);
+    return data;
   }
 
-
-  static async create(
-    payload,
-  ) {
-    try {
-
-      const {
-        data,
-      } = await api.post(
-        '/admin/auth/roles',
-        payload,
-      );
-      return data;
-
-    } catch (error) {
-      const serviceError =
-        toServiceError(
-          error,
-        );
-      return serviceError;
-    }
+  static async create(payload) {
+    const { data } = await api.post('/admin/auth/roles', payload);
+    return data;
   }
 
-  static async update(
-    id,
-    payload,
-  ) {
-    try {
-      const {
-        data,
-      } = await api.patch(
-        `/admin/auth/roles/${id}`,
-        payload,
-      );
-      return data;
-    } catch (error) {
-      const serviceError =
-        toServiceError(
-          error,
-        );
-      return serviceError;
-    }
+  static async update(id, payload) {
+    const { data } = await api.patch(`/admin/auth/roles/${id}`, payload);
+    return data;
   }
 }

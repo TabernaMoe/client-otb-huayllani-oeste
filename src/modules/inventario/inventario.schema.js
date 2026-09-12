@@ -1,16 +1,13 @@
 import z from 'zod';
-import { reqString, reqInteger } from '../../validators/funcionesZod.js';
+import { reqInteger, reqString } from '../../validators/funcionesZod';
 
-export const inventaioSchema = z.object({
+export const inventarioSchema = z.object({
   nombre_producto: reqString({
-    label: 'Nombre tip accion',
+    label: 'Nombre del producto',
     min: 3,
     max: 100,
     regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s#.\-]+$/,
-    regexMessage:
-      'El nombre del tipo accion solo puede contener letras, números, espacios y los caracteres # . -',
+    regexMessage: 'Use letras, números, espacios y los caracteres # . -',
   }),
-  saldo_actual: reqInteger('Saldo actual'),
+  saldo_actual: reqInteger('Saldo actual', true, 0),
 });
-
-export const inventarioUpdateSchema = inventaioSchema.partial();

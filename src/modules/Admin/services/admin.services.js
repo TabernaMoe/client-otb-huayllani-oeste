@@ -1,57 +1,33 @@
 import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
 
 export class AdminServices {
-  static async getAll(page = 1, limit = 5, search = '', estado = true) {
-    try {
-      const response = await api.get('/admin/auth/usuarios', {
-        params: {
-          page,
-          limit,
-          search,
-          estado,
-        },
-      });
+  static async getRoles() {
+    const { data } = await api.get('/admin/persona-admin/rol');
+    return data;
+  }
 
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+  static async getAll(params = {}) {
+    const { data } = await api.get('/admin/persona-admin/', { params });
+    return data;
   }
 
   static async getById(id) {
-    try {
-      const response = await api.get(`/admin/auth/usuarios/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    const { data } = await api.get(`/admin/persona-admin/${id}`);
+    return data;
   }
 
   static async create(payload) {
-    try {
-      const response = await api.post('/admin/auth/usuarios', payload);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    const { data } = await api.post('/admin/persona-admin', payload);
+    return data;
   }
 
   static async update(id, payload) {
-    try {
-      const response = await api.patch(`/admin/auth/usuarios/${id}`, payload);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    const { data } = await api.patch(`/admin/persona-admin/${id}`, payload);
+    return data;
   }
 
   static async toggleStatus(id) {
-    try {
-      const response = await api.patch(`/admin/auth/usuarios/toggle-status/${id}`);
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    const { data } = await api.patch(`/admin/persona-admin/cambiar-estado/${id}`);
+    return data;
   }
 }

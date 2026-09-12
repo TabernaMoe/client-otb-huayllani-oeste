@@ -1,20 +1,23 @@
-export const validateUsuarioForm = (form, isEdit = false) => {
-  const errors = {};
+import { z } from 'zod';
 
-  if (!form.nombre_usuario?.trim()) {
-    errors.nombre_usuario = 'El nombre de usuario es obligatorio';
-  }
+const usuarioSchema = z.object({
+  cargo: z.string().trim().min(1, 'El cargo es obligatorio'),
+  cedula_identidad: z.string().trim().min(1, 'La cédula es obligatoria').regex(/^\d+$/, 'La cédula solo admite números'),
+  ci_expedido: z.string().trim().min(1, 'El expedido es obligatorio'),
+  nombre: z.string().trim().min(1, 'El nombre es obligatorio'),
+  apellido_paterno: z.string().trim().min(1, 'El apellido paterno es obligatorio'),
+  apellido_materno: z.string().trim().min(1, 'El apellido materno es obligatorio'),
+  contrasenia: z.string().min(1, 'La contraseña es obligatoria'),
+  rol_id: z.coerce.number().positive('Seleccione un rol'),
+});
 
-  if (!isEdit && !form.contrasenia_usuario?.trim()) {
-    errors.contrasenia_usuario = 'La contraseña es obligatoria';
-  }
+export function validateUsuario(form) {
+  const result = usuarioSchema.safeParse(form);
+  if (result.success) return { success: true, data: result.data, errors: {} };
 
-  if (!form.rol_id) {
-    errors.rol_id = 'Debe seleccionar un rol';
-  }
+  const errors = Object.fromEntries(
+    Object.entries(result.error.flatten().fieldErrors).map(([key, value]) => [key, value[0]]),
+  );
 
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors,
-  };
-};
+  return { success: false, data: null, errors };
+}

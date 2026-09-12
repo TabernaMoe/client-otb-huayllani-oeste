@@ -1,409 +1,134 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
-import {
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  TagIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
-
-import {
-  toast,
-} from 'react-toastify';
-
-import { TipoAccionServices as Servs, } from '../services/tipoAccion.services';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PencilSquareIcon, PlusIcon, TagIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
+import AccionCatalogTabs from '../../../components/AccionCatalogTabs';
 import DataTable from '../../../components/DataTable';
-
-import { MODALS, useModalManager,} from '../../../hooks/useModalManager';
-
+import PageHeader from '../../../components/PageHeader';
 import TipoAccionModal from './TipoAccionModal';
+import { TipoAccionServices } from '../services/tipoAccion.services';
 
-import { validateTipoAccionParams,} from '../schema/tipoaccion.schema';
+export default function TipoAccionPage() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [modal, setModal] = useState(null);
 
-export default function TipoAccion() {
- 
-const [filas,setFilas,] = useState([]);
-const [loading,setLoading,] = useState(false);
-const [searchInput,setSearchInput,] = useState('');
-const {closeModal,isModalOpen,modalState,openModal,} = useModalManager();
-const [pagination,setPagination,] = useState({
-    page: 1,
-    limit: 5,
-    totalItems: 0,
-    totalPages: 1,});
-
-  const fetchFilas = async () => {
+  const load = useCallback(async () => {
     try {
-      setLoading(
-        true,
-      );
-
-      const params = {
-        page:pagination.page,
-        limit:pagination.limit,
-        search:searchInput,
-      };
-
-      const validation =validateTipoAccionParams(params,);
-      if (!validation.isValid) {
-        toast.error('Los parámetros de búsqueda no son válidos',);
-        setFilas([]);
-        return;
-      }
-
-      const response = await Servs.getAll(validation.data,);
-      if (!response?.ok) {
-        toast.error(response?.message || 'Error al cargar los tipos de acción',);
-        setFilas([]);
-        setPagination(
-          (previous) => ({
-            ...previous,
-            totalItems:
-              0,
-            totalPages:
-              1,
-          }),
-        );
-
-        return;
-      }
-      setFilas(Array.isArray(response.data,)
-          ? response.data
-          : [],
-      );
-
-      setPagination(
-        (previous) => ({
-          ...previous,
-
-          page:
-            Number(
-              response.page ??
-                previous.page,
-            ),
-
-          limit:
-            Number(
-              response.limit ??
-                previous.limit,
-            ),
-
-          totalItems:
-            Number(
-              response.total ??
-                0,
-            ),
-
-          totalPages:
-            Number(
-              response.totalPages ??
-                1,
-            ),
-        }),
-      );
-
+      setLoading(true);
+      const response = await TipoAccionServices.getAll({ page, limit, search });
+      setData(response.data);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
     } catch (error) {
-      toast.error(
-        error?.message ||
-          'Error al cargar los tipos de acción',
-      );
-
+      toast.error(error.message);
     } finally {
-      setLoading(false,);
+      setLoading(false);
     }
-  };
+  }, [page, limit, search]);
 
   useEffect(() => {
-    fetchFilas();
-  }, [
-    pagination.page,
-    pagination.limit,
-    searchInput,
-  ]);
+    load();
+  }, [load]);
 
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'nombre_tipo_accion',
+        header: 'Tipo de acción',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+              <TagIcon className="h-5 w-5" />
+            </span>
+            <span className="font-semibold text-slate-800">{row.original.nombre_tipo_accion}</span>
+          </div>
+        ),
+      },
+      {
+        id: 'acciones',
+        header: 'Acciones',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => setModal(row.original)}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <PencilSquareIcon className="h-4 w-4" />
+            Editar
+          </button>
+        ),
+      },
+    ],
+    [],
+  );
 
-  const columns =useMemo(() => [
-        {
-          accessorKey:'nombre_tipo_accion',
-          header:'Tipo de acción',
-
-          cell: ({
-            row,
-          }) => (
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                <TagIcon className="h-5 w-5" />
-              </div>
-              <span className="font-semibold text-slate-800">
-                {
-                  row.original.nombre_tipo_accion
-                }
-              </span>
-            </div>
-          ),
-        },
-        {
-          id:'acciones',
-          header:'Acciones',
-          cell: ({
-            row,
-          }) => (
-            <div className="flex justify-end gap-2">
-
-              <button
-                type="button"
-                onClick={() =>openModal(MODALS.EDIT,row.original,)}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <PencilSquareIcon className="h-4 w-4" />
-                Editar
-
-              </button>
-
-            </div>
-          ),
-        },
-      ],
-      [
-        openModal,
-      ],
-    );
-
-  const handleSearch = (
-    event,
-  ) => {
- 
-    setPagination(
-      (previous) => ({
-        ...previous,
-
-        page:
-          1,
-      }),
-    );
-
-    setSearchInput(
-      event.target.value,
-    );
-  };
-
-
-  const clearSearch = () => {
-    setSearchInput('');
-
-    setPagination(
-      (previous) => ({
-        ...previous,
-
-        page:
-          1,
-      }),
-    );
+  const submitSearch = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setSearch(searchInput.trim());
   };
 
   return (
-    <>
-      <section className="space-y-5">
-
-        {/* ====================================================
-            ENCABEZADO
-            ==================================================== */}
-
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-
-          <div>
-
-            <h2 className="text-xl font-bold text-slate-900">
-              Tipos de acción
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Administra los tipos de acción disponibles en el sistema.
-            </p>
-
-          </div>
-
+    <section className="space-y-5">
+      <PageHeader
+        title="Catálogo de acciones"
+        description="Administra los tipos y conceptos que pueden asignarse a una acción."
+        action={
           <button
             type="button"
-            onClick={() =>
-              openModal(
-                MODALS.CREATE,
-              )
-            }
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+            onClick={() => setModal({})}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
           >
-
             <PlusIcon className="h-5 w-5" />
-
-            Nuevo tipo de acción
-
+            Nuevo tipo
           </button>
+        }
+      />
 
-        </div>
+      <AccionCatalogTabs />
 
-        {/* ====================================================
-            BUSCADOR
-            ==================================================== */}
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-
-            <div className="w-full lg:max-w-md">
-
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar tipo de acción
-              </label>
-
-              <div className="relative">
-
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-
-                <input
-                  type="text"
-                  value={
-                    searchInput
-                  }
-                  onChange={
-                    handleSearch
-                  }
-                  placeholder="Buscar por nombre"
-                  className="w-full rounded-lg border border-slate-200 py-3 pl-11 pr-11 text-sm outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50"
-                />
-
-                {searchInput && (
-                  <button
-                    type="button"
-                    onClick={
-                      clearSearch
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                    aria-label="Limpiar búsqueda"
-                  >
-
-                    <XMarkIcon className="h-4 w-4" />
-
-                  </button>
-                )}
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <DataTable
-          data={filas}
-          columns={columns}
-          loading={loading}
-          page={pagination.page}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.totalItems}
-          limit={pagination.limit}  
-          
-
-          /**
-           * Cambiar página.
-           */
-          onPageChange={(
-            newPage,
-          ) =>
-            setPagination(
-              (
-                previous,
-              ) => ({
-                ...previous,
-
-                page:
-                  newPage,
-              }),
-            )
-          }
-
-          /**
-           * Cambiar registros por página.
-           */
-          onLimitChange={(
-            newLimit,
-          ) =>
-            setPagination(
-              (
-                previous,
-              ) => ({
-                ...previous,
-
-                page:
-                  1,
-
-                limit:
-                  Number(
-                    newLimit,
-                  ),
-              }),
-            )
-          }
+      <form onSubmit={submitSearch} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Buscar tipo de acción..."
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-emerald-600"
         />
+        <button className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          Buscar
+        </button>
+      </form>
 
-      </section>
-      <TipoAccionModal
-        open={
-          isModalOpen(
-            MODALS.CREATE,
-          )
-        }
-        onClose={() =>
-          closeModal(
-            MODALS.CREATE,
-          )
-        }
-        onSuccess={() => {
-          /**
-           * Cerramos modal.
-           */
-          closeModal(
-            MODALS.CREATE,
-          );
-
-          /**
-           * Actualizamos tabla.
-           */
-          fetchFilas();
+      <DataTable
+        data={data}
+        columns={columns}
+        loading={loading}
+        page={page}
+        limit={limit}
+        totalPages={totalPages}
+        totalItems={total}
+        onPageChange={setPage}
+        onLimitChange={(value) => {
+          setLimit(value);
+          setPage(1);
         }}
       />
 
-
       <TipoAccionModal
-        open={
-          isModalOpen(
-            MODALS.EDIT,
-          )
-        }
-        isEdit
-        dataRow={
-          modalState?.data
-        }
-        onClose={() =>
-          closeModal(
-            MODALS.EDIT,
-          )
-        }
+        open={modal !== null}
+        data={modal?.id ? modal : null}
+        onClose={() => setModal(null)}
         onSuccess={() => {
-          closeModal(
-            MODALS.EDIT,
-          );
-
-          fetchFilas();
+          setModal(null);
+          load();
         }}
       />
-
-    </>
+    </section>
   );
 }

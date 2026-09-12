@@ -9,89 +9,57 @@ import { validateLoginForm } from '../schema/auth.schema';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    user: '',
-    password: '',
-  });
-
+  const [form, setForm] = useState({ user: '', password: '' });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [loading, setLoading] = useState(false);
 
- const getDefaultPath = () => {
-  const role = String(AuthService.getRole() || '').toLowerCase().trim();
-
-  if (role === 'usuario_normal') {
-    return '/cliente/dashboard';
-  }
-
-  return '/admin/dashboard';
-};
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }));
-
+  const handleChange = ({ target: { name, value } }) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
     setGeneralError('');
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading) return;
 
-  if (loading) return;
-
-  setGeneralError('');
-
-  const validation = validateLoginForm(form);
-
-  if (!validation.isValid) {
-    setErrors(validation.errors);
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const data = await AuthService.login({
-      user: form.user.trim(),
-      password: form.password.trim(),
-    });
-
-    console.log('LOGIN RESPONSE =>', data);
-
-    if (!data.ok) {
-      setGeneralError(data.message || 'Credenciales incorrectas');
+    const validation = validateLoginForm(form);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
       return;
     }
 
-    if (data?.estado === false) {
-      setGeneralError('Usuario deshabilitado');
-      return;
+    try {
+      setLoading(true);
+      setGeneralError('');
+
+      const data = await AuthService.login({
+        user: form.user.trim(),
+        password: form.password.trim(),
+      });
+
+      if (!data.ok) {
+        setGeneralError(data.message);
+        return;
+      }
+
+      AuthService.saveSession(data);
+
+      navigate(
+        data.rol === 'usuario_normal'
+          ? '/cliente/dashboard'
+          : '/admin/dashboard',
+        { replace: true },
+      );
+    } catch (error) {
+      setGeneralError(
+        error.response?.data?.message || 'No se pudo iniciar sesión',
+      );
+    } finally {
+      setLoading(false);
     }
-
-    AuthService.saveSession(data);
-
-    console.log('USER SESSION =>', AuthService.getUser());
-    console.log('ROLE SESSION =>', AuthService.getRole());
-
-    navigate(getDefaultPath(), { replace: true });
-  } catch (error) {
-    console.error('Error en login:', error);
-    setGeneralError('Error al iniciar sesión');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100">
@@ -112,14 +80,13 @@ const handleSubmit = async (e) => {
             <h1 className="text-3xl font-bold text-slate-800">
               Iniciar sesión
             </h1>
-
             <p className="mt-2 text-sm text-slate-500">
               Bienvenido al sistema de la OTB Huayllani Oeste
             </p>
           </div>
 
           {generalError && (
-            <div className="mb-5 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-medium text-sky-700">
+            <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {generalError}
             </div>
           )}
@@ -146,7 +113,7 @@ const handleSubmit = async (e) => {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-2xl bg-sky-800 py-3 font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-red-400"
+              className="mt-2 w-full rounded-2xl bg-sky-800 py-3 font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </button>
@@ -160,7 +127,6 @@ const handleSubmit = async (e) => {
 
       <div className="relative hidden items-center justify-center overflow-hidden bg-linear-to-br from-red-950 via-sky-800 to-red-600 lg:flex lg:w-1/2">
         <div className="absolute inset-0 bg-black/20" />
-
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-yellow-300/20 blur-3xl" />
 
@@ -174,10 +140,9 @@ const handleSubmit = async (e) => {
           </div>
 
           <h2 className="text-4xl font-bold">Huayllani Oeste</h2>
-
           <p className="mt-4 text-sm leading-6 text-white/80">
-            Plataforma digital para la gestión vecinal, pagos, comunicados y
-            administración de la OTB.
+            Plataforma digital para la gestión vecinal y administración de la
+            OTB.
           </p>
         </div>
       </div>

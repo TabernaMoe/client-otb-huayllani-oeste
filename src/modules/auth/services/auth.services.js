@@ -1,129 +1,58 @@
 import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
 
-const normalizePermission = (permission) => {
-  if (!permission) return null;
-
-  if (typeof permission === 'string') {
-    return permission.toLowerCase().trim();
-  }
-
-  return (
-    permission?.codigo_permiso
-  )?.toLowerCase?.().trim();
-};
+const SESSION_KEY = 'user';
+const TOKEN_KEY = 'token';
 
 export const AuthService = {
   async login({ user, password }) {
-    try {
-      const { data } = await api.post('/login', {
-        nombre_usuario: user,
-        contrasenia_usuario: password,
-      });
+    const { data } = await api.post('/login', {
+      nombre_usuario: user,
+      contrasenia_usuario: password,
+    });
 
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
+    return data;
   },
 
-  saveSession(data) {
-    const token = data?.token || data?.data?.token || null;
-
-    const user =
-      data?.user ||
-      data?.usuario ||
-      data?.data?.user ||
-      data?.data?.usuario ||
-      data?.dataUser ||
-      data?.data ||
-      {
-        id: data?.id || null,
-        nombre_usuario: data?.nombre_usuario || 'Usuario',
-        rol: data?.rol || null,
-        estado: data?.estado ?? true,
-        permisos: data?.permisos || data?.permissions || [],
-      };
-
-    if (token) {
-      localStorage.setItem('token', token);
-    }
-
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    }
+  saveSession({ token, nombre_usuario, rol, permisos = [] }) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({ nombre_usuario, rol, permisos }),
+    );
   },
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(SESSION_KEY);
   },
 
   getToken() {
-    return localStorage.getItem('token');
+    return localStorage.getItem(TOKEN_KEY);
   },
 
   getUser() {
-    const user = localStorage.getItem('user');
-
-    try {
-      return user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
+    const value = localStorage.getItem(SESSION_KEY);
+    return value ? JSON.parse(value) : null;
   },
 
   getRole() {
-    const user = this.getUser();
-
-    return (
-      user?.rol?.nombre_rol ||
-      user?.rol?.nombre ||
-      user?.nombre_rol ||
-      user?.rol ||
-      user?.role ||
-      null
-    );
+    return this.getUser()?.rol || null;
   },
 
   getPermissions() {
-    const user = this.getUser();
-
-    return (
-      user?.permisos ||
-      user?.permissions ||
-      user?.rol?.permisos ||
-      user?.rol?.permissions ||
-      user?.rol?.auth_permisos ||
-      []
-    );
+    return this.getUser()?.permisos || [];
   },
 
-  hasPermission(permissionCode) {
-    const role = String(this.getRole() || '').toLowerCase().trim();
+  hasPermission(permission) {
+    if (this.getRole() === 'super_admin') return true;
 
-    if (role === 'super_admin') {
-      return true;
-    }
+    const required = Array.isArray(permission) ? permission : [permission];
+    const permissions = this.getPermissions();
 
-    const requiredPermissions = Array.isArray(permissionCode)
-      ? permissionCode
-      : [permissionCode];
-
-    const requiredNormalized = requiredPermissions
-      .map((permission) => String(permission || '').toLowerCase().trim())
-      .filter(Boolean);
-
-    const userPermissions = this.getPermissions()
-      .map(normalizePermission)
-      .filter(Boolean);
-
-    return requiredNormalized.some((required) =>
-      userPermissions.includes(required),
-    );
+    return required.some((code) => permissions.includes(code));
   },
 
   isAuthenticated() {
-    return Boolean(this.getToken());
+    return Boolean(this.getToken() && this.getUser());
   },
 };

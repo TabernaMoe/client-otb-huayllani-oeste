@@ -20,33 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 
 /**
- * Navegación del portal del cliente.
- *
- * Cada grupo representa una sección principal del sidebar.
- * Los iconos fueron elegidos según el significado de cada opción
- * para mantener una experiencia visual consistente.
- */
-export const SidebarNav = [
-  {
-    id: 'cliente',
-    title: 'Portal del socio',
-    icon: HomeIcon,
-    items: [
-      {
-        label: 'Inicio',
-        to: '/cliente/dashboard',
-        icon: HomeIcon,
-      },
-      {
-        label: 'Mi información',
-        to: '/cliente/perfil',
-        icon: UsersIcon,
-      },
-    ],
-  },
-];
-
-/**
  * Navegación principal del panel administrativo.
  *
  * Orden recomendado:
@@ -100,6 +73,18 @@ export const AdminNav = [
           'detalle_pago_accion.ver',
         ],
       },
+      {
+        label: 'Alcantarillado',
+        to: '/admin/alcantarillado',
+        icon: WrenchScrewdriverIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      },
+      {
+        label: 'Cambio de nombre',
+        to: '/admin/cambio-nombre',
+        icon: ClipboardDocumentCheckIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      },
       //Añadido por Becas
       {
         label: 'Tipo Accion',
@@ -118,12 +103,6 @@ export const AdminNav = [
       {
         label: 'Cobros Generales',
         to: '/admin/cobros',
-        icon: CreditCardIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      },
-      {
-        label: 'Historial cobros',
-        to: '/admin/historial-cobros',
         icon: CreditCardIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
@@ -248,7 +227,7 @@ export const AdminNav = [
         label: 'Inventario',
         to: '/admin/inventario',
         icon: ChartBarSquareIcon,
-        permission: ['inventario.ver', 'inventario.ver'],
+        permission: ['inventario.ver'],
       },
     ],
   },
