@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
 import { CobrosServices } from '../services/cobros.services';
 import { validatePagoCobro } from '../schema/cobros.schema';
 import SocioSelector from './SocioSelector';
@@ -15,7 +18,11 @@ const initialForm = {
   metodo_pago: 'EFECTIVO',
 };
 
-export default function CobroPendienteView({ tipoCobro, title, description }) {
+export default function CobroPendienteView({
+  tipoCobro = null,
+  title,
+  description,
+}) {
   const [socios, setSocios] = useState([]);
   const [selectedSocio, setSelectedSocio] = useState(null);
   const [cobros, setCobros] = useState([]);
@@ -68,7 +75,16 @@ export default function CobroPendienteView({ tipoCobro, title, description }) {
     }
 
     setSelectedSocio({ ...socio, ...response.data });
-    setCobros(response.data.cobrosSocio.filter((cobro) => cobro.tipo_cobro === tipoCobro));
+
+    //becas
+
+    const todosCobros = response.data.cobrosSocio || [];
+
+    const cobrosFiltrados = tipoCobro
+      ? todosCobros.filter((cobro) => cobro.tipo_cobro === tipoCobro)
+      : todosCobros;
+
+    setCobros(cobrosFiltrados);
   };
 
   const selectedCobros = useMemo(
@@ -77,7 +93,8 @@ export default function CobroPendienteView({ tipoCobro, title, description }) {
   );
 
   const totalSeleccionado = useMemo(
-    () => selectedCobros.reduce((total, cobro) => total + Number(cobro.saldo), 0),
+    () =>
+      selectedCobros.reduce((total, cobro) => total + Number(cobro.saldo), 0),
     [selectedCobros],
   );
 
@@ -106,7 +123,8 @@ export default function CobroPendienteView({ tipoCobro, title, description }) {
       return;
     }
 
-    if (!window.confirm(`¿Confirmar pago de Bs ${validation.data.monto}?`)) return;
+    if (!window.confirm(`¿Confirmar pago de Bs ${validation.data.monto}?`))
+      return;
 
     setSaving(true);
     const response = await CobrosServices.pagar(validation.data);
@@ -171,7 +189,10 @@ export default function CobroPendienteView({ tipoCobro, title, description }) {
         />
 
         <div className="space-y-5">
-          <ResumenCobro cantidad={form.cobros.length} total={totalSeleccionado} />
+          <ResumenCobro
+            cantidad={form.cobros.length}
+            total={totalSeleccionado}
+          />
           <FormularioPago
             form={form}
             errors={errors}

@@ -55,13 +55,57 @@ export const AdminNav = [
         icon: UsersIcon,
         permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
+      // {
+      //   label: 'Acciones',
+      //   to: '/admin/acciones',
+      //   icon: ClipboardDocumentListIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
+
+      // {
+      //   label: 'Detalle de acción',
+      //   to: '/admin/detalle-pago-accion',
+      //   icon: DocumentChartBarIcon,
+      //   permission: [
+      //     'acciones.detalle.ver',
+      //     'acciones.detalles.ver',
+      //     'detalle_accion.ver',
+      //     'detalle_pago_accion.ver',
+      //   ],
+      // },
+      // {
+      //   label: 'Alcantarillado',
+      //   to: '/admin/alcantarillado',
+      //   icon: WrenchScrewdriverIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
+      // {
+      //   label: 'Cambio de nombre',
+      //   to: '/admin/cambio-nombre',
+      //   icon: ClipboardDocumentCheckIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
+      // //Añadido por Becas
+      // {
+      //   label: 'Tipo Accion',
+      //   to: '/admin/tipo-accion',
+      //   icon: ClipboardDocumentListIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
+    ],
+  },
+  {
+    id: 'acciones-agua',
+    title: 'Acciones de agua',
+    icon: UserGroupIcon,
+    items: [
       {
         label: 'Acciones',
         to: '/admin/acciones',
         icon: ClipboardDocumentListIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
-     
+
       {
         label: 'Detalle de acción',
         to: '/admin/detalle-pago-accion',
@@ -73,10 +117,11 @@ export const AdminNav = [
           'detalle_pago_accion.ver',
         ],
       },
+      //Añadido por Becas
       {
-        label: 'Alcantarillado',
-        to: '/admin/alcantarillado',
-        icon: WrenchScrewdriverIcon,
+        label: 'Tipo Accion',
+        to: '/admin/tipo-accion',
+        icon: ClipboardDocumentListIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       {
@@ -85,16 +130,21 @@ export const AdminNav = [
         icon: ClipboardDocumentCheckIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
-      //Añadido por Becas
+    ],
+  },
+  {
+    id: 'acciones-alcantarillado',
+    title: 'Acciones de alcantarillado',
+    icon: UserGroupIcon,
+    items: [
       {
-        label: 'Tipo Accion',
-        to: '/admin/tipo-accion',
-        icon: ClipboardDocumentListIcon,
+        label: 'Alcantarillado',
+        to: '/admin/alcantarillado',
+        icon: WrenchScrewdriverIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
     ],
   },
-
   {
     id: 'cobros',
     title: 'Cobros y pagos',
@@ -124,12 +174,6 @@ export const AdminNav = [
         to: '/admin/lecturas',
         icon: DocumentTextIcon,
         permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
-      },
-        {
-        label: 'Multas',
-        to: '/admin/multas',
-        icon: DocumentTextIcon,
-        permission: ['multa.ver', 'multas.ver', 'agua.multa.ver'],
       },
     ],
   },
@@ -195,11 +239,11 @@ export const AdminNav = [
 
   {
     id: 'asambleas',
-    title: 'Reportes y Asambleas',
+    title: 'Reportes y Multas',
     icon: UserGroupIcon,
     items: [
       {
-        label: 'Reuniones',
+        label: 'Multas',
         to: '/admin/asambleas',
         icon: CalendarDaysIcon,
         permission: [
@@ -208,6 +252,12 @@ export const AdminNav = [
           'reunion.ver',
           'reuniones.ver',
         ],
+      },
+      {
+        label: 'Otras multas',
+        to: '/admin/multas',
+        icon: DocumentTextIcon,
+        permission: ['multa.ver', 'multas.ver', 'agua.multa.ver'],
       },
       {
         label: 'Reportes generales',

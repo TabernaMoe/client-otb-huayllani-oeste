@@ -3,18 +3,32 @@ import {
   ClipboardDocumentListIcon,
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 
 const tabs = [
-  { value: 'acciones', label: 'Cobrar acciones', icon: ClipboardDocumentListIcon },
+  {
+    value: 'cobros_generales',
+    label: 'Cobros generales',
+    icon: ListBulletIcon,
+  },
+  {
+    value: 'acciones',
+    label: 'Cobros acciones de agua',
+    icon: ClipboardDocumentListIcon,
+  },
   { value: 'multas', label: 'Cobrar multas', icon: ExclamationTriangleIcon },
-  { value: 'adicionales', label: 'Cobros adicionales', icon: CurrencyDollarIcon },
+  {
+    value: 'adicionales',
+    label: 'Cobros adicionales',
+    icon: CurrencyDollarIcon,
+  },
   { value: 'pagos', label: 'Pagos', icon: BanknotesIcon },
 ];
 
 export default function CobrosTabs({ activeView, onChange }) {
   return (
-    <div className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-5">
       {tabs.map(({ value, label, icon: Icon }) => (
         <button
           key={value}

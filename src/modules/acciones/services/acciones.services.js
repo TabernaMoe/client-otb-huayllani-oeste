@@ -1,38 +1,19 @@
-import {
-  api,
-} from '../../../services/api';
+import { api } from '../../../services/api';
 
-import {
-  toServiceError,
-} from '../../../services/error';
-
+import { toServiceError } from '../../../services/error';
 
 export class AccionesServices {
-  static async getAll(
-    params = {},
-  ) {
+  static async getAll(params = {}) {
     try {
-
-      const {
-        data,
-      } = await api.get(
-        '/admin/accion',
-        {
-          params,
-        },
-      );
+      const { data } = await api.get('/admin/accion', {
+        params,
+      });
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -41,28 +22,15 @@ export class AccionesServices {
    *
    * GET /admin/accion/:id
    */
-  static async getById(
-    id,
-  ) {
+  static async getById(id) {
     try {
-
-      const {
-        data,
-      } = await api.get(
-        `/admin/accion/${id}`,
-      );
+      const { data } = await api.get(`/admin/accion/${id}`);
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -73,24 +41,13 @@ export class AccionesServices {
    */
   static async getTiposAccion() {
     try {
-
-      const {
-        data,
-      } = await api.get(
-        '/admin/accion/tipos-accion',
-      );
+      const { data } = await api.get('/admin/accion/tipos-accion');
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -99,28 +56,17 @@ export class AccionesServices {
    *
    * GET /admin/accion/detalle-accion/:tipoAccionId
    */
-  static async getDetallesAccion(
-    tipoAccionId,
-  ) {
+  static async getDetallesAccion(tipoAccionId) {
     try {
-
-      const {
-        data,
-      } = await api.get(
+      const { data } = await api.get(
         `/admin/accion/detalle-accion/${tipoAccionId}`,
       );
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -131,24 +77,13 @@ export class AccionesServices {
    */
   static async getSocios() {
     try {
-
-      const {
-        data,
-      } = await api.get(
-        '/admin/accion/socios',
-      );
+      const { data } = await api.get('/admin/accion/socios');
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -159,24 +94,13 @@ export class AccionesServices {
    */
   static async getTarifas() {
     try {
-
-      const {
-        data,
-      } = await api.get(
-        '/admin/accion/tarifa-agua',
-      );
+      const { data } = await api.get('/admin/accion/tarifa-agua');
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -185,29 +109,15 @@ export class AccionesServices {
    *
    * POST /admin/accion
    */
-  static async create(
-    payload,
-  ) {
+  static async create(payload) {
     try {
-
-      const {
-        data,
-      } = await api.post(
-        '/admin/accion',
-        payload,
-      );
+      const { data } = await api.post('/admin/accion', payload);
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -216,30 +126,15 @@ export class AccionesServices {
    *
    * PATCH /admin/accion/:id
    */
-  static async update(
-    id,
-    payload,
-  ) {
+  static async update(id, payload) {
     try {
-
-      const {
-        data,
-      } = await api.patch(
-        `/admin/accion/${id}`,
-        payload,
-      );
+      const { data } = await api.patch(`/admin/accion/${id}`, payload);
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -254,30 +149,18 @@ export class AccionesServices {
    *
    * Lo respetamos exactamente.
    */
-  static async changeEstado(
-    id,
-    payload,
-  ) {
+  static async changeEstado(id, payload) {
     try {
-
-      const {
-        data,
-      } = await api.patch(
+      const { data } = await api.patch(
         `/admin/accion/camibiar-estado/${id}`,
         payload,
       );
 
       return data;
-
     } catch (error) {
-
-      return toServiceError(
-        error,
-      );
-
+      return toServiceError(error);
     }
   }
-
 
   /**
    * ==========================================================
@@ -293,27 +176,29 @@ export class AccionesServices {
    *   tipo: 'FAMILIAR'
    * }
    */
-  static async changeNombre(
-    id,
-    payload,
-  ) {
+  static async changeNombre(id, payload) {
     try {
-
-      const {
-        data,
-      } = await api.patch(
+      const { data } = await api.patch(
         `/admin/accion/cambiar-nombre/${id}`,
         payload,
       );
 
       return data;
-
     } catch (error) {
+      return toServiceError(error);
+    }
+  }
 
-      return toServiceError(
-        error,
-      );
+  //************************** */
+  static async getCaratula(id) {
+    try {
+      const response = await api.get(`/admin/accion/caratula/${id}`, {
+        responseType: 'blob',
+      });
 
+      return response.data;
+    } catch (e) {
+      return toServiceError(error);
     }
   }
 }

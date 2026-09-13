@@ -12,6 +12,7 @@ import DataTable from '../../../components/DataTable';
 import SelectComponent from '../../../components/Select';
 import AccionModal from '../components/AccionModal';
 import { AccionesServices as Servs } from '../services/acciones.services';
+import { toast } from 'react-toastify';
 
 const estadoOptions = [
   { value: 'ACTIVO', label: 'Activo' },
@@ -30,10 +31,14 @@ function StatCard({ label, value, icon: Icon, className }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {label}
+          </p>
           <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
         </div>
-        <span className={`rounded-2xl p-3 ${className}`}><Icon className="h-6 w-6" /></span>
+        <span className={`rounded-2xl p-3 ${className}`}>
+          <Icon className="h-6 w-6" />
+        </span>
       </div>
     </div>
   );
@@ -46,7 +51,12 @@ export default function AccionesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, limit: 5, totalItems: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    totalItems: 0,
+    totalPages: 1,
+  });
 
   const cargarAcciones = useCallback(async () => {
     setLoading(true);
@@ -86,40 +96,85 @@ export default function AccionesPage() {
     else setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const columns = useMemo(() => [
-    {
-      accessorKey: 'codigo_interno',
-      header: 'Código',
-      cell: ({ row }) => (
-        <div>
-          <p className="font-semibold text-slate-800">{row.original.codigo_interno}</p>
-          <p className="text-xs text-slate-400">ID: {row.original.id}</p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'nombre_completo',
-      header: 'Socio',
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium text-slate-800">{row.original.nombre_completo}</p>
-          <p className="text-xs text-slate-400">Medidor: {row.original.nro_medidor}</p>
-        </div>
-      ),
-    },
-    { accessorKey: 'nombre_calle', header: 'Calle' },
-    { accessorKey: 'nombre_tarifa', header: 'Tarifa' },
-    {
-      accessorKey: 'estado',
-      header: 'Estado',
-      cell: ({ row }) => (
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses[row.original.estado]}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-          {row.original.estado}
-        </span>
-      ),
-    },
-  ], []);
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'codigo_interno',
+        header: 'Código',
+        cell: ({ row }) => (
+          <div>
+            <p className="font-semibold text-slate-800">
+              {row.original.codigo_interno}
+            </p>
+            <p className="text-xs text-slate-400">ID: {row.original.id}</p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'nombre_completo',
+        header: 'Socio',
+        cell: ({ row }) => (
+          <div>
+            <p className="font-medium text-slate-800">
+              {row.original.nombre_completo}
+            </p>
+            <p className="text-xs text-slate-400">
+              Medidor: {row.original.nro_medidor}
+            </p>
+          </div>
+        ),
+      },
+      { accessorKey: 'nombre_calle', header: 'Calle' },
+      { accessorKey: 'nombre_tarifa', header: 'Tarifa' },
+      {
+        accessorKey: 'estado',
+        header: 'Estado',
+        cell: ({ row }) => (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses[row.original.estado]}`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            {row.original.estado}
+          </span>
+        ),
+      },
+      {
+        id: 'acciones',
+        header: 'Acciones',
+        cell: ({ row }) => (
+          <button
+            onClick={() => {
+              handlePdfCaratula(row.original.id);
+            }}
+            className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+          >
+            Obtene caratula
+          </button>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const handlePdfCaratula = async (id) => {
+    try {
+      const pdfBlob = await Servs.getCaratula(id);
+
+      const url = URL.createObjectURL(
+        new Blob([pdfBlob], {
+          type: 'application/pdf',
+        }),
+      );
+
+      window.open(url, '_blank');
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+    } catch (e) {
+      toast.error(e.message || 'Algo salió mal');
+    }
+  };
 
   const activas = acciones.filter((item) => item.estado === 'ACTIVO').length;
   const pasivas = acciones.filter((item) => item.estado === 'PASIVO').length;
@@ -128,27 +183,54 @@ export default function AccionesPage() {
     <section className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Administración</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Acciones registradas</h1>
-          <p className="mt-1 text-sm text-slate-500">Consulta y registra las acciones de los socios.</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+            Administración
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">
+            Acciones registradas
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Consulta y registra las acciones de los socios.
+          </p>
         </div>
 
-        <button type="button" onClick={() => setModalOpen(true)} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+        >
           <PlusIcon className="h-5 w-5" />
           Nueva acción
         </button>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Total de acciones" value={pagination.totalItems} icon={RectangleStackIcon} className="bg-slate-100 text-slate-600" />
-        <StatCard label="Activas en página" value={activas} icon={CheckCircleIcon} className="bg-emerald-50 text-emerald-600" />
-        <StatCard label="Pasivas en página" value={pasivas} icon={PowerIcon} className="bg-amber-50 text-amber-600" />
+        <StatCard
+          label="Total de acciones"
+          value={pagination.totalItems}
+          icon={RectangleStackIcon}
+          className="bg-slate-100 text-slate-600"
+        />
+        <StatCard
+          label="Activas en página"
+          value={activas}
+          icon={CheckCircleIcon}
+          className="bg-emerald-50 text-emerald-600"
+        />
+        <StatCard
+          label="Pasivas en página"
+          value={pasivas}
+          icon={PowerIcon}
+          className="bg-amber-50 text-amber-600"
+        />
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1fr_260px_auto] md:items-end">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Buscar acción</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">
+              Buscar acción
+            </label>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
@@ -174,11 +256,22 @@ export default function AccionesPage() {
           />
 
           <div className="flex gap-2">
-            <button type="button" onClick={handleBuscar} className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+            <button
+              type="button"
+              onClick={handleBuscar}
+              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+            >
               Buscar
             </button>
-            <button type="button" onClick={cargarAcciones} disabled={loading} className="flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-              <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <button
+              type="button"
+              onClick={cargarAcciones}
+              disabled={loading}
+              className="flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <ArrowPathIcon
+                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+              />
               Actualizar
             </button>
           </div>
@@ -194,10 +287,16 @@ export default function AccionesPage() {
         totalPages={pagination.totalPages}
         totalItems={pagination.totalItems}
         onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-        onLimitChange={(limit) => setPagination((prev) => ({ ...prev, page: 1, limit }))}
+        onLimitChange={(limit) =>
+          setPagination((prev) => ({ ...prev, page: 1, limit }))
+        }
       />
 
-      <AccionModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
+      <AccionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={handleCreated}
+      />
     </section>
   );
 }
