@@ -138,6 +138,12 @@ export const AdminNav = [
     icon: UserGroupIcon,
     items: [
       {
+        label: 'Acciones Alcantarillado',
+        to: '/admin/alcantarillado/acciones',
+        icon: WrenchScrewdriverIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      },
+      {
         label: 'Alcantarillado',
         to: '/admin/alcantarillado',
         icon: WrenchScrewdriverIcon,

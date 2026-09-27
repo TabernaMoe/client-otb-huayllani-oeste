@@ -70,7 +70,11 @@ export default function AlcantarilladoModal({ open, item, onClose, onSaved }) {
   return (
     <FormModal
       open={open}
-      title={item ? 'Editar detalle de alcantarillado' : 'Nuevo detalle de alcantarillado'}
+      title={
+        item
+          ? 'Editar detalle de alcantarillado'
+          : 'Nuevo detalle de alcantarillado'
+      }
       description="Define el concepto, precio y modalidad de cobro."
       onClose={onClose}
     >
@@ -119,7 +123,11 @@ export default function AlcantarilladoModal({ open, item, onClose, onSaved }) {
             disabled={saving}
             className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
           >
-            {saving ? 'Guardando...' : item ? 'Guardar cambios' : 'Crear detalle'}
+            {saving
+              ? 'Guardando...'
+              : item
+                ? 'Guardar cambios'
+                : 'Crear detalle'}
           </button>
         </div>
       </form>
