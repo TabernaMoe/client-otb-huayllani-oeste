@@ -5,9 +5,11 @@ import CobrarMultasView from '../components/CobrarMultasView';
 import CobrarAdicionalesView from '../components/CobrarAdicionalesView';
 import PagosView from '../components/PagosView';
 import CobrarGeneralView from '../components/CobrarGeneralView';
+import CobroAlcantarilladoView from '../components/CobroAlcantarilladoView';
 
 const views = {
   acciones: CobrarAccionesView,
+  alcantarillado: CobroAlcantarilladoView,
   multas: CobrarMultasView,
   adicionales: CobrarAdicionalesView,
   pagos: PagosView,
@@ -30,7 +32,7 @@ export default function CobrosPage() {
           Gestión de cobros
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Cobra acciones y multas, registra pagos y consulta el historial.
+          Cobra acciones, alcantarillado y multas, registra pagos y consulta el historial.
         </p>
       </header>
 

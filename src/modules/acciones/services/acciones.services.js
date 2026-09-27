@@ -68,6 +68,28 @@ export class AccionesServices {
     }
   }
 
+
+  /**
+   * ==========================================================
+   * OBTENER UN DETALLE DE ACCIÓN POR ID
+   * ==========================================================
+   *
+   * GET /admin/accion/detalle/:id
+   *
+   * Este endpoint devuelve el tipo_accion_id real del detalle.
+   * Se usa al editar para seleccionar automáticamente el tipo
+   * sin tener que inferirlo recorriendo todos los catálogos.
+   */
+  static async getDetalleAccionById(id) {
+    try {
+      const { data } = await api.get(`/admin/accion/detalle/${id}`);
+
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
   /**
    * ==========================================================
    * SOCIOS PARA SELECT
@@ -138,6 +160,28 @@ export class AccionesServices {
 
   /**
    * ==========================================================
+   * HISTORIAL DE PAGOS POR ACCIÓN
+   * ==========================================================
+   *
+   * GET /admin/cobro/accion-historial/:id
+   *
+   * Se usa al editar para identificar únicamente los detalles
+   * que ya tienen monto pagado y evitar que se desmarquen.
+   */
+  static async getHistorialAccion(id, params = {}) {
+    try {
+      const { data } = await api.get(`/admin/cobro/accion-historial/${id}`, {
+        params,
+      });
+
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  /**
+   * ==========================================================
    * CAMBIAR ESTADO
    * ==========================================================
    *
@@ -197,7 +241,7 @@ export class AccionesServices {
       });
 
       return response.data;
-    } catch (e) {
+    } catch (error) {
       return toServiceError(error);
     }
   }

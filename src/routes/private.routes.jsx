@@ -32,6 +32,7 @@ import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
 import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
 
 import AccionesAlcantarilladoPage from '../modules/alcantarillado/pages/AccionesAlcantarilladoPage';
+import AdelantoPagosPage from '../modules/adelantoPagos/pages/AdelantoPagosPage';
 
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
@@ -79,6 +80,7 @@ export const privateRoutes = (
           ])}
         >
           <Route path="acciones" element={<AccionesPage />} />
+          <Route path="acciones/adelantos" element={<AdelantoPagosPage />} />
           {/* -----------------agregar permisos-------------------------- */}
           <Route path="alcantarillado" element={<AlcantarilladoPage />} />
           <Route

@@ -91,10 +91,43 @@ export default function AccionesPage() {
     setSearch(searchInput.trim());
   };
 
-  const handleCreated = async () => {
+  const handleSaved = async () => {
     if (pagination.page === 1) await cargarAcciones();
     else setPagination((prev) => ({ ...prev, page: 1 }));
   };
+
+  const openCreate = () => {
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
+
+
+  const handlePdfCaratula = useCallback(async (id) => {
+    try {
+      const pdfBlob = await Servs.getCaratula(id);
+
+      if (!pdfBlob || pdfBlob?.ok === false) {
+        throw new Error(pdfBlob?.message || 'No se pudo obtener la carátula');
+      }
+
+      const url = URL.createObjectURL(
+        new Blob([pdfBlob], {
+          type: 'application/pdf',
+        }),
+      );
+
+      window.open(url, '_blank');
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+    } catch (e) {
+      toast.error(e.message || 'Algo salió mal');
+    }
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -142,39 +175,20 @@ export default function AccionesPage() {
         id: 'acciones',
         header: 'Acciones',
         cell: ({ row }) => (
-          <button
-            onClick={() => {
-              handlePdfCaratula(row.original.id);
-            }}
-            className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
-          >
-            Obtene caratula
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handlePdfCaratula(row.original.id)}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              Obtener carátula
+            </button>
+          </div>
         ),
       },
     ],
-    [],
+    [handlePdfCaratula],
   );
-
-  const handlePdfCaratula = async (id) => {
-    try {
-      const pdfBlob = await Servs.getCaratula(id);
-
-      const url = URL.createObjectURL(
-        new Blob([pdfBlob], {
-          type: 'application/pdf',
-        }),
-      );
-
-      window.open(url, '_blank');
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 10000);
-    } catch (e) {
-      toast.error(e.message || 'Algo salió mal');
-    }
-  };
 
   const activas = acciones.filter((item) => item.estado === 'ACTIVO').length;
   const pasivas = acciones.filter((item) => item.estado === 'PASIVO').length;
@@ -196,7 +210,7 @@ export default function AccionesPage() {
 
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={openCreate}
           className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
         >
           <PlusIcon className="h-5 w-5" />
@@ -294,8 +308,8 @@ export default function AccionesPage() {
 
       <AccionModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={handleCreated}
+        onClose={closeModal}
+        onCreated={handleSaved}
       />
     </section>
   );

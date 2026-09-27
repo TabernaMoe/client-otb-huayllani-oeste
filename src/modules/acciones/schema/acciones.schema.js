@@ -115,6 +115,17 @@ export const accionSchema =
 
 /**
  * ============================================================
+ * EDICIÓN DE ACCIÓN
+ * ============================================================
+ * Mantiene las mismas validaciones de campos que el registro.
+ * La única restricción adicional de negocio al editar se controla
+ * en el modal: un detalle con pago registrado no puede quitarse.
+ */
+export const accionEditSchema = accionSchema;
+
+
+/**
+ * ============================================================
  * PARÁMETROS LISTADO
  * ============================================================
  */
@@ -307,6 +318,69 @@ export const validateAccion = (
 
   const result =
     accionSchema.safeParse(
+      normalizedData,
+    );
+
+
+  if (
+    result.success
+  ) {
+
+    return {
+
+      isValid: true,
+
+      errors: {},
+
+      data:
+        result.data,
+
+    };
+
+  }
+
+
+  return {
+
+    isValid: false,
+
+    errors:
+      formatErrors(
+        result.error,
+      ),
+
+    data: null,
+
+  };
+};
+
+
+/**
+ * ============================================================
+ * VALIDAR EDICIÓN DE ACCIÓN
+ * ============================================================
+ */
+export const validateAccionEdit = (
+  data,
+) => {
+
+  const normalizedData = {
+
+    ...data,
+
+    estado:
+      String(
+        data?.estado ||
+          'ACTIVO',
+      )
+        .trim()
+        .toUpperCase(),
+
+  };
+
+
+  const result =
+    accionEditSchema.safeParse(
       normalizedData,
     );
 

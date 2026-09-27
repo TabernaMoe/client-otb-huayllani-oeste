@@ -1,5 +1,6 @@
 import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
+
 export class AlcantarilladoServices {
   static async getAll(params = {}) {
     try {
@@ -11,6 +12,7 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
+
   static async getId({ id }) {
     try {
       const { data } = await api.get(`/admin/alcantarillado/accion/${id}`);
@@ -19,6 +21,7 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
+
   static async getSocios() {
     try {
       const { data } = await api.get('/admin/alcantarillado/accion/socio');
@@ -27,6 +30,16 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
+
+  static async getCalles() {
+    try {
+      const { data } = await api.get('/admin/alcantarillado/accion/calle');
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
   static async getDetalle() {
     try {
       const { data } = await api.get('/admin/alcantarillado/accion/detalle');
@@ -35,6 +48,7 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
+
   static async create({ payload }) {
     try {
       const { data } = await api.post('/admin/alcantarillado/accion', payload);
@@ -43,11 +57,23 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
+
   static async update({ id, payload }) {
     try {
       const { data } = await api.patch(
         `/admin/alcantarillado/accion/${id}`,
         payload,
+      );
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async changeEstado({ id }) {
+    try {
+      const { data } = await api.patch(
+        `/admin/alcantarillado/accion/cambiar-estado/${id}`,
       );
       return data;
     } catch (error) {

@@ -130,6 +130,12 @@ export const AdminNav = [
         icon: ClipboardDocumentCheckIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
+      {
+        label: 'Adelanto de pagos',
+        to: '/admin/acciones/adelantos',
+        icon: BanknotesIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      },
     ],
   },
   {

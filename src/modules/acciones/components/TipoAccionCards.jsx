@@ -7,7 +7,7 @@ export default function TipoAccionCards({ options = [], value, onChange }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {options.map((option) => {
-        const selected = option.value === value;
+        const selected = String(option.value) === String(value);
 
         return (
           <button
