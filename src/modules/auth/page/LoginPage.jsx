@@ -46,8 +46,13 @@ export default function LoginPage() {
 
       AuthService.saveSession(data);
 
+      console.log(
+        data?.usuario?.rol === 'usuario_normal'
+          ? '/cliente/dashboard'
+          : '/admin/dashboard',
+      );
       navigate(
-        data.rol === 'usuario_normal'
+        data?.usuario?.rol === 'usuario_normal'
           ? '/cliente/dashboard'
           : '/admin/dashboard',
         { replace: true },

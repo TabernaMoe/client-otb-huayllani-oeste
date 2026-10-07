@@ -32,6 +32,7 @@ export const AuthService = {
 
   getUser() {
     const value = localStorage.getItem(SESSION_KEY);
+
     return value ? JSON.parse(value) : null;
   },
 

@@ -1,7 +1,4 @@
-import {
-  z,
-} from 'zod';
-
+import { z } from 'zod';
 
 /**
  * ============================================================
@@ -9,109 +6,45 @@ import {
  * ============================================================
  */
 
-export const accionSchema =
-  z.object({
+export const accionSchema = z.object({
+  socio_id: z.coerce
+    .number()
+    .int('Debe seleccionar un socio válido')
+    .positive('Debe seleccionar un socio'),
 
-    socio_id:
-      z.coerce
-        .number()
-        .int(
-          'Debe seleccionar un socio válido',
-        )
-        .positive(
-          'Debe seleccionar un socio',
-        ),
+  calle_id: z.coerce
+    .number()
+    .int('Debe seleccionar una calle válida')
+    .positive('Debe seleccionar una calle'),
 
+  tarifa_id: z.coerce
+    .number()
+    .int('Debe seleccionar una tarifa válida')
+    .positive('Debe seleccionar una tarifa'),
 
-    calle_id:
-      z.coerce
-        .number()
-        .int(
-          'Debe seleccionar una calle válida',
-        )
-        .positive(
-          'Debe seleccionar una calle',
-        ),
+  nro_medidor: z.string().trim().optional(),
 
+  direccion: z
+    .string()
+    .trim()
+    .min(1, 'La dirección es obligatoria')
+    .max(255, 'La dirección es muy larga'),
 
-    tarifa_id:
-      z.coerce
-        .number()
-        .int(
-          'Debe seleccionar una tarifa válida',
-        )
-        .positive(
-          'Debe seleccionar una tarifa',
-        ),
+  observacion: z
+    .string()
+    .trim()
+    .max(500, 'La observación es muy larga')
+    .optional()
+    .or(z.literal('')),
 
+  estado: z.enum(['ACTIVO', 'PASIVO', 'ANULADO'], {
+    message: 'Debe seleccionar un estado válido',
+  }),
 
-    nro_medidor:
-      z.string()
-        .trim()
-        .min(
-          1,
-          'El número de medidor es obligatorio',
-        )
-        .max(
-          50,
-          'El número de medidor es muy largo',
-        ),
-
-
-    direccion:
-      z.string()
-        .trim()
-        .min(
-          1,
-          'La dirección es obligatoria',
-        )
-        .max(
-          255,
-          'La dirección es muy larga',
-        ),
-
-
-    observacion:
-      z.string()
-        .trim()
-        .max(
-          500,
-          'La observación es muy larga',
-        )
-        .optional()
-        .or(
-          z.literal(''),
-        ),
-
-
-    estado:
-      z.enum(
-        [
-          'ACTIVO',
-          'PASIVO',
-          'ANULADO',
-        ],
-        {
-          message:
-            'Debe seleccionar un estado válido',
-        },
-      ),
-
-
-    detallesAccion:
-      z.array(
-        z.coerce
-          .number()
-          .int()
-          .positive(),
-      )
-        .min(
-          1,
-          'Debe seleccionar al menos un detalle de acción',
-        ),
-
-  });
-
+  detallesAccion: z
+    .array(z.coerce.number().int().positive())
+    .min(1, 'Debe seleccionar al menos un detalle de acción'),
+});
 
 /**
  * ============================================================
@@ -123,55 +56,30 @@ export const accionSchema =
  */
 export const accionEditSchema = accionSchema;
 
-
 /**
  * ============================================================
  * PARÁMETROS LISTADO
  * ============================================================
  */
 
-export const accionParamsSchema =
-  z.object({
+export const accionParamsSchema = z.object({
+  page: z.coerce
+    .number()
+    .int()
+    .min(1, 'La página debe ser mayor o igual a 1')
+    .default(1),
 
-    page:
-      z.coerce
-        .number()
-        .int()
-        .min(
-          1,
-          'La página debe ser mayor o igual a 1',
-        )
-        .default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100, 'El límite máximo es 100')
+    .default(10),
 
+  search: z.string().trim().default(''),
 
-    limit:
-      z.coerce
-        .number()
-        .int()
-        .min(1)
-        .max(
-          100,
-          'El límite máximo es 100',
-        )
-        .default(10),
-
-
-    search:
-      z.string()
-        .trim()
-        .default(''),
-
-
-    estado:
-      z.enum([
-        'ACTIVO',
-        'PASIVO',
-        'ANULADO',
-      ])
-        .optional(),
-
-  });
-
+  estado: z.enum(['ACTIVO', 'PASIVO', 'ANULADO']).optional(),
+});
 
 /**
  * ============================================================
@@ -179,16 +87,10 @@ export const accionParamsSchema =
  * ============================================================
  */
 
-export const accionIdSchema =
-  z.coerce
-    .number()
-    .int(
-      'El identificador debe ser entero',
-    )
-    .positive(
-      'El identificador no es válido',
-    );
-
+export const accionIdSchema = z.coerce
+  .number()
+  .int('El identificador debe ser entero')
+  .positive('El identificador no es válido');
 
 /**
  * ============================================================
@@ -196,24 +98,11 @@ export const accionIdSchema =
  * ============================================================
  */
 
-export const accionEstadoSchema =
-  z.object({
-
-    estado:
-      z.enum(
-        [
-          'ACTIVO',
-          'PASIVO',
-          'ANULADO',
-        ],
-        {
-          message:
-            'El estado no es válido',
-        },
-      ),
-
-  });
-
+export const accionEstadoSchema = z.object({
+  estado: z.enum(['ACTIVO', 'PASIVO', 'ANULADO'], {
+    message: 'El estado no es válido',
+  }),
+});
 
 /**
  * ============================================================
@@ -221,34 +110,16 @@ export const accionEstadoSchema =
  * ============================================================
  */
 
-export const cambiarNombreAccionSchema =
-  z.object({
+export const cambiarNombreAccionSchema = z.object({
+  nuevoSocioId: z.coerce
+    .number()
+    .int('El socio debe ser válido')
+    .positive('Debe seleccionar el nuevo socio'),
 
-    nuevoSocioId:
-      z.coerce
-        .number()
-        .int(
-          'El socio debe ser válido',
-        )
-        .positive(
-          'Debe seleccionar el nuevo socio',
-        ),
-
-
-    tipo:
-      z.enum(
-        [
-          'FAMILIAR',
-          'PARTICULAR',
-        ],
-        {
-          message:
-            'Debe seleccionar un tipo válido',
-        },
-      ),
-
-  });
-
+  tipo: z.enum(['FAMILIAR', 'PARTICULAR'], {
+    message: 'Debe seleccionar un tipo válido',
+  }),
+});
 
 /**
  * ============================================================
@@ -256,40 +127,21 @@ export const cambiarNombreAccionSchema =
  * ============================================================
  */
 
-const formatErrors = (
-  zodError,
-) => {
-
+const formatErrors = (zodError) => {
   const errors = {};
 
-  const issues =
-    zodError?.issues || [];
+  const issues = zodError?.issues || [];
 
+  issues.forEach((issue) => {
+    const field = issue.path?.[0];
 
-  issues.forEach(
-    (issue) => {
-
-      const field =
-        issue.path?.[0];
-
-
-      if (
-        field &&
-        !errors[field]
-      ) {
-
-        errors[field] =
-          issue.message;
-
-      }
-
-    },
-  );
-
+    if (field && !errors[field]) {
+      errors[field] = issue.message;
+    }
+  });
 
   return errors;
 };
-
 
 /**
  * ============================================================
@@ -297,126 +149,70 @@ const formatErrors = (
  * ============================================================
  */
 
-export const validateAccion = (
-  data,
-) => {
-
+export const validateAccion = (data) => {
   const normalizedData = {
-
     ...data,
 
-    estado:
-      String(
-        data?.estado ||
-          'ACTIVO',
-      )
-        .trim()
-        .toUpperCase(),
-
+    estado: String(data?.estado || 'ACTIVO')
+      .trim()
+      .toUpperCase(),
   };
 
+  const result = accionSchema.safeParse(normalizedData);
 
-  const result =
-    accionSchema.safeParse(
-      normalizedData,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
       errors: {},
 
-      data:
-        result.data,
-
+      data: result.data,
     };
-
   }
 
-
   return {
-
     isValid: false,
 
-    errors:
-      formatErrors(
-        result.error,
-      ),
+    errors: formatErrors(result.error),
 
     data: null,
-
   };
 };
-
 
 /**
  * ============================================================
  * VALIDAR EDICIÓN DE ACCIÓN
  * ============================================================
  */
-export const validateAccionEdit = (
-  data,
-) => {
-
+export const validateAccionEdit = (data) => {
   const normalizedData = {
-
     ...data,
 
-    estado:
-      String(
-        data?.estado ||
-          'ACTIVO',
-      )
-        .trim()
-        .toUpperCase(),
-
+    estado: String(data?.estado || 'ACTIVO')
+      .trim()
+      .toUpperCase(),
   };
 
+  const result = accionEditSchema.safeParse(normalizedData);
 
-  const result =
-    accionEditSchema.safeParse(
-      normalizedData,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
       errors: {},
 
-      data:
-        result.data,
-
+      data: result.data,
     };
-
   }
 
-
   return {
-
     isValid: false,
 
-    errors:
-      formatErrors(
-        result.error,
-      ),
+    errors: formatErrors(result.error),
 
     data: null,
-
   };
 };
-
 
 /**
  * ============================================================
@@ -424,64 +220,33 @@ export const validateAccionEdit = (
  * ============================================================
  */
 
-export const validateAccionParams = (
-  data,
-) => {
-
+export const validateAccionParams = (data) => {
   const normalizedData = {
-
     ...data,
 
-    estado:
-      data?.estado
-        ? String(
-            data.estado,
-          )
-            .trim()
-            .toUpperCase()
-        : undefined,
-
+    estado: data?.estado ? String(data.estado).trim().toUpperCase() : undefined,
   };
 
+  const result = accionParamsSchema.safeParse(normalizedData);
 
-  const result =
-    accionParamsSchema.safeParse(
-      normalizedData,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
       errors: {},
 
-      data:
-        result.data,
-
+      data: result.data,
     };
-
   }
 
-
   return {
-
     isValid: false,
 
-    errors:
-      formatErrors(
-        result.error,
-      ),
+    errors: formatErrors(result.error),
 
     data: null,
-
   };
 };
-
 
 /**
  * ============================================================
@@ -489,49 +254,27 @@ export const validateAccionParams = (
  * ============================================================
  */
 
-export const validateAccionId = (
-  id,
-) => {
+export const validateAccionId = (id) => {
+  const result = accionIdSchema.safeParse(id);
 
-  const result =
-    accionIdSchema.safeParse(
-      id,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
-      data:
-        result.data,
+      data: result.data,
 
       error: null,
-
     };
-
   }
 
-
   return {
-
     isValid: false,
 
     data: null,
 
-    error:
-      result.error
-        ?.issues?.[0]
-        ?.message ||
-      'Identificador inválido',
-
+    error: result.error?.issues?.[0]?.message || 'Identificador inválido',
   };
 };
-
 
 /**
  * ============================================================
@@ -539,61 +282,33 @@ export const validateAccionId = (
  * ============================================================
  */
 
-export const validateAccionEstado = (
-  data,
-) => {
-
+export const validateAccionEstado = (data) => {
   const normalizedData = {
-
-    estado:
-      String(
-        data?.estado ||
-          '',
-      )
-        .trim()
-        .toUpperCase(),
-
+    estado: String(data?.estado || '')
+      .trim()
+      .toUpperCase(),
   };
 
+  const result = accionEstadoSchema.safeParse(normalizedData);
 
-  const result =
-    accionEstadoSchema.safeParse(
-      normalizedData,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
       errors: {},
 
-      data:
-        result.data,
-
+      data: result.data,
     };
-
   }
 
-
   return {
-
     isValid: false,
 
-    errors:
-      formatErrors(
-        result.error,
-      ),
+    errors: formatErrors(result.error),
 
     data: null,
-
   };
 };
-
 
 /**
  * ============================================================
@@ -601,60 +316,32 @@ export const validateAccionEstado = (
  * ============================================================
  */
 
-export const validateCambioNombreAccion = (
-  data,
-) => {
-
+export const validateCambioNombreAccion = (data) => {
   const normalizedData = {
+    nuevoSocioId: data?.nuevoSocioId,
 
-    nuevoSocioId:
-      data?.nuevoSocioId,
-
-    tipo:
-      String(
-        data?.tipo ||
-          '',
-      )
-        .trim()
-        .toUpperCase(),
-
+    tipo: String(data?.tipo || '')
+      .trim()
+      .toUpperCase(),
   };
 
+  const result = cambiarNombreAccionSchema.safeParse(normalizedData);
 
-  const result =
-    cambiarNombreAccionSchema.safeParse(
-      normalizedData,
-    );
-
-
-  if (
-    result.success
-  ) {
-
+  if (result.success) {
     return {
-
       isValid: true,
 
       errors: {},
 
-      data:
-        result.data,
-
+      data: result.data,
     };
-
   }
 
-
   return {
-
     isValid: false,
 
-    errors:
-      formatErrors(
-        result.error,
-      ),
+    errors: formatErrors(result.error),
 
     data: null,
-
   };
 };

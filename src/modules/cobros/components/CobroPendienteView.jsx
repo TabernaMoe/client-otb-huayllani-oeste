@@ -10,6 +10,7 @@ import CobrosPendientes from './CobrosPendientes';
 import ResumenCobro from './ResumenCobro';
 import FormularioPago from './FormularioPago';
 import QrPagoModal from './QrPagoModal';
+import { imprimirRecibo } from '../reciboPdf/generarReciboHTML.js';
 
 const initialForm = {
   socio_id: '',
@@ -133,6 +134,11 @@ export default function CobroPendienteView({
     if (!response.ok) {
       setMessage({ type: 'error', text: response.message });
       return;
+    }
+
+    console.log(response);
+    if (response.data) {
+      imprimirRecibo(response.data);
     }
 
     if (validation.data.metodo_pago === 'QR') {

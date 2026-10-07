@@ -11,7 +11,11 @@ const asambleaSchema = z.object({
 
 const asistenciaSchema = z.object({
   asistio: z.enum(['ASISTIO', 'FALTA', 'SIN EFECTO', 'RETRASO', 'PERMISO']),
-  observacion: z.string().trim().max(250, 'Máximo 250 caracteres'),
+  observacion: z
+    .string({ required_error: 'La observación es obligatoria' })
+    .trim()
+    .min(1, 'La observación es obligatoria')
+    .max(250, 'Máximo 250 caracteres'),
 });
 
 const errorsFrom = (error) =>

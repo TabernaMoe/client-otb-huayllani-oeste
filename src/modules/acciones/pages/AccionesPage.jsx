@@ -13,6 +13,8 @@ import SelectComponent from '../../../components/Select';
 import AccionModal from '../components/AccionModal';
 import { AccionesServices as Servs } from '../services/acciones.services';
 import { toast } from 'react-toastify';
+import { MODALS, useModalManager } from '../../../hooks/useModalManager';
+import { imprimirReciboAgua } from '../Pruebas/recibo';
 
 const estadoOptions = [
   { value: 'ACTIVO', label: 'Activo' },
@@ -58,6 +60,8 @@ export default function AccionesPage() {
     totalPages: 1,
   });
 
+  const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
+
   const cargarAcciones = useCallback(async () => {
     setLoading(true);
 
@@ -96,14 +100,9 @@ export default function AccionesPage() {
     else setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const openCreate = () => {
-    setModalOpen(true);
+  const handleUpdate = async (data) => {
+    console.log(data);
   };
-
-  const closeModal = () => {
-    setModalOpen(false);
-  };
-
 
   const handlePdfCaratula = useCallback(async (id) => {
     try {
@@ -183,6 +182,13 @@ export default function AccionesPage() {
             >
               Obtener carátula
             </button>
+            <button
+              type="button"
+              onClick={() => openModal(MODALS.EDIT, row.original.id)}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              Editar
+            </button>
           </div>
         ),
       },
@@ -210,7 +216,9 @@ export default function AccionesPage() {
 
         <button
           type="button"
-          onClick={openCreate}
+          onClick={() => {
+            openModal(MODALS.CREATE);
+          }}
           className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
         >
           <PlusIcon className="h-5 w-5" />
@@ -307,8 +315,15 @@ export default function AccionesPage() {
       />
 
       <AccionModal
-        open={modalOpen}
+        open={isModalOpen(MODALS.CREATE)}
         onClose={closeModal}
+        onCreated={handleSaved}
+      />
+
+      <AccionModal
+        open={isModalOpen(MODALS.EDIT)}
+        onClose={closeModal}
+        accionId={modalState.data}
         onCreated={handleSaved}
       />
     </section>

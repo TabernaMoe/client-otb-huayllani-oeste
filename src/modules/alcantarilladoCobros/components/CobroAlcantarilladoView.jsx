@@ -176,7 +176,7 @@ export default function CobroAlcantarilladoView() {
       setMessage({ type: 'error', text: response.message });
       return;
     }
-
+    console.log(response.data);
     if (response.data) {
       imprimirRecibo(response.data);
     }

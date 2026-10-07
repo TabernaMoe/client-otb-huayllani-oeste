@@ -32,7 +32,9 @@ import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
 import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
 
 import AccionesAlcantarilladoPage from '../modules/alcantarillado/pages/AccionesAlcantarilladoPage';
+import CobroAlcantarilladoPage from '../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage';
 import AdelantoPagosPage from '../modules/adelantoPagos/pages/AdelantoPagosPage';
+import ModificarMora from '../modules/lecturas/modificar-mora/ModificarMora';
 
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
@@ -83,6 +85,10 @@ export const privateRoutes = (
           <Route path="acciones/adelantos" element={<AdelantoPagosPage />} />
           {/* -----------------agregar permisos-------------------------- */}
           <Route path="alcantarillado" element={<AlcantarilladoPage />} />
+          <Route
+            path="alcantarillado-cobros"
+            element={<CobroAlcantarilladoPage />}
+          />
           <Route
             path="alcantarillado/acciones"
             element={<AccionesAlcantarilladoPage />}
@@ -153,6 +159,7 @@ export const privateRoutes = (
           <Route path="lecturas" element={<LecturasPage />} />
         </Route>
 
+        <Route path="lectura-mora" element={<ModificarMora />} />
         <Route
           element={permission([
             'pago_agua.ver',

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reqInteger, reqString } from '../../../validators/funcionesZod';
 
 export const lecturaSchema = z.object({
   lectura_actual: z
@@ -21,3 +22,14 @@ export const validateLectura = (form) => {
     ),
   };
 };
+
+export const modificarMoraSchema = z.object({
+  mora: reqInteger('Mora'),
+  observacion_mora: reqString({
+    label: 'Observacion',
+    min: 5,
+    max: 255,
+    regex: /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s#\-.,/]+$/,
+    regexMessage: 'La observacion contiene caracteres inválidos',
+  }),
+});

@@ -9,27 +9,10 @@ import {
 
 const tabs = [
   {
-    value: 'cobros_generales',
-    label: 'Cobros generales',
-    icon: ListBulletIcon,
+    value: 'alcantarillado',
+    label: 'Cobros alcantarillado',
+    icon: WrenchScrewdriverIcon,
   },
-  {
-    value: 'acciones',
-    label: 'Cobros acciones de agua',
-    icon: ClipboardDocumentListIcon,
-  },
-  // {
-  //   value: 'alcantarillado',
-  //   label: 'Cobros alcantarillado',
-  //   icon: WrenchScrewdriverIcon,
-  // },
-  { value: 'multas', label: 'Cobrar multas', icon: ExclamationTriangleIcon },
-  // {
-  //   value: 'adicionales',
-  //   label: 'Cobros adicionales',
-  //   icon: CurrencyDollarIcon,
-  // },
-  { value: 'pagos', label: 'Pagos', icon: BanknotesIcon },
 ];
 
 export default function CobrosTabs({ activeView, onChange }) {

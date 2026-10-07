@@ -130,11 +130,17 @@ export const AdminNav = [
         icon: ClipboardDocumentCheckIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
+      // {
+      //   label: 'Adelanto de pagos',
+      //   to: '/admin/acciones/adelantos',
+      //   icon: BanknotesIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
       {
-        label: 'Adelanto de pagos',
-        to: '/admin/acciones/adelantos',
-        icon: BanknotesIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        label: 'Cobros Generales',
+        to: '/admin/cobros',
+        icon: CreditCardIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
     ],
   },
@@ -152,6 +158,12 @@ export const AdminNav = [
       {
         label: 'Alcantarillado',
         to: '/admin/alcantarillado',
+        icon: WrenchScrewdriverIcon,
+        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      },
+      {
+        label: 'Cobros',
+        to: '/admin/alcantarillado-cobros',
         icon: WrenchScrewdriverIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
@@ -184,6 +196,12 @@ export const AdminNav = [
       {
         label: 'Lecturas',
         to: '/admin/lecturas',
+        icon: DocumentTextIcon,
+        permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+      },
+      {
+        label: 'Mora',
+        to: '/admin/lectura-mora',
         icon: DocumentTextIcon,
         permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
       },

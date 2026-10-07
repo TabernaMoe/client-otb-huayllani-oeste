@@ -1,9 +1,31 @@
+import { useState, useEffect } from 'react';
 import FormModal from '../../../components/FormModal';
-
+import { LecturasServices } from '../services/lecturas.services';
 const money = (value) => `Bs ${Number(value).toFixed(2)}`;
 
-export default function HistorialLecturasModal({ open, accion, onClose }) {
-  const lecturas = accion?.lecturas ?? [];
+export default function HistorialLecturasModal({
+  open,
+  accion,
+  accion_id,
+  onClose,
+}) {
+  const [loading, setLoading] = useState(false);
+  const [filas, setFilas] = useState([]);
+
+  useEffect(() => {
+    const dataLoad = async () => {
+      try {
+        setLoading(true);
+        const response = await LecturasServices.getHistorial({ accion_id });
+        console.log(response);
+        setFilas(Array.isArray(response.data) ? response.data : []);
+      } catch (e) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    dataLoad();
+  }, [open]);
 
   return (
     <FormModal
@@ -26,22 +48,30 @@ export default function HistorialLecturasModal({ open, accion, onClose }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {lecturas.map((lectura, index) => (
+              {filas.map((lectura, index) => (
                 <tr key={`${lectura.periodo}-${index}`}>
-                  <td className="px-4 py-3 font-semibold text-slate-800">{lectura.periodo}</td>
-                  <td className="px-4 py-3">{lectura.lectura_anterior} m³</td>
-                  <td className="px-4 py-3">{lectura.lectura_actual} m³</td>
-                  <td className="px-4 py-3 font-semibold text-emerald-700">{lectura.consumo_m3} m³</td>
+                  <td className="px-4 py-3 font-semibold text-slate-800">
+                    {lectura.periodo}
+                  </td>
+                  <td className="px-4 py-3">{lectura.lectura_anterior}</td>
+                  <td className="px-4 py-3">{lectura.lectura_actual} </td>
+                  <td className="px-4 py-3 font-semibold text-emerald-700">
+                    {lectura.consumo_m3} m³
+                  </td>
                   <td className="px-4 py-3">{money(lectura.precio)}</td>
-                  <td className="px-4 py-3 text-slate-500">{lectura.observacion}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {lectura.observacion}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {!lecturas.length && (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No hay lecturas registradas.</p>
+        {!filas.length && (
+          <p className="px-4 py-8 text-center text-sm text-slate-500">
+            No hay lecturas registradas.
+          </p>
         )}
       </div>
     </FormModal>

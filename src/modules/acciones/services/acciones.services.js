@@ -68,7 +68,6 @@ export class AccionesServices {
     }
   }
 
-
   /**
    * ==========================================================
    * OBTENER UN DETALLE DE ACCIÓN POR ID
