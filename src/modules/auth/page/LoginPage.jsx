@@ -6,6 +6,7 @@ import PasswordField from '../../../components/PasswordField';
 import Logo from '/logo-otb.webp';
 import { AuthService } from '../services/auth.services';
 import { validateLoginForm } from '../schema/auth.schema';
+import { getHomeRoute } from '../utils/authRedirect';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -34,29 +35,18 @@ export default function LoginPage() {
       setLoading(true);
       setGeneralError('');
 
-      const data = await AuthService.login({
+      const session = await AuthService.login({
         user: form.user.trim(),
         password: form.password.trim(),
       });
 
-      if (!data.ok) {
-        setGeneralError(data.message);
+      if (!session.ok || !session.token) {
+        setGeneralError(session.message || 'No se pudo iniciar sesión');
         return;
       }
 
-      AuthService.saveSession(data);
-
-      console.log(
-        data?.usuario?.rol === 'usuario_normal'
-          ? '/cliente/dashboard'
-          : '/admin/dashboard',
-      );
-      navigate(
-        data?.usuario?.rol === 'usuario_normal'
-          ? '/cliente/dashboard'
-          : '/admin/dashboard',
-        { replace: true },
-      );
+      AuthService.saveSession(session);
+      navigate(getHomeRoute(session.user), { replace: true });
     } catch (error) {
       setGeneralError(
         error.response?.data?.message || 'No se pudo iniciar sesión',

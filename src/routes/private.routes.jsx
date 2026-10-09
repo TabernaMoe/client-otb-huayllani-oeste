@@ -2,11 +2,10 @@ import { Navigate, Route } from 'react-router-dom';
 
 import ProtectedRoute from './ProtectedRoute';
 import PermissionRoute from './PermissionRoute';
-import AdminRoute from './AdminRoute';
-import ClienteRoute from './ClienteRoute';
+import AccountTypeRoute from './AccountTypeRoute';
 
 import AdminLayout from '../layouts/AdminLayout';
-import ClienteLayout from '../layouts/ClienteLayout';
+import SocioLayout from '../layouts/SocioLayout';
 
 import AdminDashboardPage from '../modules/Admin/pages/AdminDashboardPage';
 import AdminPage from '../modules/Admin/pages/AdminPage';
@@ -18,6 +17,7 @@ import SocioPage from '../modules/socios/pages/SocioPage';
 import AccionesPage from '../modules/acciones/pages/AccionesPage';
 import DetalleAccionPage from '../modules/detalleAccion/pages/DetalleAccionPage';
 import CobrosPage from '../modules/cobros/pages/CobrosPage';
+import CobroUniversalPage from '../modules/cobroUniversal/pages/CobroUniversalPage';
 import AlcantarilladoPage from '../modules/alcantarillado/pages/AlcantarilladoPage';
 import CambioNombrePage from '../modules/cambioNombre/pages/CambioNombrePage';
 import LecturasPage from '../modules/lecturas/pages/LecturasPage';
@@ -28,8 +28,13 @@ import AsambleasPage from '../modules/asambleas/pages/AsambleasPage';
 import TipoAccionPage from '../modules/tipoAccion/pages/TipoAccionPage';
 import InventarioPage from '../modules/inventario/pages/InventarioPage';
 import MultasPage from '../modules/multas/pages/MultasPage';
-import ClientePerfilPage from '../modules/client/pages/ClientePerfilPage';
-import ClienteDashboardPage from '../modules/client/pages/ClienteDashboardPage';
+import SocioDashboardPage from '../modules/socioPortal/pages/SocioDashboardPage';
+import MisAccionesPage from '../modules/socioPortal/pages/MisAccionesPage';
+import MisLecturasPage from '../modules/socioPortal/pages/MisLecturasPage';
+import MisCobrosPage from '../modules/socioPortal/pages/MisCobrosPage';
+import MisRecibosPage from '../modules/socioPortal/pages/MisRecibosPage';
+import MiPerfilPage from '../modules/socioPortal/pages/MiPerfilPage';
+import CambiarContrasenaPage from '../modules/socioPortal/pages/CambiarContrasenaPage';
 
 import AccionesAlcantarilladoPage from '../modules/alcantarillado/pages/AccionesAlcantarilladoPage';
 import CobroAlcantarilladoPage from '../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage';
@@ -40,7 +45,7 @@ const permission = (codes) => <PermissionRoute permission={codes} />;
 
 export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
-    <Route element={<AdminRoute />}>
+    <Route element={<AccountTypeRoute allowed={['ADMIN']} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
@@ -147,6 +152,7 @@ export const privateRoutes = (
           ])}
         >
           <Route path="cobros" element={<CobrosPage />} />
+          <Route path="cobros-universales" element={<CobroUniversalPage />} />
         </Route>
 
         <Route
@@ -191,13 +197,20 @@ export const privateRoutes = (
       </Route>
     </Route>
 
-    <Route element={<ClienteRoute />}>
-      <Route path="/cliente" element={<ClienteLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<ClienteDashboardPage />} />
-        <Route path="perfil" element={<ClientePerfilPage />} />
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
+    <Route element={<AccountTypeRoute allowed={['SOCIO']} />}>
+      <Route path="/socio" element={<SocioLayout />}>
+        <Route index element={<Navigate to="inicio" replace />} />
+        <Route path="inicio" element={<SocioDashboardPage />} />
+        <Route path="acciones" element={<MisAccionesPage />} />
+        <Route path="lecturas" element={<MisLecturasPage />} />
+        <Route path="cobros" element={<MisCobrosPage />} />
+        <Route path="recibos" element={<MisRecibosPage />} />
+        <Route path="perfil" element={<MiPerfilPage />} />
+        <Route path="cambiar-contrasena" element={<CambiarContrasenaPage />} />
+        <Route path="*" element={<Navigate to="inicio" replace />} />
       </Route>
     </Route>
+
+    <Route path="/cliente/*" element={<Navigate to="/socio/inicio" replace />} />
   </Route>
 );

@@ -181,6 +181,12 @@ export const AdminNav = [
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
       {
+        label: 'Cobros universales',
+        to: '/admin/cobros-universales',
+        icon: BanknotesIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
+      {
         label: 'Cobros de agua',
         to: '/admin/cobros-agua',
         icon: ReceiptPercentIcon,
