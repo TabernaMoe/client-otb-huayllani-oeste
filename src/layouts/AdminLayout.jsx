@@ -11,7 +11,7 @@ import {
   ChevronRightIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/solid';
 
 import LogoOtb from '/logo-otb.webp';
 import { AdminNav } from './Nav';

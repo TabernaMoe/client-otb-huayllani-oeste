@@ -1,11 +1,15 @@
 import SocioListPage from './SocioListPage';
 import { SocioPortalServices } from '../services/socioPortal.services';
+import { formatDate,formatCurrency, } from '../../../utils/formatters';
+const loader = async () => {
+  const response = await SocioPortalServices.getCobros();
+  return response;
+};
 
-const loader = () => SocioPortalServices.getCobros();
 const columns = [
   { key: 'concepto', label: 'Concepto' },
-  { key: 'fecha', label: 'Fecha' },
-  { key: 'monto', label: 'Monto' },
+  { key: 'fecha_emision', label: 'Fecha',render: formatDate, },
+  { key: 'monto', label: 'Monto', render: formatCurrency, },
   { key: 'estado', label: 'Estado' },
 ];
 

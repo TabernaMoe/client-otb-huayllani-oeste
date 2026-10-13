@@ -17,7 +17,7 @@ import {
   UsersIcon,
   WrenchScrewdriverIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/solid';
 
 /**
  * ============================================================
@@ -316,7 +316,7 @@ export default function InicioOTB() {
 
       <section
         id="inicio"
-        className="relative overflow-hidden bg-gradient-to-br from-sky-950 via-sky-800 to-cyan-600"
+        className="relative overflow-hidden bg-linear-to-br from-sky-950 via-sky-800 to-cyan-600"
       >
         {/* DECORACIONES */}
 
@@ -366,7 +366,7 @@ export default function InicioOTB() {
 
           <div className="relative">
             <div className="rounded-3xl border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur">
-              <div className="flex min-h-[390px] items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-sky-900">
+              <div className="flex min-h-97.5 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-sky-900">
                 <div className="px-8 text-center text-white">
                   <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-white/10">
                     <HomeModernIcon className="h-20 w-20 text-sky-100" />
@@ -533,7 +533,7 @@ export default function InicioOTB() {
         <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 lg:grid-cols-2 lg:px-8">
           {/* IMAGEN / BLOQUE */}
 
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-700 to-sky-950 p-10 text-white shadow-xl">
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-sky-700 to-sky-950 p-10 text-white shadow-xl">
             <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-cyan-300/20 blur-3xl" />
 
             <div className="relative">
@@ -610,7 +610,7 @@ export default function InicioOTB() {
       ====================================================== */}
 
       <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-sky-950 via-sky-800 to-cyan-600 text-white shadow-xl">
+        <div className="overflow-hidden rounded-3xl bg-linear-to-br from-sky-950 via-sky-800 to-cyan-600 text-white shadow-xl">
           <div className="grid gap-12 p-8 sm:p-12 lg:grid-cols-2 lg:p-16">
             {/* INFORMACIÓN */}
 
@@ -875,7 +875,7 @@ export default function InicioOTB() {
           DIRECTIVA
       ====================================================== */}
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-sky-950 via-sky-900 to-sky-800 py-24 text-white">
+      <section className="relative overflow-hidden bg-linear-to-br from-sky-950 via-sky-900 to-sky-800 py-24 text-white">
         <div className="absolute -left-24 top-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
 
         <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-sky-300/10 blur-3xl" />

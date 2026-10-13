@@ -4,10 +4,10 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/solid';
 
 import LogoOtb from '/logo-otb.webp';
-import { SocioNav } from '../navigation/socioNav';
+import { SocioNav } from './SocioNav';
 import { AuthService } from '../modules/auth/services/auth.services';
 
 function cx(...classes) {

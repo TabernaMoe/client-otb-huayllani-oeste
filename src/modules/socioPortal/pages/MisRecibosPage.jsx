@@ -1,12 +1,12 @@
 import SocioListPage from './SocioListPage';
 import { SocioPortalServices } from '../services/socioPortal.services';
-
+import { formatDate, formatCurrency } from '../../../utils/formatters';
 const loader = () => SocioPortalServices.getRecibos();
 const columns = [
   { key: 'numero_recibo', label: 'N.º recibo' },
-  { key: 'fecha', label: 'Fecha' },
+  { key: 'fecha_emision', label: 'Fecha', render: formatDate },
   { key: 'concepto', label: 'Concepto' },
-  { key: 'monto', label: 'Monto' },
+  { key: 'monto', label: 'Monto', render: formatCurrency },
 ];
 
 export default function MisRecibosPage() {

@@ -7,7 +7,7 @@ import {
   HomeIcon,
   UserIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/solid';
 
 import LogoOtb from '/logo-otb.webp';
 import { AuthService } from '../modules/auth/services/auth.services';
