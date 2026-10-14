@@ -2,7 +2,7 @@ import {
   IdentificationIcon,
   ShieldCheckIcon,
   UserCircleIcon,
-} from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/solid';
 
 import { AuthService } from '../../auth/services/auth.services';
 
