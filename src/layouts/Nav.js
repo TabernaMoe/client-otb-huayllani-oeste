@@ -1,5 +1,6 @@
 import {
   AdjustmentsHorizontalIcon,
+  ArrowTrendingDownIcon,
   BanknotesIcon,
   CalendarDaysIcon,
   ChartBarSquareIcon,
@@ -263,6 +264,19 @@ export const AdminNav = [
         to: '/admin/reportes',
         icon: ChartBarSquareIcon,
         permission: ['reporte.ver', 'reportes.ver'],
+      },
+    ],
+  },
+
+  {
+    id: 'egresos',
+    title: 'Egresos',
+    icon: ArrowTrendingDownIcon,
+    items: [
+      {
+        label: 'Gestión de egresos',
+        to: '/admin/egresos',
+        icon: BanknotesIcon,
       },
     ],
   },

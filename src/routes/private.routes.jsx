@@ -40,6 +40,7 @@ import AccionesAlcantarilladoPage from '../modules/alcantarillado/pages/Acciones
 import CobroAlcantarilladoPage from '../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage';
 import AdelantoPagosPage from '../modules/adelantoPagos/pages/AdelantoPagosPage';
 import ModificarMora from '../modules/lecturas/modificar-mora/ModificarMora';
+import EgresosPage from '../modules/egresos/pages/EgresosPage';
 
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
@@ -166,6 +167,7 @@ export const privateRoutes = (
         </Route>
 
         <Route path="lectura-mora" element={<ModificarMora />} />
+        <Route path="egresos" element={<EgresosPage />} />
         <Route
           element={permission([
             'pago_agua.ver',
