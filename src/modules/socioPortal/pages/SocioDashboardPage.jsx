@@ -50,3 +50,17 @@ function Card({ title, value }) {
     </article>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
