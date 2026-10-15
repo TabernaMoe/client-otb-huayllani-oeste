@@ -5,7 +5,6 @@ import {
 } from '@heroicons/react/24/solid';
 
 import { AuthService } from '../../auth/services/auth.services';
-
 function formatRole(role) {
   return role.replaceAll('_', ' ');
 }
