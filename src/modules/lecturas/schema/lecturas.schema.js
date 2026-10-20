@@ -33,3 +33,13 @@ export const modificarMoraSchema = z.object({
     regexMessage: 'La observacion contiene caracteres inválidos',
   }),
 });
+
+export const updateOblyLecturaSchema = z
+  .object({
+    lectura_actual: reqInteger('Lectura actual', true, 1),
+    lectura_anterior: reqInteger('Lectura anterior', true, 1),
+  })
+  .refine((data) => data.lectura_actual >= data.lectura_anterior, {
+    message: 'La lectura actual no puede ser menor que la lectura anterior',
+    path: ['lectura_actual'],
+  });

@@ -106,6 +106,12 @@ export const AdminNav = [
         icon: CreditCardIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
+      {
+        label: 'Recibo universal',
+        to: '/admin/recibo-universal',
+        icon: CreditCardIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
     ],
   },
   {
@@ -144,12 +150,12 @@ export const AdminNav = [
         icon: CreditCardIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
-      {
-        label: 'Cobros universales',
-        to: '/admin/cobros-universales',
-        icon: BanknotesIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      },
+      // {
+      //   label: 'Cobros universales',
+      //   to: '/admin/cobros-universales',
+      //   icon: BanknotesIcon,
+      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      // },
       {
         label: 'Cobros de agua',
         to: '/admin/cobros-agua',
@@ -295,4 +301,3 @@ export const AdminNav = [
     ],
   },
 ];
-

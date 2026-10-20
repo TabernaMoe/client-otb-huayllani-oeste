@@ -41,6 +41,7 @@ import CobroAlcantarilladoPage from '../modules/alcantarilladoCobros/pages/Cobro
 import AdelantoPagosPage from '../modules/adelantoPagos/pages/AdelantoPagosPage';
 import ModificarMora from '../modules/lecturas/modificar-mora/ModificarMora';
 import EgresosPage from '../modules/egresos/pages/EgresosPage';
+import ReciboUniversaPage from '../modules/reciboUniversal/page/ReciboUniversaPage';
 
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
@@ -195,6 +196,8 @@ export const privateRoutes = (
           <Route path="reportes" element={<ReportesPage />} />
         </Route>
 
+        <Route path="recibo-universal" element={<ReciboUniversaPage />} />
+
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Route>
@@ -213,6 +216,9 @@ export const privateRoutes = (
       </Route>
     </Route>
 
-    <Route path="/cliente/*" element={<Navigate to="/socio/inicio" replace />} />
+    <Route
+      path="/cliente/*"
+      element={<Navigate to="/socio/inicio" replace />}
+    />
   </Route>
 );

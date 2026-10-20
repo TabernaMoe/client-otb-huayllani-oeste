@@ -90,4 +90,15 @@ export class LecturasServices {
       return toServiceError(error);
     }
   }
+  static async UpdateOnlyLectura({ id, payload }) {
+    try {
+      const { data } = await api.patch(
+        `/admin/lectura/update-only-lectura/${id}`,
+        payload,
+      );
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
 }

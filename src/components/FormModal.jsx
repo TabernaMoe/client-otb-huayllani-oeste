@@ -11,7 +11,7 @@ export default function FormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-4xl rounded-3xl bg-white shadow-2xl">
+      <div className="w-full max-w-6xl rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
           <div>
             <h2 className="text-lg font-bold text-slate-900">{title}</h2>

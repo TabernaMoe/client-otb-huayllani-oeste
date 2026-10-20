@@ -166,3 +166,18 @@ export const reqEstadoAccion = (label = 'Estado', required = true) => {
 
   return schema;
 };
+export const reqDecimal = ({ label = 'Monto', required = true } = {}) => {
+  let schema = z.coerce
+    .number({
+      required_error: `Debe ingresar ${label.toLowerCase()}`,
+      invalid_type_error: `${label} debe ser un número`,
+    })
+    .finite(`${label} debe ser un número válido`)
+    .min(1, `${label} debe ser mayor a 0`);
+
+  if (!required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+};
