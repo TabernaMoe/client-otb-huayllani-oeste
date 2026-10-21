@@ -1,12 +1,34 @@
-import { useEffect, useState } from 'react';
+// src/modules/socioPortal/hooks/useSocioAcciones.js
 
-import { SocioPortalServices } from '../services/socioPortal.services';
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  SocioPortalServices,
+} from '../services/socioPortal.services';
 
 export function useSocioAcciones() {
-  const [acciones, setAcciones] = useState([]);
-  const [accionSeleccionada, setAccionSeleccionada] = useState(null);
-  const [loadingAcciones, setLoadingAcciones] = useState(true);
-  const [errorAcciones, setErrorAcciones] = useState('');
+  const [
+    acciones,
+    setAcciones,
+  ] = useState([]);
+
+  const [
+    accionSeleccionada,
+    setAccionSeleccionada,
+  ] = useState(null);
+
+  const [
+    loadingAcciones,
+    setLoadingAcciones,
+  ] = useState(true);
+
+  const [
+    errorAcciones,
+    setErrorAcciones,
+  ] = useState('');
 
   useEffect(() => {
     async function cargarAcciones() {
@@ -14,17 +36,26 @@ export function useSocioAcciones() {
         setLoadingAcciones(true);
         setErrorAcciones('');
 
-        const response = await SocioPortalServices.getAcciones();
-        const data = response?.data ?? response ?? [];
+        const response =
+          await SocioPortalServices
+            .getAcciones();
+
+        const data =
+          response?.data ??
+          response ??
+          [];
 
         setAcciones(data);
 
         if (data.length > 0) {
-          setAccionSeleccionada((actual) => actual ?? data[0].id);
+          setAccionSeleccionada(
+            data[0].id,
+          );
         }
       } catch (error) {
         setErrorAcciones(
-          error.response?.data?.message ||
+          error.response?.data
+            ?.message ||
             'No se pudieron cargar las acciones',
         );
       } finally {
@@ -36,7 +67,11 @@ export function useSocioAcciones() {
   }, []);
 
   const accionActual =
-    acciones.find((accion) => accion.id === accionSeleccionada) ?? null;
+    acciones.find(
+      (accion) =>
+        accion.id ===
+        accionSeleccionada,
+    ) ?? null;
 
   return {
     acciones,
