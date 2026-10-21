@@ -1,10 +1,10 @@
 import {
   BoltIcon,
-  MapPinIcon,
-  TagIcon,
   CheckCircleIcon,
   CurrencyDollarIcon,
-} from '@heroicons/react/24/outline';
+  MapPinIcon,
+  TagIcon,
+} from '@heroicons/react/24/solid';
 
 export default function AccionCard({ accion }) {
   return (
@@ -36,7 +36,7 @@ export default function AccionCard({ accion }) {
       <div className="space-y-4 p-6">
         <Dato
           icon={TagIcon}
-          label="Tipo"
+          label="Tipo de acción"
           value={accion.tipo || 'Sin tipo'}
         />
 
@@ -63,6 +63,25 @@ export default function AccionCard({ accion }) {
           label="Dirección"
           value={accion.direccion || 'Sin dirección'}
         />
+
+        {accion.detalles?.length > 0 && (
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              Detalles asociados
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {accion.detalles.map((detalle) => (
+                <span
+                  key={detalle.id}
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
+                >
+                  {detalle.nombre}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

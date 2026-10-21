@@ -1,5 +1,9 @@
 import { api } from '../../../services/api';
 
+function buildAccionParams(accionId) {
+  return accionId ? { accion_id: accionId } : {};
+}
+
 export const SocioPortalServices = {
   async getResumen() {
     const { data } = await api.get('/socio/me/resumen');
@@ -16,13 +20,19 @@ export const SocioPortalServices = {
     return data;
   },
 
-  async getLecturas() {
-    const { data } = await api.get('/socio/me/lecturas');
+  async getLecturas(accionId = null) {
+    const { data } = await api.get('/socio/me/lecturas', {
+      params: buildAccionParams(accionId),
+    });
+
     return data;
   },
 
-  async getCobros() {
-    const { data } = await api.get('/socio/me/cobros');
+  async getCobros(accionId = null) {
+    const { data } = await api.get('/socio/me/cobros', {
+      params: buildAccionParams(accionId),
+    });
+
     return data;
   },
 
