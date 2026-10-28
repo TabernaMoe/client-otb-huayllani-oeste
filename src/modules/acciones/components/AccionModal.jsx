@@ -212,17 +212,6 @@ const getChangedFields = (original, current) => {
       return;
     }
 
-    /*
-     * Los selects pueden devolver string:
-     *
-     * "2"
-     *
-     * mientras la API puede devolver:
-     *
-     * 2
-     *
-     * Para los IDs normalizamos antes de comparar.
-     */
     if (field === 'calle_id' || field === 'tarifa_id') {
       const originalValue = normalizeId(original[field]);
       const currentValue = normalizeId(current[field]);
@@ -234,15 +223,7 @@ const getChangedFields = (original, current) => {
       return;
     }
 
-    /*
-     * Normalizamos nro_medidor para evitar que:
-     *
-     * null
-     * ''
-     *
-     * sean detectados como modificación cuando
-     * representan lo mismo para el formulario.
-     */
+ 
     if (field === 'nro_medidor') {
       const originalValue = original[field] ?? '';
       const currentValue = current[field] ?? '';
