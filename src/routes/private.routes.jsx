@@ -43,6 +43,8 @@ import ModificarMora from '../modules/lecturas/modificar-mora/ModificarMora';
 import EgresosPage from '../modules/egresos/pages/EgresosPage';
 import ReciboUniversaPage from '../modules/reciboUniversal/page/ReciboUniversaPage';
 
+import CobroUniversalDosPage from '../modules/reciboUniversal/page/cobroUniversalPage';
+
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
 export const privateRoutes = (
@@ -197,6 +199,7 @@ export const privateRoutes = (
         </Route>
 
         <Route path="recibo-universal" element={<ReciboUniversaPage />} />
+        <Route path="cobro-universal-dos" element={<CobroUniversalDosPage />} />
 
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>

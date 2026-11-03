@@ -14,6 +14,8 @@ import AccionModal from '../components/AccionModal';
 import { AccionesServices as Servs } from '../services/acciones.services';
 import { toast } from 'react-toastify';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
+import DataTableLocal from '../../../components/DataTableLocal';
+import { imprimirReciboAgua } from '../Pruebas/recibo';
 
 const estadoOptions = [
   { value: 'ACTIVO', label: 'Activo' },
@@ -48,6 +50,7 @@ function StatCard({ label, value, icon: Icon, className }) {
 export default function AccionesPage() {
   const [acciones, setAcciones] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState('');
@@ -59,24 +62,19 @@ export default function AccionesPage() {
   });
 
   const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
+
   const cargarAcciones = useCallback(async () => {
     setLoading(true);
 
-    try {
-      const respuesta = await Servs.getAll({
-        page: pagination.page,
-        limit: pagination.limit,
-        search,
-        estado: estado || undefined,
-      });
+    const respuesta = await Servs.getAll({
+      page: pagination.page,
+      limit: pagination.limit,
+      search,
+      estado: estado || undefined,
+    });
 
-      if (!respuesta?.ok) {
-        toast.error(respuesta?.message || 'No se pudieron cargar las acciones');
-        return;
-      }
-
-      setAcciones(respuesta.data ?? []);
-
+    if (respuesta.ok) {
+      setAcciones(respuesta.data);
       setPagination((prev) => ({
         ...prev,
         page: respuesta.page,
@@ -84,9 +82,9 @@ export default function AccionesPage() {
         totalItems: respuesta.total,
         totalPages: respuesta.totalPages,
       }));
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   }, [pagination.page, pagination.limit, search, estado]);
 
   useEffect(() => {
@@ -102,7 +100,12 @@ export default function AccionesPage() {
     if (pagination.page === 1) await cargarAcciones();
     else setPagination((prev) => ({ ...prev, page: 1 }));
   };
-const handlePdfCaratula = useCallback(async (id) => {
+
+  const handleUpdate = async (data) => {
+    console.log(data);
+  };
+
+  const handlePdfCaratula = useCallback(async (id) => {
     try {
       const pdfBlob = await Servs.getCaratula(id);
 
@@ -141,12 +144,12 @@ const handlePdfCaratula = useCallback(async (id) => {
         ),
       },
       {
-        accessorKey: 'nombre_completo',
+        accessorKey: 'nombre_socio',
         header: 'Socio',
         cell: ({ row }) => (
           <div>
             <p className="font-medium text-slate-800">
-              {row.original.nombre_completo}
+              {row.original.nombre_socio}
             </p>
             <p className="text-xs text-slate-400">
               Medidor: {row.original.nro_medidor}
@@ -191,7 +194,7 @@ const handlePdfCaratula = useCallback(async (id) => {
         ),
       },
     ],
-    [handlePdfCaratula, openModal],
+    [handlePdfCaratula],
   );
 
   const activas = acciones.filter((item) => item.estado === 'ACTIVO').length;

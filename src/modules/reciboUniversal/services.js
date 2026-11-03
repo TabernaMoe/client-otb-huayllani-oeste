@@ -18,4 +18,12 @@ export class ReciboMadreSerivices {
       return toServiceError(e);
     }
   }
+  static async createCobro({ payload }) {
+    try {
+      const response = await api.post('/admin/cobro/crear-cobro', payload);
+      return response.data;
+    } catch (e) {
+      return toServiceError(e);
+    }
+  }
 }

@@ -100,18 +100,18 @@ export const AdminNav = [
       //   icon: BanknotesIcon,
       //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       // },
-      {
-        label: 'Cobros Generales',
-        to: '/admin/cobros',
-        icon: CreditCardIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      },
-      {
-        label: 'Recibo universal',
-        to: '/admin/recibo-universal',
-        icon: CreditCardIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      },
+      // {
+      //   label: 'Cobros Generales',
+      //   to: '/admin/cobros',
+      //   icon: CreditCardIcon,
+      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      // },
+      // {
+      //   label: 'Cuenta por cobrar',
+      //   to: '/admin/recibo-universal',
+      //   icon: CreditCardIcon,
+      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      // },
     ],
   },
   {
@@ -131,12 +131,12 @@ export const AdminNav = [
         icon: WrenchScrewdriverIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
-      {
-        label: 'Cobros',
-        to: '/admin/alcantarillado-cobros',
-        icon: WrenchScrewdriverIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
-      },
+      // {
+      //   label: 'Cobros',
+      //   to: '/admin/alcantarillado-cobros',
+      //   icon: WrenchScrewdriverIcon,
+      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+      // },
     ],
   },
   {
@@ -156,19 +156,52 @@ export const AdminNav = [
       //   icon: BanknotesIcon,
       //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       // },
-      {
-        label: 'Cobros de agua',
-        to: '/admin/cobros-agua',
-        icon: ReceiptPercentIcon,
-        permission: [
-          'pago_agua.ver',
-          'pago-agua.ver',
-          'cobro_agua.ver',
-          'cobros_agua.ver',
-          'agua.cobro.ver',
-        ],
-      },
 
+      {
+        label: 'Recibo universal',
+        to: '/admin/recibo-universal',
+        icon: CreditCardIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
+      {
+        label: 'Cobro universal',
+        to: '/admin/cobro-universal-dos',
+        icon: CreditCardIcon,
+        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+      },
+      // {
+      //   label: 'Cobros de agua',
+      //   to: '/admin/cobros-agua',
+      //   icon: ReceiptPercentIcon,
+      //   permission: [
+      //     'pago_agua.ver',
+      //     'pago-agua.ver',
+      //     'cobro_agua.ver',
+      //     'cobros_agua.ver',
+      //     'agua.cobro.ver',
+      //   ],
+      // },
+
+      // {
+      //   label: 'Lecturas',
+      //   to: '/admin/lecturas',
+      //   icon: DocumentTextIcon,
+      //   permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+      // },
+      // {
+      //   label: 'Mora',
+      //   to: '/admin/lectura-mora',
+      //   icon: DocumentTextIcon,
+      //   permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+      // },
+    ],
+  },
+
+  {
+    id: 'lecturas-agua',
+    title: 'Lecturas',
+    icon: Cog6ToothIcon,
+    items: [
       {
         label: 'Lecturas',
         to: '/admin/lecturas',

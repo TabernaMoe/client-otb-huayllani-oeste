@@ -29,7 +29,7 @@ export const accionAlcantarilladoSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  detalles: z
+  detallesAccion: z
     .array(z.coerce.number().int().positive())
     .min(1, 'Debe seleccionar al menos un detalle de alcantarillado'),
 });

@@ -635,6 +635,8 @@ export default function AccionModal({
 
     const respuesta = await Servs.getDetallesAccion(id);
 
+    console.log(respuesta);
+
     const nuevasOpciones = safeData(respuesta);
 
     if (!respuesta?.ok) {

@@ -84,11 +84,11 @@ export default function AccionesAlcantarilladoPage() {
         ),
       },
       {
-        accessorKey: 'nombre_completo_socio',
+        accessorKey: 'nombre_socio',
         header: 'Socio',
         cell: ({ row }) => (
           <p className="font-medium text-slate-800">
-            {row.original.nombre_completo_socio}
+            {row.original.nombre_socio}
           </p>
         ),
       },
@@ -149,9 +149,7 @@ export default function AccionesAlcantarilladoPage() {
                 <input
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
-                  onKeyDown={(event) =>
-                    event.key === 'Enter' && handleBuscar()
-                  }
+                  onKeyDown={(event) => event.key === 'Enter' && handleBuscar()}
                   placeholder="Socio, CI, código o dirección..."
                   className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                 />

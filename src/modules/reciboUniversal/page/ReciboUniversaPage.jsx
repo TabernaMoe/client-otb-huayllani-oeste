@@ -89,7 +89,7 @@ export default function ReciboMadreForm() {
         <div>
           <div className="mb-5">
             <h1 className="text-xl font-bold tracking-tight text-[#1f285f] sm:text-2xl">
-              Crear recibo madre
+              Crear un recibo
             </h1>
             <p className="mt-1 text-sm text-[#7a84aa]">
               Define un recibo base con código universal y datos obligatorios.

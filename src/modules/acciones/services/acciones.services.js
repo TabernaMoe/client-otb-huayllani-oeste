@@ -5,7 +5,7 @@ import { toServiceError } from '../../../services/error';
 export class AccionesServices {
   static async getAll(params = {}) {
     try {
-      const { data } = await api.get('/admin/accion', {
+      const { data } = await api.get('/admin/acciones/agua', {
         params,
       });
 
@@ -24,7 +24,7 @@ export class AccionesServices {
    */
   static async getById(id) {
     try {
-      const { data } = await api.get(`/admin/accion/${id}`);
+      const { data } = await api.get(`/admin/acciones/agua/${id}`);
 
       return data;
     } catch (error) {
@@ -41,7 +41,7 @@ export class AccionesServices {
    */
   static async getTiposAccion() {
     try {
-      const { data } = await api.get('/admin/accion/tipos-accion');
+      const { data } = await api.get('/admin/acciones/agua/tipos-accion');
 
       return data;
     } catch (error) {
@@ -59,9 +59,8 @@ export class AccionesServices {
   static async getDetallesAccion(tipoAccionId) {
     try {
       const { data } = await api.get(
-        `/admin/accion/detalle-accion/${tipoAccionId}`,
+        `/admin/acciones/agua/detalle-accion/${tipoAccionId}`,
       );
-
       return data;
     } catch (error) {
       return toServiceError(error);
@@ -81,7 +80,7 @@ export class AccionesServices {
    */
   static async getDetalleAccionById(id) {
     try {
-      const { data } = await api.get(`/admin/accion/detalle/${id}`);
+      const { data } = await api.get(`/admin/acciones/agua/detalle/${id}`);
 
       return data;
     } catch (error) {
@@ -98,7 +97,7 @@ export class AccionesServices {
    */
   static async getSocios() {
     try {
-      const { data } = await api.get('/admin/accion/socios');
+      const { data } = await api.get('/admin/acciones/agua/socios');
 
       return data;
     } catch (error) {
@@ -115,7 +114,7 @@ export class AccionesServices {
    */
   static async getTarifas() {
     try {
-      const { data } = await api.get('/admin/accion/tarifa-agua');
+      const { data } = await api.get('/admin/acciones/agua/tarifa');
 
       return data;
     } catch (error) {
@@ -132,7 +131,7 @@ export class AccionesServices {
    */
   static async create(payload) {
     try {
-      const { data } = await api.post('/admin/accion', payload);
+      const { data } = await api.post('/admin/acciones/agua', payload);
 
       return data;
     } catch (error) {
@@ -149,7 +148,7 @@ export class AccionesServices {
    */
   static async update(id, payload) {
     try {
-      const { data } = await api.patch(`/admin/accion/${id}`, payload);
+      const { data } = await api.patch(`/admin/acciones/agua/${id}`, payload);
 
       return data;
     } catch (error) {
@@ -195,7 +194,7 @@ export class AccionesServices {
   static async changeEstado(id, payload) {
     try {
       const { data } = await api.patch(
-        `/admin/accion/camibiar-estado/${id}`,
+        `/admin/acciones/agua/camibiar-estado/${id}`,
         payload,
       );
 
