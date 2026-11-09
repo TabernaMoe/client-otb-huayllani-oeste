@@ -50,8 +50,12 @@ export default function RegistrarEgresoView() {
       EgresosServices.getAll(),
     ]);
 
-    setCategorias(Array.isArray(categoriasResponse?.data) ? categoriasResponse.data : []);
-    setEgresos(Array.isArray(egresosResponse?.data) ? egresosResponse.data : []);
+    setCategorias(
+      Array.isArray(categoriasResponse?.data) ? categoriasResponse.data : [],
+    );
+    setEgresos(
+      Array.isArray(egresosResponse?.data) ? egresosResponse.data : [],
+    );
     setLoading(false);
   }, []);
 
@@ -60,15 +64,19 @@ export default function RegistrarEgresoView() {
   }, [cargarDatos]);
 
   const categoriaOptions = useMemo(
-    () => categorias.map((categoria) => ({
-      value: Number(categoria.id),
-      label: categoria.nombre_gasto,
-    })),
+    () =>
+      categorias.map((categoria) => ({
+        value: Number(categoria.id),
+        label: categoria.nombre_gasto,
+      })),
     [categorias],
   );
 
   const categoriasById = useMemo(
-    () => Object.fromEntries(categorias.map((categoria) => [categoria.id, categoria.nombre_gasto])),
+    () =>
+      Object.fromEntries(
+        categorias.map((categoria) => [categoria.id, categoria.nombre_gasto]),
+      ),
     [categorias],
   );
 
@@ -92,13 +100,19 @@ export default function RegistrarEgresoView() {
     setSaving(false);
 
     if (!response?.ok) {
-      setMessage({ type: 'error', text: response?.message || 'No se pudo registrar el egreso' });
+      setMessage({
+        type: 'error',
+        text: response?.message || 'No se pudo registrar el egreso',
+      });
       return;
     }
 
     setForm(createInitialForm());
     setErrors({});
-    setMessage({ type: 'success', text: response.message || 'Egreso registrado correctamente' });
+    setMessage({
+      type: 'success',
+      text: response.message || 'Egreso registrado correctamente',
+    });
     await cargarDatos();
   };
 
@@ -110,7 +124,9 @@ export default function RegistrarEgresoView() {
             <PlusCircleIcon className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Registrar nuevo egreso</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              Registrar nuevo egreso
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
               Completa la información del gasto realizado por la OTB.
             </p>
@@ -127,9 +143,41 @@ export default function RegistrarEgresoView() {
               onChange={handleChange}
               error={errors.categoria_egreso_id}
               isDisabled={loading}
-              placeholder={loading ? 'Cargando categorías...' : 'Seleccionar categoría'}
+              placeholder={
+                loading ? 'Cargando categorías...' : 'Seleccionar categoría'
+              }
             />
-
+            <ElegantInput
+              label="Beneficiario / proveedor"
+              name="beneficiario"
+              value={form.beneficiario}
+              onChange={handleChange}
+              placeholder="Persona o empresa que recibe el pago"
+              error={errors.beneficiario}
+              required
+              icon={<IdentificationIcon className="h-5 w-5" />}
+            />
+            <ElegantInput
+              label="Concepto del egreso"
+              name="concepto"
+              value={form.concepto}
+              onChange={handleChange}
+              placeholder="Ej: Compra de tuberías PVC"
+              error={errors.concepto}
+              required
+              icon={<ReceiptPercentIcon className="h-5 w-5" />}
+            />{' '}
+            <ElegantInput
+              label="Monto (Bs)"
+              name="monto"
+              type="number"
+              value={form.monto}
+              onChange={handleChange}
+              placeholder="0.00"
+              error={errors.monto}
+              required
+              icon={<BanknotesIcon className="h-5 w-5" />}
+            />
             <ElegantInput
               label="Fecha"
               name="fecha"
@@ -142,41 +190,7 @@ export default function RegistrarEgresoView() {
             />
           </div>
 
-          <ElegantInput
-            label="Concepto del egreso"
-            name="concepto"
-            value={form.concepto}
-            onChange={handleChange}
-            placeholder="Ej: Compra de tuberías PVC"
-            error={errors.concepto}
-            required
-            icon={<ReceiptPercentIcon className="h-5 w-5" />}
-          />
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <ElegantInput
-              label="Monto (Bs)"
-              name="monto"
-              type="number"
-              value={form.monto}
-              onChange={handleChange}
-              placeholder="0.00"
-              error={errors.monto}
-              required
-              icon={<BanknotesIcon className="h-5 w-5" />}
-            />
-
-            <ElegantInput
-              label="Beneficiario / proveedor"
-              name="beneficiario"
-              value={form.beneficiario}
-              onChange={handleChange}
-              placeholder="Persona o empresa que recibe el pago"
-              error={errors.beneficiario}
-              required
-              icon={<IdentificationIcon className="h-5 w-5" />}
-            />
-          </div>
+          <div className="grid gap-5 md:grid-cols-2"></div>
 
           <ElegantTextarea
             label="Observaciones"
@@ -225,33 +239,60 @@ export default function RegistrarEgresoView() {
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold text-slate-600">Fecha</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-600">Tipo</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-600">Concepto</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-600">Beneficiario</th>
-                <th className="px-6 py-3 text-right font-semibold text-slate-600">Monto</th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-600">
+                  Fecha
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-600">
+                  Tipo
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-600">
+                  Concepto
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-slate-600">
+                  Beneficiario
+                </th>
+                <th className="px-6 py-3 text-right font-semibold text-slate-600">
+                  Monto
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500">Cargando...</td>
+                  <td
+                    colSpan="5"
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
+                    Cargando...
+                  </td>
                 </tr>
               ) : egresos.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500">No hay egresos registrados</td>
+                  <td
+                    colSpan="5"
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
+                    No hay egresos registrados
+                  </td>
                 </tr>
               ) : (
                 egresos.map((egreso) => (
                   <tr key={egreso.id} className="hover:bg-slate-50">
-                    <td className="whitespace-nowrap px-6 py-4 text-slate-600">{formatDate(egreso.fecha)}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-slate-600">
+                      {formatDate(egreso.fecha)}
+                    </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                        {categoriasById[egreso.categoria_egreso_id] || `Categoría #${egreso.categoria_egreso_id}`}
+                        {categoriasById[egreso.categoria_egreso_id] ||
+                          `Categoría #${egreso.categoria_egreso_id}`}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-semibold text-slate-800">{egreso.concepto}</td>
-                    <td className="px-6 py-4 text-slate-600">{egreso.beneficiario}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-800">
+                      {egreso.concepto}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {egreso.beneficiario}
+                    </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right font-bold text-slate-800">
                       Bs {Number(egreso.monto || 0).toFixed(2)}
                     </td>

@@ -1,22 +1,39 @@
 import {
   AdjustmentsHorizontalIcon,
+  ArchiveBoxIcon,
   ArrowTrendingDownIcon,
   BanknotesIcon,
+  BeakerIcon,
   CalendarDaysIcon,
+  ChartBarIcon,
   ChartBarSquareIcon,
+  CircleStackIcon,
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
+  ClockIcon,
   Cog6ToothIcon,
   CreditCardIcon,
+  CurrencyDollarIcon,
   DocumentChartBarIcon,
+  DocumentMagnifyingGlassIcon,
   DocumentTextIcon,
+  ExclamationTriangleIcon,
   HomeIcon,
+  IdentificationIcon,
+  KeyIcon,
   MapPinIcon,
+  PencilSquareIcon,
   PresentationChartLineIcon,
   ReceiptPercentIcon,
+  RectangleStackIcon,
+  ScaleIcon,
   ShieldCheckIcon,
+  Squares2X2Icon,
+  UserCircleIcon,
   UserGroupIcon,
   UsersIcon,
+  WalletIcon,
+  WrenchIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/solid';
 
@@ -40,7 +57,7 @@ export const AdminNav = [
       {
         label: 'Dashboard',
         to: '/admin/dashboard',
-        icon: PresentationChartLineIcon,
+        icon: Squares2X2Icon,
       },
     ],
   },
@@ -53,7 +70,7 @@ export const AdminNav = [
       {
         label: 'Administrar socios',
         to: '/admin/socios',
-        icon: UsersIcon,
+        icon: IdentificationIcon,
         permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
       },
     ],
@@ -61,7 +78,7 @@ export const AdminNav = [
   {
     id: 'acciones-agua',
     title: 'Acciones de agua',
-    icon: UserGroupIcon,
+    icon: BeakerIcon,
     items: [
       {
         label: 'Acciones',
@@ -85,13 +102,13 @@ export const AdminNav = [
       {
         label: 'Tipo Accion',
         to: '/admin/tipo-accion',
-        icon: ClipboardDocumentListIcon,
+        icon: RectangleStackIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       {
         label: 'Cambio de nombre',
         to: '/admin/cambio-nombre',
-        icon: ClipboardDocumentCheckIcon,
+        icon: PencilSquareIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       // {
@@ -117,18 +134,18 @@ export const AdminNav = [
   {
     id: 'acciones-alcantarillado',
     title: 'Acciones de alcantarillado',
-    icon: UserGroupIcon,
+    icon: WrenchScrewdriverIcon,
     items: [
       {
         label: 'Acciones Alcantarillado',
         to: '/admin/alcantarillado/acciones',
-        icon: WrenchScrewdriverIcon,
+        icon: CircleStackIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       {
         label: 'Alcantarillado',
         to: '/admin/alcantarillado',
-        icon: WrenchScrewdriverIcon,
+        icon: WrenchIcon,
         permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
       },
       // {
@@ -160,13 +177,13 @@ export const AdminNav = [
       {
         label: 'Recibo universal',
         to: '/admin/recibo-universal',
-        icon: CreditCardIcon,
+        icon: ReceiptPercentIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
       {
         label: 'Cobro universal',
         to: '/admin/cobro-universal-dos',
-        icon: CreditCardIcon,
+        icon: CurrencyDollarIcon,
         permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
       },
       // {
@@ -200,26 +217,52 @@ export const AdminNav = [
   {
     id: 'lecturas-agua',
     title: 'Lecturas',
-    icon: Cog6ToothIcon,
+    icon: DocumentMagnifyingGlassIcon,
     items: [
       {
         label: 'Lecturas',
         to: '/admin/lecturas',
-        icon: DocumentTextIcon,
+        icon: ClipboardDocumentListIcon,
         permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
       },
       {
         label: 'Mora',
         to: '/admin/lectura-mora',
-        icon: DocumentTextIcon,
+        icon: ExclamationTriangleIcon,
         permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+      },
+    ],
+  },
+
+  {
+    id: 'reportes',
+    title: 'Reportes',
+    icon: ChartBarIcon,
+    items: [
+      {
+        label: 'Gestión de recibos',
+        to: '/admin/reportes-recibo',
+        icon: DocumentTextIcon,
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+      },
+      {
+        label: 'Gestión de recibos por accion',
+        to: '/admin/reportes-recibo-accion',
+        icon: ClipboardDocumentCheckIcon,
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+      },
+      {
+        label: 'Gestión de recibos por socio',
+        to: '/admin/reportes-recibo-socio',
+        icon: UserCircleIcon,
+        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
       },
     ],
   },
   {
     id: 'operaciones',
     title: 'Administración',
-    icon: WrenchScrewdriverIcon,
+    icon: Cog6ToothIcon,
     items: [
       {
         label: 'Gestiones',
@@ -230,7 +273,7 @@ export const AdminNav = [
       {
         label: 'Periodos',
         to: '/admin/periodos',
-        icon: ClipboardDocumentCheckIcon,
+        icon: ClockIcon,
         permission: ['periodo.ver', 'periodos.ver', 'gestion.ver'],
       },
 
@@ -263,7 +306,7 @@ export const AdminNav = [
       {
         label: 'Roles y permisos',
         to: '/admin/roles',
-        icon: ShieldCheckIcon,
+        icon: KeyIcon,
         permission: ['rol.ver', 'roles.ver', 'auth.rol.ver'],
       },
     ],
@@ -279,12 +322,12 @@ export const AdminNav = [
   {
     id: 'asambleas',
     title: 'Reportes y Multas',
-    icon: UserGroupIcon,
+    icon: ScaleIcon,
     items: [
       {
         label: 'Multas',
         to: '/admin/asambleas',
-        icon: CalendarDaysIcon,
+        icon: ExclamationTriangleIcon,
         permission: [
           'asamblea.ver',
           'asambleas.ver',
@@ -295,7 +338,7 @@ export const AdminNav = [
       {
         label: 'Otras multas',
         to: '/admin/multas',
-        icon: DocumentTextIcon,
+        icon: ReceiptPercentIcon,
         permission: ['multa.ver', 'multas.ver', 'agua.multa.ver'],
       },
       {
@@ -315,7 +358,7 @@ export const AdminNav = [
       {
         label: 'Gestión de egresos',
         to: '/admin/egresos',
-        icon: BanknotesIcon,
+        icon: WalletIcon,
       },
     ],
   },
@@ -323,12 +366,12 @@ export const AdminNav = [
   {
     id: 'funciones_extras',
     title: 'Funciones',
-    icon: Cog6ToothIcon,
+    icon: Squares2X2Icon,
     items: [
       {
         label: 'Inventario',
         to: '/admin/inventario',
-        icon: ChartBarSquareIcon,
+        icon: ArchiveBoxIcon,
         permission: ['inventario.ver'],
       },
     ],

@@ -29,7 +29,6 @@ const tabs = [
   //   label: 'Cobros adicionales',
   //   icon: CurrencyDollarIcon,
   // },
-  { value: 'pagos', label: 'Pagos', icon: BanknotesIcon },
 ];
 
 export default function CobrosTabs({ activeView, onChange }) {

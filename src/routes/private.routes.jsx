@@ -44,6 +44,10 @@ import EgresosPage from '../modules/egresos/pages/EgresosPage';
 import ReciboUniversaPage from '../modules/reciboUniversal/page/ReciboUniversaPage';
 
 import CobroUniversalDosPage from '../modules/reciboUniversal/page/cobroUniversalPage';
+//REPORTES
+import ReporteReciboPage from '../modules/reportes/recibos/page/ReciboPage';
+import RecibosByAccionPage from '../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage';
+import ReciboBySocioPage from '../modules/reportes/recibos/recibosBySocio/ReciboBySocioPage';
 
 const permission = (codes) => <PermissionRoute permission={codes} />;
 
@@ -200,6 +204,13 @@ export const privateRoutes = (
 
         <Route path="recibo-universal" element={<ReciboUniversaPage />} />
         <Route path="cobro-universal-dos" element={<CobroUniversalDosPage />} />
+
+        <Route path="reportes-recibo" element={<ReporteReciboPage />} />
+        <Route
+          path="reportes-recibo-accion"
+          element={<RecibosByAccionPage />}
+        />
+        <Route path="reportes-recibo-socio" element={<ReciboBySocioPage />} />
 
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
