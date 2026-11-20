@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ReciboServices } from '../services';
+import { ReciboServices } from '../services/services';
 import DataTableLocal from '../../../../components/DataTableLocal';
 import { toast } from 'react-toastify';
 import {
@@ -211,7 +211,7 @@ export default function ReciboPage() {
   return (
     <section className="mx-auto max-w-7xl space-y-6 pb-8">
       {/* ENCABEZADO */}
-      <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 p-6 shadow-lg sm:p-8">
+      <header className="relative overflow-hidden rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-blue-900 p-6 shadow-lg sm:p-8">
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
             <DocumentTextIcon className="h-8 w-8 text-white" />

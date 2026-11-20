@@ -1,5 +1,5 @@
-import { api } from '../../../services/api';
-import { toServiceError } from '../../../services/error';
+import { api } from '../../../../services/api';
+import { toServiceError } from '../../../../services/error';
 
 export class ReciboServices {
   static async getAll() {

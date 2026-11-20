@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ReciboServices } from '../services';
+import { ReciboServices } from '../services/services';
 import DataTableLocal from '../../../../components/DataTableLocal';
 import { toast } from 'react-toastify';
 import {
