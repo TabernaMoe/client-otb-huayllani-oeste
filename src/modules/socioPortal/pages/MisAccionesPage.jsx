@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { SocioPortalServices } from '../services/socioPortal.services';
 import AccionCard from '../../../components/AccionCard';
+import PortalPageHeader from '../components/PortalPageHeader';
+import PortalStatGrid from '../components/PortalStatGrid';
+import {
+  PortalEmpty,
+  PortalError,
+  PortalLoading,
+} from '../components/PortalFeedback';
+
+const ESTADOS = ['TODAS', 'ACTIVO', 'PASIVO'];
 
 export default function MisAccionesPage() {
   const [acciones, setAcciones] = useState([]);
+  const [estadoFiltro, setEstadoFiltro] = useState('TODAS');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -13,21 +23,11 @@ export default function MisAccionesPage() {
       try {
         setLoading(true);
         setError('');
-
-        const response =
-          await SocioPortalServices.getAcciones();
-
-        console.log('ACCIONES:', response);
-
-        setAcciones(
-          response?.data ?? response ?? []
-        );
+        const response = await SocioPortalServices.getAcciones();
+        setAcciones(response?.data ?? response ?? []);
       } catch (err) {
-        console.error(err);
-
         setError(
-          err.response?.data?.message ||
-            'No se pudieron cargar las acciones'
+          err.response?.data?.message || 'No se pudieron cargar tus acciones',
         );
       } finally {
         setLoading(false);
@@ -37,48 +37,68 @@ export default function MisAccionesPage() {
     cargarAcciones();
   }, []);
 
+  const accionesFiltradas = useMemo(() => {
+    if (estadoFiltro === 'TODAS') return acciones;
+    return acciones.filter((a) => a.estado === estadoFiltro);
+  }, [acciones, estadoFiltro]);
+
+  const activas = acciones.filter((a) => a.estado === 'ACTIVO').length;
+  const pasivas = acciones.filter((a) => a.estado === 'PASIVO').length;
+
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">
-          Mis acciones
-        </h1>
+      <PortalPageHeader
+        title="Mis acciones"
+        description="Consulta el estado, medidor, calle y tarifa de tus acciones registradas."
+        action={
+          acciones.length > 0 && (
+            <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-xs">
+              {ESTADOS.map((estado) => (
+                <button
+                  key={estado}
+                  type="button"
+                  onClick={() => setEstadoFiltro(estado)}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                    estadoFiltro === estado
+                      ? 'bg-emerald-700 text-white'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {estado}
+                </button>
+              ))}
+            </div>
+          )
+        }
+      />
 
-        <p className="mt-1 text-sm text-slate-500">
-          Acciones asociadas a tu cuenta.
-        </p>
-      </div>
+      <PortalError message={error} />
 
-      {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700">
-          {error}
-        </div>
+      {!loading && acciones.length > 0 && (
+        <PortalStatGrid
+          items={[
+            { label: 'Total de acciones', value: acciones.length },
+            { label: 'Activas', value: activas, valueClass: 'text-emerald-700' },
+            { label: 'Pasivas', value: pasivas, valueClass: 'text-amber-700' },
+          ]}
+        />
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3 text-slate-500">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-600" />
-            Cargando acciones...
-          </div>
-        </div>
-      ) : acciones.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-          <p className="font-semibold text-slate-700">
-            No tienes acciones registradas
-          </p>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Las acciones asociadas a tu cuenta aparecerán aquí.
-          </p>
-        </div>
+        <PortalLoading text="Cargando tus acciones..." />
+      ) : accionesFiltradas.length === 0 ? (
+        <PortalEmpty
+          title="No se encontraron acciones"
+          description={
+            estadoFiltro === 'TODAS'
+              ? 'Las acciones asociadas a tu cuenta aparecerán aquí.'
+              : `No tienes acciones en estado ${estadoFiltro}.`
+          }
+        />
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {acciones.map((accion) => (
-            <AccionCard
-              key={accion.id}
-              accion={accion}
-            />
+          {accionesFiltradas.map((accion) => (
+            <AccionCard key={accion.id} accion={accion} />
           ))}
         </div>
       )}

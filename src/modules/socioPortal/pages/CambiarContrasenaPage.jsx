@@ -1,33 +1,59 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { EyeIcon, EyeSlashIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+
 import { AuthService } from '../../auth/services/auth.services';
+import { PortalError } from '../components/PortalFeedback';
+import { cambiarContrasenaSchema } from '../schemas/socioPortal.schema';
 import { SocioPortalServices } from '../services/socioPortal.services';
+
+const FIELDS = [
+  { name: 'contrasenia_actual', label: 'Contraseña actual' },
+  { name: 'contrasenia_nueva', label: 'Nueva contraseña (mín. 8 caracteres)' },
+  { name: 'confirmar', label: 'Confirmar nueva contraseña' },
+];
 
 export default function CambiarContrasenaPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ contrasenia_actual: '', contrasenia_nueva: '', confirmar: '' });
+  const [form, setForm] = useState({
+    contrasenia_actual: '',
+    contrasenia_nueva: '',
+    confirmar: '',
+  });
+  const [visible, setVisible] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const submit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setFieldErrors({});
 
-    if (form.contrasenia_nueva !== form.confirmar) {
-      setError('Las contraseñas nuevas no coinciden');
+    const parsed = cambiarContrasenaSchema.safeParse(form);
+    if (!parsed.success) {
+      const nextErrors = {};
+      for (const issue of parsed.error.issues) {
+        nextErrors[issue.path[0]] = issue.message;
+      }
+      setFieldErrors(nextErrors);
       return;
     }
 
     try {
       setLoading(true);
       await SocioPortalServices.cambiarPassword({
-        contrasenia_actual: form.contrasenia_actual,
-        contrasenia_nueva: form.contrasenia_nueva,
+        contrasenia_actual: parsed.data.contrasenia_actual,
+        contrasenia_nueva: parsed.data.contrasenia_nueva,
       });
       AuthService.updateSession({ debe_cambiar_password: false });
+      toast.success('Contraseña actualizada correctamente');
       navigate('/socio/inicio', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'No se pudo cambiar la contraseña');
+      setError(
+        err.response?.data?.message || 'No se pudo cambiar la contraseña',
+      );
     } finally {
       setLoading(false);
     }
@@ -35,30 +61,72 @@ export default function CambiarContrasenaPage() {
 
   return (
     <section className="mx-auto max-w-xl">
-      <form onSubmit={submit} className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-black">Cambiar contraseña</h1>
-          <p className="mt-1 text-sm text-slate-500">Por seguridad, cambia la contraseña inicial antes de continuar.</p>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      >
+        <div className="flex items-start gap-3">
+          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+            <ShieldCheckIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-slate-900">
+              Cambiar contraseña
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Usa una contraseña segura de al menos 8 caracteres para proteger tu cuenta.
+            </p>
+          </div>
         </div>
-        {error && <div className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>}
-        {[
-          ['contrasenia_actual', 'Contraseña actual'],
-          ['contrasenia_nueva', 'Nueva contraseña'],
-          ['confirmar', 'Confirmar nueva contraseña'],
-        ].map(([name, label]) => (
-          <label key={name} className="block">
-            <span className="mb-1 block text-sm font-bold text-slate-700">{label}</span>
-            <input
-              type="password"
-              value={form[name]}
-              onChange={(e) => setForm((current) => ({ ...current, [name]: e.target.value }))}
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600"
-              required
-            />
-          </label>
-        ))}
-        <button disabled={loading} className="w-full rounded-2xl bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-60">
-          {loading ? 'Guardando...' : 'Cambiar contraseña'}
+
+        <PortalError message={error} />
+
+        {FIELDS.map(({ name, label }) => {
+          const isVisible = Boolean(visible[name]);
+          return (
+            <div key={name}>
+              <label className="mb-1 block text-sm font-bold text-slate-700">
+                {label}
+              </label>
+              <div className="relative">
+                <input
+                  type={isVisible ? 'text' : 'password'}
+                  value={form[name]}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, [name]: e.target.value }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-11 text-sm outline-none focus:border-emerald-600"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVisible((prev) => ({ ...prev, [name]: !prev[name] }))
+                  }
+                  aria-label="Mostrar u ocultar contraseña"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  {isVisible ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {fieldErrors[name] && (
+                <p className="mt-1 text-xs font-semibold text-rose-600">
+                  {fieldErrors[name]}
+                </p>
+              )}
+            </div>
+          );
+        })}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:opacity-60"
+        >
+          {loading ? 'Guardando...' : 'Actualizar contraseña'}
         </button>
       </form>
     </section>

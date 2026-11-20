@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { AuthService } from '../../auth/services/auth.services';
 import AccionSelector from '../components/AccionSelector';
+import PortalPageHeader from '../components/PortalPageHeader';
+import PortalStatGrid from '../components/PortalStatGrid';
 import ReciboCard from '../components/ReciboCard';
+import ReciboDetalleModal from '../components/ReciboDetalleModal';
 import {
   PortalEmpty,
   PortalError,
@@ -9,8 +13,14 @@ import {
 } from '../components/PortalFeedback';
 import { useSocioAcciones } from '../hooks/useSocioAcciones';
 import { SocioPortalServices } from '../services/socioPortal.services';
+import { formatCurrency } from '../../../utils/formatters';
+
+const ORIGENES = ['TODOS', 'GENERAL', 'AGUA'];
 
 export default function MisRecibosPage() {
+  const user = AuthService.getUser();
+  const socioName = user?.nombre || user?.nombre_usuario || 'Socio';
+
   const {
     acciones,
     accionSeleccionada,
@@ -21,6 +31,8 @@ export default function MisRecibosPage() {
   } = useSocioAcciones();
 
   const [recibos, setRecibos] = useState([]);
+  const [origenFiltro, setOrigenFiltro] = useState('TODOS');
+  const [reciboActivo, setReciboActivo] = useState(null);
   const [loadingRecibos, setLoadingRecibos] = useState(false);
   const [errorRecibos, setErrorRecibos] = useState('');
 
@@ -34,16 +46,11 @@ export default function MisRecibosPage() {
       try {
         setLoadingRecibos(true);
         setErrorRecibos('');
-
-        const response = await SocioPortalServices.getRecibos(
-          accionSeleccionada,
-        );
-
+        const response = await SocioPortalServices.getRecibos(accionSeleccionada);
         setRecibos(response?.data ?? response ?? []);
       } catch (error) {
         setErrorRecibos(
-          error.response?.data?.message ||
-            'No se pudieron cargar los recibos',
+          error.response?.data?.message || 'No se pudieron cargar los recibos',
         );
       } finally {
         setLoadingRecibos(false);
@@ -53,16 +60,42 @@ export default function MisRecibosPage() {
     cargarRecibos();
   }, [accionSeleccionada]);
 
+  const recibosFiltrados = useMemo(() => {
+    if (origenFiltro === 'TODOS') return recibos;
+    return recibos.filter((r) => r.origen === origenFiltro);
+  }, [recibos, origenFiltro]);
+
+  const totalPagado = useMemo(
+    () => recibosFiltrados.reduce((sum, r) => sum + Number(r.monto ?? 0), 0),
+    [recibosFiltrados],
+  );
+
   return (
-    <section className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">
-          Mis recibos
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Selecciona una acción para consultar sus recibos.
-        </p>
-      </div>
+    <section className="space-y-6">
+      <PortalPageHeader
+        title="Mis recibos"
+        description="Consulta tus comprobantes de pago y genera una copia imprimible cuando la necesites."
+        action={
+          recibos.length > 0 && (
+            <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-xs">
+              {ORIGENES.map((origen) => (
+                <button
+                  key={origen}
+                  type="button"
+                  onClick={() => setOrigenFiltro(origen)}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                    origenFiltro === origen
+                      ? 'bg-emerald-700 text-white'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {origen}
+                </button>
+              ))}
+            </div>
+          )
+        }
+      />
 
       <PortalError message={errorAcciones || errorRecibos} />
 
@@ -74,57 +107,56 @@ export default function MisRecibosPage() {
       />
 
       {accionActual && (
-        <div className="rounded-3xl border border-violet-100 bg-violet-50/60 p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
-            Acción seleccionada
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <span className="text-lg font-black text-slate-900">
-              #{accionActual.codigo_interno}
-            </span>
-            <span className="text-sm font-semibold text-slate-600">
-              {accionActual.tipo}
-            </span>
-            <span className="text-sm text-slate-500">
-              Medidor: {accionActual.nro_medidor || 'Sin medidor'}
-            </span>
-          </div>
+        <PortalStatGrid
+          items={[
+            {
+              label: 'Acción seleccionada',
+              value: `#${accionActual.codigo_interno}`,
+              helper: accionActual.tipo,
+            },
+            {
+              label: 'Comprobantes',
+              value: recibosFiltrados.length,
+              valueClass: 'text-violet-700',
+            },
+            {
+              label: 'Total pagado',
+              value: formatCurrency(totalPagado),
+              valueClass: 'text-emerald-700',
+            },
+          ]}
+        />
+      )}
+
+      {loadingRecibos ? (
+        <PortalLoading text="Cargando recibos..." />
+      ) : !accionSeleccionada ? (
+        <PortalEmpty
+          title="Selecciona una acción"
+          description="Elige una acción para consultar sus recibos."
+        />
+      ) : recibosFiltrados.length === 0 ? (
+        <PortalEmpty
+          title="Sin recibos registrados"
+          description="No se encontraron comprobantes para el filtro actual."
+        />
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {recibosFiltrados.map((recibo) => (
+            <ReciboCard
+              key={`${recibo.origen}-${recibo.id}`}
+              recibo={recibo}
+              onSelect={setReciboActivo}
+            />
+          ))}
         </div>
       )}
 
-      <div>
-        <div className="mb-4">
-          <h2 className="text-xl font-black text-slate-900">
-            Recibos de la acción
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Historial de pagos de la acción seleccionada.
-          </p>
-        </div>
-
-        {loadingRecibos ? (
-          <PortalLoading text="Cargando recibos..." />
-        ) : !accionSeleccionada ? (
-          <PortalEmpty
-            title="Selecciona una acción"
-            description="Elige una acción para consultar sus recibos."
-          />
-        ) : recibos.length === 0 ? (
-          <PortalEmpty
-            title="Sin recibos"
-            description="La acción seleccionada todavía no tiene recibos."
-          />
-        ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {recibos.map((recibo) => (
-              <ReciboCard
-                key={`${recibo.origen}-${recibo.id}`}
-                recibo={recibo}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ReciboDetalleModal
+        recibo={reciboActivo}
+        socioName={socioName}
+        onClose={() => setReciboActivo(null)}
+      />
     </section>
   );
 }

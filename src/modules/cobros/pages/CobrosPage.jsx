@@ -1,24 +1,16 @@
 import { useState } from 'react';
 import CobrosTabs from '../components/CobrosTabs';
-import CobrarAccionesView from '../components/CobrarAccionesView';
-import CobrarMultasView from '../components/CobrarMultasView';
-import CobrarAdicionalesView from '../components/CobrarAdicionalesView';
-import PagosView from '../components/PagosView';
 import CobrarGeneralView from '../components/CobrarGeneralView';
-import CobroAlcantarilladoView from '../components/CobroAlcantarilladoView';
+import CobrarMultasView from '../components/CobrarMultasView';
 
 const views = {
-  acciones: CobrarAccionesView,
-  alcantarillado: CobroAlcantarilladoView,
-  multas: CobrarMultasView,
-  adicionales: CobrarAdicionalesView,
-  pagos: PagosView,
   cobros_generales: CobrarGeneralView,
+  multas: CobrarMultasView,
 };
 
 export default function CobrosPage() {
-  const [activeView, setActiveView] = useState('acciones');
-  const ActiveView = views[activeView];
+  const [activeView, setActiveView] = useState('cobros_generales');
+  const ActiveView = views[activeView] || CobrarGeneralView;
 
   return (
     <section className="space-y-5">
@@ -31,9 +23,6 @@ export default function CobrosPage() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Gestión de cobros
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Cobra acciones, alcantarillado y multas, registra pagos y consulta el historial.
-        </p>
       </header>
 
       <CobrosTabs activeView={activeView} onChange={setActiveView} />
