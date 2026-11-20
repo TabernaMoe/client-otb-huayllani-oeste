@@ -23,7 +23,6 @@ import {
   KeyIcon,
   MapPinIcon,
   PencilSquareIcon,
-  PresentationChartLineIcon,
   ReceiptPercentIcon,
   RectangleStackIcon,
   ScaleIcon,
@@ -36,32 +35,17 @@ import {
   WrenchIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/solid';
+import { PERMS } from '../routes/permissions';
 
-/**
- * Navegación principal del panel administrativo.
- *
- * Orden recomendado:
- * 1. Resumen y operación diaria.
- * 2. Gestión comercial y cobros.
- * 3. Socios.
- * 4. Configuración.
- * 5. Asambleas.
- * 6. Reportes.
- */
 export const AdminNav = [
   {
     id: 'principal',
     title: 'Panel principal',
     icon: HomeIcon,
     items: [
-      {
-        label: 'Dashboard',
-        to: '/admin/dashboard',
-        icon: Squares2X2Icon,
-      },
+      { label: 'Dashboard', to: '/admin/dashboard', icon: Squares2X2Icon },
     ],
   },
-
   {
     id: 'socios',
     title: 'Socios',
@@ -71,7 +55,7 @@ export const AdminNav = [
         label: 'Administrar socios',
         to: '/admin/socios',
         icon: IdentificationIcon,
-        permission: ['socio.ver', 'socios.ver', 'socios.socio.ver'],
+        permission: PERMS.SOCIOS,
       },
     ],
   },
@@ -84,51 +68,26 @@ export const AdminNav = [
         label: 'Acciones',
         to: '/admin/acciones',
         icon: ClipboardDocumentListIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        permission: PERMS.ACCIONES,
       },
-
       {
         label: 'Detalle de acción',
         to: '/admin/detalle-pago-accion',
         icon: DocumentChartBarIcon,
-        permission: [
-          'acciones.detalle.ver',
-          'acciones.detalles.ver',
-          'detalle_accion.ver',
-          'detalle_pago_accion.ver',
-        ],
+        permission: PERMS.DETALLE_ACCION,
       },
-      //Añadido por Becas
       {
-        label: 'Tipo Accion',
+        label: 'Tipo Acción',
         to: '/admin/tipo-accion',
         icon: RectangleStackIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        permission: PERMS.ACCIONES,
       },
       {
         label: 'Cambio de nombre',
         to: '/admin/cambio-nombre',
         icon: PencilSquareIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        permission: PERMS.ACCIONES,
       },
-      // {
-      //   label: 'Adelanto de pagos',
-      //   to: '/admin/acciones/adelantos',
-      //   icon: BanknotesIcon,
-      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
-      // },
-      // {
-      //   label: 'Cobros Generales',
-      //   to: '/admin/cobros',
-      //   icon: CreditCardIcon,
-      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      // },
-      // {
-      //   label: 'Cuenta por cobrar',
-      //   to: '/admin/recibo-universal',
-      //   icon: CreditCardIcon,
-      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      // },
     ],
   },
   {
@@ -140,20 +99,14 @@ export const AdminNav = [
         label: 'Acciones Alcantarillado',
         to: '/admin/alcantarillado/acciones',
         icon: CircleStackIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        permission: PERMS.ACCIONES,
       },
       {
         label: 'Alcantarillado',
         to: '/admin/alcantarillado',
         icon: WrenchIcon,
-        permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
+        permission: PERMS.ACCIONES,
       },
-      // {
-      //   label: 'Cobros',
-      //   to: '/admin/alcantarillado-cobros',
-      //   icon: WrenchScrewdriverIcon,
-      //   permission: ['acciones.accion.ver', 'accion.ver', 'acciones.ver'],
-      // },
     ],
   },
   {
@@ -165,55 +118,22 @@ export const AdminNav = [
         label: 'Cobros Generales',
         to: '/admin/cobros',
         icon: CreditCardIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+        permission: PERMS.COBROS,
       },
-      // {
-      //   label: 'Cobros universales',
-      //   to: '/admin/cobros-universales',
-      //   icon: BanknotesIcon,
-      //   permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
-      // },
-
       {
         label: 'Recibo universal',
         to: '/admin/recibo-universal',
         icon: ReceiptPercentIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+        permission: PERMS.COBROS,
       },
       {
         label: 'Cobro universal',
         to: '/admin/cobro-universal-dos',
         icon: CurrencyDollarIcon,
-        permission: ['cobro.ver', 'cobros.ver', 'pago.ver', 'pagos.ver'],
+        permission: PERMS.COBROS,
       },
-      // {
-      //   label: 'Cobros de agua',
-      //   to: '/admin/cobros-agua',
-      //   icon: ReceiptPercentIcon,
-      //   permission: [
-      //     'pago_agua.ver',
-      //     'pago-agua.ver',
-      //     'cobro_agua.ver',
-      //     'cobros_agua.ver',
-      //     'agua.cobro.ver',
-      //   ],
-      // },
-
-      // {
-      //   label: 'Lecturas',
-      //   to: '/admin/lecturas',
-      //   icon: DocumentTextIcon,
-      //   permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
-      // },
-      // {
-      //   label: 'Mora',
-      //   to: '/admin/lectura-mora',
-      //   icon: DocumentTextIcon,
-      //   permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
-      // },
     ],
   },
-
   {
     id: 'lecturas-agua',
     title: 'Lecturas',
@@ -223,17 +143,16 @@ export const AdminNav = [
         label: 'Lecturas',
         to: '/admin/lecturas',
         icon: ClipboardDocumentListIcon,
-        permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+        permission: PERMS.LECTURAS,
       },
       {
         label: 'Mora',
         to: '/admin/lectura-mora',
         icon: ExclamationTriangleIcon,
-        permission: ['lectura.ver', 'lecturas.ver', 'agua.lectura.ver'],
+        permission: PERMS.LECTURAS,
       },
     ],
   },
-
   {
     id: 'reportes',
     title: 'Reportes',
@@ -243,19 +162,19 @@ export const AdminNav = [
         label: 'Gestión de recibos',
         to: '/admin/reportes-recibo',
         icon: DocumentTextIcon,
-        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+        permission: PERMS.REPORTES,
       },
       {
-        label: 'Gestión de recibos por accion',
+        label: 'Recibos por acción',
         to: '/admin/reportes-recibo-accion',
         icon: ClipboardDocumentCheckIcon,
-        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+        permission: PERMS.REPORTES,
       },
       {
-        label: 'Gestión de recibos por socio',
+        label: 'Recibos por socio',
         to: '/admin/reportes-recibo-socio',
         icon: UserCircleIcon,
-        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+        permission: PERMS.REPORTES,
       },
     ],
   },
@@ -268,30 +187,28 @@ export const AdminNav = [
         label: 'Gestiones',
         to: '/admin/gestiones',
         icon: CalendarDaysIcon,
-        permission: ['gestion.ver', 'gestiones.ver'],
+        permission: PERMS.GESTIONES,
       },
       {
         label: 'Periodos',
         to: '/admin/periodos',
         icon: ClockIcon,
-        permission: ['periodo.ver', 'periodos.ver', 'gestion.ver'],
+        permission: PERMS.PERIODOS,
       },
-
       {
         label: 'Calles',
         to: '/admin/calles',
         icon: MapPinIcon,
-        permission: ['calle.ver', 'calles.ver', 'acciones.calles.ver'],
+        permission: PERMS.CALLES,
       },
       {
         label: 'Tarifas',
         to: '/admin/tarifas',
         icon: AdjustmentsHorizontalIcon,
-        permission: ['tarifa.ver', 'tarifas.ver'],
+        permission: PERMS.TARIFAS,
       },
     ],
   },
-
   {
     id: 'seguridad',
     title: 'Usuarios y Roles',
@@ -301,55 +218,41 @@ export const AdminNav = [
         label: 'Gestión de usuarios',
         to: '/admin/usuarios',
         icon: UsersIcon,
-        permission: ['usuario.ver', 'usuarios.ver', 'auth.usuario.ver'],
+        permission: PERMS.USUARIOS,
       },
       {
         label: 'Roles y permisos',
         to: '/admin/roles',
         icon: KeyIcon,
-        permission: ['rol.ver', 'roles.ver', 'auth.rol.ver'],
+        permission: PERMS.ROLES,
       },
     ],
   },
-
-  {
-    id: 'configuracion',
-    title: 'Configuración',
-    icon: Cog6ToothIcon,
-    items: [],
-  },
-
   {
     id: 'asambleas',
-    title: 'Reportes y Multas',
+    title: 'Asambleas y Multas',
     icon: ScaleIcon,
     items: [
       {
-        label: 'Multas',
+        label: 'Asambleas',
         to: '/admin/asambleas',
         icon: ExclamationTriangleIcon,
-        permission: [
-          'asamblea.ver',
-          'asambleas.ver',
-          'reunion.ver',
-          'reuniones.ver',
-        ],
+        permission: PERMS.ASAMBLEAS,
       },
       {
         label: 'Otras multas',
         to: '/admin/multas',
         icon: ReceiptPercentIcon,
-        permission: ['multa.ver', 'multas.ver', 'agua.multa.ver'],
+        permission: PERMS.MULTAS,
       },
       {
         label: 'Reportes generales',
         to: '/admin/reportes',
         icon: ChartBarSquareIcon,
-        permission: ['reporte.ver', 'reportes.ver'],
+        permission: PERMS.REPORTES,
       },
     ],
   },
-
   {
     id: 'egresos',
     title: 'Egresos',
@@ -359,10 +262,10 @@ export const AdminNav = [
         label: 'Gestión de egresos',
         to: '/admin/egresos',
         icon: WalletIcon,
+        permission: PERMS.EGRESOS,
       },
     ],
   },
-
   {
     id: 'funciones_extras',
     title: 'Funciones',
@@ -372,7 +275,7 @@ export const AdminNav = [
         label: 'Inventario',
         to: '/admin/inventario',
         icon: ArchiveBoxIcon,
-        permission: ['inventario.ver'],
+        permission: PERMS.INVENTARIO,
       },
     ],
   },

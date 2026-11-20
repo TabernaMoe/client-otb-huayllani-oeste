@@ -1,216 +1,152 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 
 import ProtectedRoute from './ProtectedRoute';
 import PermissionRoute from './PermissionRoute';
 import AccountTypeRoute from './AccountTypeRoute';
+import { PERMS } from './permissions';
+import PageLoader from '../components/PageLoader';
 
 import AdminLayout from '../layouts/AdminLayout';
 import SocioLayout from '../layouts/SocioLayout';
 
-import AdminDashboardPage from '../modules/Admin/pages/AdminDashboardPage';
-import AdminPage from '../modules/Admin/pages/AdminPage';
-import ReportesPage from '../modules/Admin/pages/ReportesPage';
-import RolesPage from '../modules/roles/pages/RolesPage';
-import GestionesPage from '../modules/gestiones/pages/GestionesPage';
-import PeriodosPage from '../modules/periodo/pages/PeriodosPage';
-import SocioPage from '../modules/socios/pages/SocioPage';
-import AccionesPage from '../modules/acciones/pages/AccionesPage';
-import DetalleAccionPage from '../modules/detalleAccion/pages/DetalleAccionPage';
-import CobrosPage from '../modules/cobros/pages/CobrosPage';
-import CobroUniversalPage from '../modules/cobroUniversal/pages/CobroUniversalPage';
-import AlcantarilladoPage from '../modules/alcantarillado/pages/AlcantarilladoPage';
-import CambioNombrePage from '../modules/cambioNombre/pages/CambioNombrePage';
-import LecturasPage from '../modules/lecturas/pages/LecturasPage';
-import CobrosAguaPage from '../modules/cobrosAgua/pages/CobrosAguaPage';
-import TarifasPage from '../modules/tarifas/pages/TarifasPage';
-import CallesPage from '../modules/calles/pages/CallesPage';
-import AsambleasPage from '../modules/asambleas/pages/AsambleasPage';
-import TipoAccionPage from '../modules/tipoAccion/pages/TipoAccionPage';
-import InventarioPage from '../modules/inventario/pages/InventarioPage';
-import MultasPage from '../modules/multas/pages/MultasPage';
-import SocioDashboardPage from '../modules/socioPortal/pages/SocioDashboardPage';
-import MisAccionesPage from '../modules/socioPortal/pages/MisAccionesPage';
-import MisLecturasPage from '../modules/socioPortal/pages/MisLecturasPage';
-import MisCobrosPage from '../modules/socioPortal/pages/MisCobrosPage';
-import MisRecibosPage from '../modules/socioPortal/pages/MisRecibosPage';
-import MiPerfilPage from '../modules/socioPortal/pages/MiPerfilPage';
-import CambiarContrasenaPage from '../modules/socioPortal/pages/CambiarContrasenaPage';
+// Admin pages (lazy)
+const AdminDashboardPage = lazy(() => import('../modules/Admin/pages/AdminDashboardPage'));
+const AdminPage = lazy(() => import('../modules/Admin/pages/AdminPage'));
+const ReportesPage = lazy(() => import('../modules/Admin/pages/ReportesPage'));
+const RolesPage = lazy(() => import('../modules/roles/pages/RolesPage'));
+const GestionesPage = lazy(() => import('../modules/gestiones/pages/GestionesPage'));
+const PeriodosPage = lazy(() => import('../modules/periodo/pages/PeriodosPage'));
+const SocioPage = lazy(() => import('../modules/socios/pages/SocioPage'));
+const AccionesPage = lazy(() => import('../modules/acciones/pages/AccionesPage'));
+const DetalleAccionPage = lazy(() => import('../modules/detalleAccion/pages/DetalleAccionPage'));
+const CobrosPage = lazy(() => import('../modules/cobros/pages/CobrosPage'));
+const CobroUniversalPage = lazy(() => import('../modules/cobroUniversal/pages/CobroUniversalPage'));
+const AlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/AlcantarilladoPage'));
+const AccionesAlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/AccionesAlcantarilladoPage'));
+const CobroAlcantarilladoPage = lazy(() => import('../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage'));
+const CambioNombrePage = lazy(() => import('../modules/cambioNombre/pages/CambioNombrePage'));
+const LecturasPage = lazy(() => import('../modules/lecturas/pages/LecturasPage'));
+const ModificarMora = lazy(() => import('../modules/lecturas/modificar-mora/ModificarMora'));
+const CobrosAguaPage = lazy(() => import('../modules/cobrosAgua/pages/CobrosAguaPage'));
+const TarifasPage = lazy(() => import('../modules/tarifas/pages/TarifasPage'));
+const CallesPage = lazy(() => import('../modules/calles/pages/CallesPage'));
+const AsambleasPage = lazy(() => import('../modules/asambleas/pages/AsambleasPage'));
+const TipoAccionPage = lazy(() => import('../modules/tipoAccion/pages/TipoAccionPage'));
+const InventarioPage = lazy(() => import('../modules/inventario/pages/InventarioPage'));
+const MultasPage = lazy(() => import('../modules/multas/pages/MultasPage'));
+const AdelantoPagosPage = lazy(() => import('../modules/adelantoPagos/pages/AdelantoPagosPage'));
+const EgresosPage = lazy(() => import('../modules/egresos/pages/EgresosPage'));
+const ReciboUniversaPage = lazy(() => import('../modules/reciboUniversal/page/ReciboUniversaPage'));
+const CobroUniversalDosPage = lazy(() => import('../modules/reciboUniversal/page/cobroUniversalPage'));
+const ReporteReciboPage = lazy(() => import('../modules/reportes/recibos/page/ReciboPage'));
+const RecibosByAccionPage = lazy(() => import('../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage'));
+const ReciboBySocioPage = lazy(() => import('../modules/reportes/recibos/recibosBySocio/ReciboBySocioPage'));
 
-import AccionesAlcantarilladoPage from '../modules/alcantarillado/pages/AccionesAlcantarilladoPage';
-import CobroAlcantarilladoPage from '../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage';
-import AdelantoPagosPage from '../modules/adelantoPagos/pages/AdelantoPagosPage';
-import ModificarMora from '../modules/lecturas/modificar-mora/ModificarMora';
-import EgresosPage from '../modules/egresos/pages/EgresosPage';
-import ReciboUniversaPage from '../modules/reciboUniversal/page/ReciboUniversaPage';
+// Socio portal pages (lazy)
+const SocioDashboardPage = lazy(() => import('../modules/socioPortal/pages/SocioDashboardPage'));
+const MisAccionesPage = lazy(() => import('../modules/socioPortal/pages/MisAccionesPage'));
+const MisLecturasPage = lazy(() => import('../modules/socioPortal/pages/MisLecturasPage'));
+const MisCobrosPage = lazy(() => import('../modules/socioPortal/pages/MisCobrosPage'));
+const MisRecibosPage = lazy(() => import('../modules/socioPortal/pages/MisRecibosPage'));
+const MiPerfilPage = lazy(() => import('../modules/socioPortal/pages/MiPerfilPage'));
+const CambiarContrasenaPage = lazy(() => import('../modules/socioPortal/pages/CambiarContrasenaPage'));
 
-import CobroUniversalDosPage from '../modules/reciboUniversal/page/cobroUniversalPage';
-//REPORTES
-import ReporteReciboPage from '../modules/reportes/recibos/page/ReciboPage';
-import RecibosByAccionPage from '../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage';
-import ReciboBySocioPage from '../modules/reportes/recibos/recibosBySocio/ReciboBySocioPage';
+const load = (Component) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
-const permission = (codes) => <PermissionRoute permission={codes} />;
+const guard = (codes) => <PermissionRoute permission={codes} />;
 
 export const privateRoutes = (
   <Route element={<ProtectedRoute />}>
     <Route element={<AccountTypeRoute allowed={['ADMIN']} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="dashboard" element={load(AdminDashboardPage)} />
 
-        <Route
-          element={permission([
-            'usuario.ver',
-            'usuarios.ver',
-            'auth.usuario.ver',
-          ])}
-        >
-          <Route path="usuarios" element={<AdminPage />} />
+        <Route element={guard(PERMS.USUARIOS)}>
+          <Route path="usuarios" element={load(AdminPage)} />
         </Route>
 
-        <Route element={permission(['rol.ver', 'roles.ver', 'auth.rol.ver'])}>
-          <Route path="roles" element={<RolesPage />} />
+        <Route element={guard(PERMS.ROLES)}>
+          <Route path="roles" element={load(RolesPage)} />
         </Route>
 
-        <Route element={permission(['gestion.ver', 'gestiones.ver'])}>
-          <Route path="gestiones" element={<GestionesPage />} />
+        <Route element={guard(PERMS.GESTIONES)}>
+          <Route path="gestiones" element={load(GestionesPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'periodo.ver',
-            'periodos.ver',
-            'gestion.ver',
-            'gestiones.ver',
-          ])}
-        >
-          <Route path="periodos" element={<PeriodosPage />} />
+        <Route element={guard(PERMS.PERIODOS)}>
+          <Route path="periodos" element={load(PeriodosPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'acciones.accion.ver',
-            'accion.ver',
-            'acciones.ver',
-          ])}
-        >
-          <Route path="acciones" element={<AccionesPage />} />
-          <Route path="acciones/adelantos" element={<AdelantoPagosPage />} />
-          {/* -----------------agregar permisos-------------------------- */}
-          <Route path="alcantarillado" element={<AlcantarilladoPage />} />
-          <Route
-            path="alcantarillado-cobros"
-            element={<CobroAlcantarilladoPage />}
-          />
-          <Route
-            path="alcantarillado/acciones"
-            element={<AccionesAlcantarilladoPage />}
-          />
-
-          {/* ------------------------------------------- */}
-          <Route path="cambio-nombre" element={<CambioNombrePage />} />
-          <Route path="tipo-accion" element={<TipoAccionPage />} />
+        <Route element={guard(PERMS.ACCIONES)}>
+          <Route path="acciones" element={load(AccionesPage)} />
+          <Route path="acciones/adelantos" element={load(AdelantoPagosPage)} />
+          <Route path="alcantarillado" element={load(AlcantarilladoPage)} />
+          <Route path="alcantarillado-cobros" element={load(CobroAlcantarilladoPage)} />
+          <Route path="alcantarillado/acciones" element={load(AccionesAlcantarilladoPage)} />
+          <Route path="cambio-nombre" element={load(CambioNombrePage)} />
+          <Route path="tipo-accion" element={load(TipoAccionPage)} />
         </Route>
 
-        <Route element={permission(['inventario.ver'])}>
-          <Route path="inventario" element={<InventarioPage />} />
+        <Route element={guard(PERMS.DETALLE_ACCION)}>
+          <Route path="detalle-pago-accion" element={load(DetalleAccionPage)} />
         </Route>
 
-        <Route
-          element={permission(['socio.ver', 'socios.ver', 'socios.socio.ver'])}
-        >
-          <Route path="socios" element={<SocioPage />} />
+        <Route element={guard(PERMS.SOCIOS)}>
+          <Route path="socios" element={load(SocioPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'calle.ver',
-            'calles.ver',
-            'acciones.calles.ver',
-          ])}
-        >
-          <Route path="calles" element={<CallesPage />} />
+        <Route element={guard(PERMS.CALLES)}>
+          <Route path="calles" element={load(CallesPage)} />
         </Route>
 
-        <Route element={permission(['tarifa.ver', 'tarifas.ver'])}>
-          <Route path="tarifas" element={<TarifasPage />} />
+        <Route element={guard(PERMS.TARIFAS)}>
+          <Route path="tarifas" element={load(TarifasPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'acciones.detalle.ver',
-            'acciones.detalles.ver',
-            'detalle_accion.ver',
-            'detalle_pago_accion.ver',
-          ])}
-        >
-          <Route path="detalle-pago-accion" element={<DetalleAccionPage />} />
+        <Route element={guard(PERMS.MULTAS)}>
+          <Route path="multas" element={load(MultasPage)} />
         </Route>
 
-        <Route element={permission(['multa.ver', 'multas.ver'])}>
-          <Route path="multas" element={<MultasPage />} />
+        <Route element={guard(PERMS.COBROS)}>
+          <Route path="cobros" element={load(CobrosPage)} />
+          <Route path="cobros-universales" element={load(CobroUniversalPage)} />
+          <Route path="recibo-universal" element={load(ReciboUniversaPage)} />
+          <Route path="cobro-universal-dos" element={load(CobroUniversalDosPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'cobro.ver',
-            'cobros.ver',
-            'pago.ver',
-            'pagos.ver',
-          ])}
-        >
-          <Route path="cobros" element={<CobrosPage />} />
-          <Route path="cobros-universales" element={<CobroUniversalPage />} />
+        <Route element={guard(PERMS.COBROS_AGUA)}>
+          <Route path="cobros-agua" element={load(CobrosAguaPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'lectura.ver',
-            'lecturas.ver',
-            'agua.lectura.ver',
-          ])}
-        >
-          <Route path="lecturas" element={<LecturasPage />} />
+        <Route element={guard(PERMS.LECTURAS)}>
+          <Route path="lecturas" element={load(LecturasPage)} />
+          <Route path="lectura-mora" element={load(ModificarMora)} />
         </Route>
 
-        <Route path="lectura-mora" element={<ModificarMora />} />
-        <Route path="egresos" element={<EgresosPage />} />
-        <Route
-          element={permission([
-            'pago_agua.ver',
-            'pago-agua.ver',
-            'cobro_agua.ver',
-            'cobros_agua.ver',
-            'agua.cobro.ver',
-          ])}
-        >
-          <Route path="cobros-agua" element={<CobrosAguaPage />} />
+        <Route element={guard(PERMS.ASAMBLEAS)}>
+          <Route path="asambleas" element={load(AsambleasPage)} />
         </Route>
 
-        <Route
-          element={permission([
-            'asamblea.ver',
-            'asambleas.ver',
-            'reunion.ver',
-            'reuniones.ver',
-          ])}
-        >
-          <Route path="asambleas" element={<AsambleasPage />} />
+        <Route element={guard(PERMS.EGRESOS)}>
+          <Route path="egresos" element={load(EgresosPage)} />
         </Route>
 
-        <Route element={permission(['reporte.ver', 'reportes.ver'])}>
-          <Route path="reportes" element={<ReportesPage />} />
+        <Route element={guard(PERMS.REPORTES)}>
+          <Route path="reportes" element={load(ReportesPage)} />
+          <Route path="reportes-recibo" element={load(ReporteReciboPage)} />
+          <Route path="reportes-recibo-accion" element={load(RecibosByAccionPage)} />
+          <Route path="reportes-recibo-socio" element={load(ReciboBySocioPage)} />
         </Route>
 
-        <Route path="recibo-universal" element={<ReciboUniversaPage />} />
-        <Route path="cobro-universal-dos" element={<CobroUniversalDosPage />} />
-
-        <Route path="reportes-recibo" element={<ReporteReciboPage />} />
-        <Route
-          path="reportes-recibo-accion"
-          element={<RecibosByAccionPage />}
-        />
-        <Route path="reportes-recibo-socio" element={<ReciboBySocioPage />} />
+        <Route element={guard(PERMS.INVENTARIO)}>
+          <Route path="inventario" element={load(InventarioPage)} />
+        </Route>
 
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
@@ -219,20 +155,17 @@ export const privateRoutes = (
     <Route element={<AccountTypeRoute allowed={['SOCIO']} />}>
       <Route path="/socio" element={<SocioLayout />}>
         <Route index element={<Navigate to="inicio" replace />} />
-        <Route path="inicio" element={<SocioDashboardPage />} />
-        <Route path="acciones" element={<MisAccionesPage />} />
-        <Route path="lecturas" element={<MisLecturasPage />} />
-        <Route path="cobros" element={<MisCobrosPage />} />
-        <Route path="recibos" element={<MisRecibosPage />} />
-        <Route path="perfil" element={<MiPerfilPage />} />
-        <Route path="cambiar-contrasena" element={<CambiarContrasenaPage />} />
+        <Route path="inicio" element={load(SocioDashboardPage)} />
+        <Route path="acciones" element={load(MisAccionesPage)} />
+        <Route path="lecturas" element={load(MisLecturasPage)} />
+        <Route path="cobros" element={load(MisCobrosPage)} />
+        <Route path="recibos" element={load(MisRecibosPage)} />
+        <Route path="perfil" element={load(MiPerfilPage)} />
+        <Route path="cambiar-contrasena" element={load(CambiarContrasenaPage)} />
         <Route path="*" element={<Navigate to="inicio" replace />} />
       </Route>
     </Route>
 
-    <Route
-      path="/cliente/*"
-      element={<Navigate to="/socio/inicio" replace />}
-    />
+    <Route path="/cliente/*" element={<Navigate to="/socio/inicio" replace />} />
   </Route>
 );

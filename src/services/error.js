@@ -26,7 +26,6 @@ export const normalizeApiError = (error) => {
 
 export const toServiceError = (error) => {
   const normalized = normalizeApiError(error);
-  console.log(normalized);
 
   if (normalized.payload && typeof normalized.payload === 'object') {
     return {

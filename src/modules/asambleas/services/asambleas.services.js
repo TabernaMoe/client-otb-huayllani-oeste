@@ -46,14 +46,14 @@ export class AsambleasServices {
       return toServiceError(error);
     }
   }
+
   static async getReporte(id) {
     try {
-      const response = await api.get(`/admin/asamblea/reporte/${id}`, {
+      const { data } = await api.get(`/admin/asamblea/reporte/${id}`, {
         responseType: 'blob',
       });
-
-      return response.data;
-    } catch (e) {
+      return data;
+    } catch (error) {
       return toServiceError(error);
     }
   }

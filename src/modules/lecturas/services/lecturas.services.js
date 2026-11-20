@@ -19,21 +19,22 @@ export class LecturasServices {
       return toServiceError(error);
     }
   }
+
   static async getHistorial({ accion_id }) {
     try {
-      const response = await api.get(`/admin/lectura/historial/${accion_id}`);
-      return response.data;
-    } catch (e) {
-      return toServiceError(e);
+      const { data } = await api.get(`/admin/lectura/historial/${accion_id}`);
+      return data;
+    } catch (error) {
+      return toServiceError(error);
     }
   }
 
   static async getAcionesWithMora() {
     try {
-      const response = await api.get('/admin/lectura/acciones-con-mora');
-      return response.data;
-    } catch (e) {
-      toServiceError(e);
+      const { data } = await api.get('/admin/lectura/acciones-con-mora');
+      return data;
+    } catch (error) {
+      return toServiceError(error);
     }
   }
 
@@ -57,11 +58,8 @@ export class LecturasServices {
 
   static async updateMora({ id, payload }) {
     try {
-      const response = await api.patch(
-        `/admin/lectura/modificar-mora/${id}`,
-        payload,
-      );
-      return response.data;
+      const { data } = await api.patch(`/admin/lectura/modificar-mora/${id}`, payload);
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
@@ -69,11 +67,8 @@ export class LecturasServices {
 
   static async updateM3({ id, payload }) {
     try {
-      const response = await api.patch(
-        `/admin/lectura/modificar-m3/${id}`,
-        payload,
-      );
-      return response.data;
+      const { data } = await api.patch(`/admin/lectura/modificar-m3/${id}`, payload);
+      return data;
     } catch (error) {
       return toServiceError(error);
     }
@@ -81,21 +76,16 @@ export class LecturasServices {
 
   static async cambioMedidor(accionId, payload) {
     try {
-      const { data } = await api.patch(
-        `/admin/lectura/cambio/${accionId}`,
-        payload,
-      );
+      const { data } = await api.patch(`/admin/lectura/cambio/${accionId}`, payload);
       return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
+
   static async UpdateOnlyLectura({ id, payload }) {
     try {
-      const { data } = await api.patch(
-        `/admin/lectura/update-only-lectura/${id}`,
-        payload,
-      );
+      const { data } = await api.patch(`/admin/lectura/update-only-lectura/${id}`, payload);
       return data;
     } catch (error) {
       return toServiceError(error);
