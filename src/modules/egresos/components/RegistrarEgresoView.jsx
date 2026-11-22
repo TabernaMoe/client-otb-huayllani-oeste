@@ -5,6 +5,8 @@ import {
   IdentificationIcon,
   PlusCircleIcon,
   ReceiptPercentIcon,
+  PencilSquareIcon,
+  NoSymbolIcon,
 } from '@heroicons/react/24/outline';
 import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
@@ -295,6 +297,47 @@ export default function RegistrarEgresoView() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right font-bold text-slate-800">
                       Bs {Number(egreso.monto || 0).toFixed(2)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* EDITAR */}
+                        <button
+                          type="button"
+                          onClick={() => {}}
+                          className="
+            inline-flex items-center gap-1.5
+            rounded-lg border border-blue-200
+            bg-blue-50 px-3 py-2
+            text-xs font-semibold text-blue-700
+            transition-all duration-200
+            hover:border-blue-300 hover:bg-blue-100
+            focus-visible:outline-none
+            focus-visible:ring-2 focus-visible:ring-blue-400
+          "
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                          Editar
+                        </button>
+
+                        {/* ANULAR */}
+                        <button
+                          type="button"
+                          onClick={() => {}}
+                          className="
+            inline-flex items-center gap-1.5
+            rounded-lg border border-red-200
+            bg-red-50 px-3 py-2
+            text-xs font-semibold text-red-700
+            transition-all duration-200
+            hover:border-red-300 hover:bg-red-100
+            focus-visible:outline-none
+            focus-visible:ring-2 focus-visible:ring-red-400
+          "
+                        >
+                          <NoSymbolIcon className="h-4 w-4" />
+                          Anular
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
