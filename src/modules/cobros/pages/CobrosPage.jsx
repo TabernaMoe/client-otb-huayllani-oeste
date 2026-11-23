@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageHeader from '../../../components/PageHeader';
 import CobrosTabs from '../components/CobrosTabs';
 import CobrarGeneralView from '../components/CobrarGeneralView';
 import CobrarMultasView from '../components/CobrarMultasView';
@@ -14,16 +15,10 @@ export default function CobrosPage() {
 
   return (
     <section className="space-y-5">
-      <header>
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-          <span>Inicio</span>
-          <span>/</span>
-          <span className="text-emerald-700">Cobros</span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Gestión de cobros
-        </h1>
-      </header>
+      <PageHeader
+        title="Gestión de cobros"
+        description="Registra cobros generales y multas pendientes por socio."
+      />
 
       <CobrosTabs activeView={activeView} onChange={setActiveView} />
       <ActiveView />

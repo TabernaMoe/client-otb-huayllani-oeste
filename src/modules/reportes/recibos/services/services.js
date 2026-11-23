@@ -4,49 +4,34 @@ import { toServiceError } from '../../../../services/error';
 export class ReciboServices {
   static async getAll() {
     try {
-      const response = await api.get('/admin/cobros-generales/recibos');
-      return response.data;
+      const { data } = await api.get('/admin/cobros-generales/recibos');
+      return data;
     } catch (e) {
       return toServiceError(e);
     }
   }
-  static async getSocios() {
+
+  static async getAccionesByServicio({ tipo_servicio, search = '' } = {}) {
     try {
-      const response = await api.get(
-        '/admin/cobros-generales/recibos/seleccion-socios',
-      );
-      return response.data;
+      const params = {
+        ...(tipo_servicio ? { tipo_servicio } : {}),
+        ...(search ? { search } : {}),
+      };
+      const { data } = await api.get('/admin/reportes/recibo/acciones', {
+        params,
+      });
+      return data;
     } catch (e) {
       return toServiceError(e);
     }
   }
-  static async getAccion({ payload }) {
-    try {
-      const response = await api.post(
-        '/admin/cobros-generales/recibos/seleccion-accion',
-        payload,
-      );
-      return response.data;
-    } catch (e) {
-      return toServiceError(e);
-    }
-  }
-  static async getRecibosBySocio({ id }) {
-    try {
-      const response = await api.get(
-        `/admin/cobros-generales/recibos/socio/${id}`,
-      );
-      return response.data;
-    } catch (e) {
-      return toServiceError(e);
-    }
-  }
+
   static async getRecibosByAccion({ id }) {
     try {
-      const response = await api.get(
+      const { data } = await api.get(
         `/admin/cobros-generales/recibos/accion/${id}`,
       );
-      return response.data;
+      return data;
     } catch (e) {
       return toServiceError(e);
     }

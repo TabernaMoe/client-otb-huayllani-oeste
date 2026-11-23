@@ -1,5 +1,5 @@
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import { formatMoney } from '../utils/cobros.utils';
+import { formatMoney } from '../../cobros/utils/cobros.utils';
 
 export default function CobrosPendientes({
   socio,

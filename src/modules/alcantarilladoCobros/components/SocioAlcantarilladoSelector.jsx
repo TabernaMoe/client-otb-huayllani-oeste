@@ -4,7 +4,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { getSocioInitials } from '../utils/cobros.utils';
+import { getSocioInitials } from '../../cobros/utils/cobros.utils';
 
 export default function SocioAlcantarilladoSelector({
   socios,

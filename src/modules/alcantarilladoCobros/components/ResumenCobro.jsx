@@ -1,4 +1,4 @@
-import { formatMoney } from '../utils/cobros.utils';
+import { formatMoney } from '../../cobros/utils/cobros.utils';
 
 export default function ResumenCobro({ cantidad, total }) {
   return (

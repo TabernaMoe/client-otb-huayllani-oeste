@@ -39,7 +39,6 @@ const EgresosPage = lazy(() => import('../modules/egresos/pages/EgresosPage'));
 const ReciboUniversaPage = lazy(() => import('../modules/reciboUniversal/page/ReciboUniversaPage'));
 const CobroUniversalDosPage = lazy(() => import('../modules/reciboUniversal/page/cobroUniversalPage'));
 const RecibosByAccionPage = lazy(() => import('../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage'));
-const ReciboBySocioPage = lazy(() => import('../modules/reportes/recibos/recibosBySocio/ReciboBySocioPage'));
 
 // Socio portal pages (lazy)
 const SocioDashboardPage = lazy(() => import('../modules/socioPortal/pages/SocioDashboardPage'));
@@ -136,9 +135,7 @@ export const privateRoutes = (
 
         <Route element={guard(PERMS.REPORTES)}>
           <Route path="reportes" element={load(ReportesPage)} />
-          <Route path="reportes-recibo" element={load(ReportesPage)} />
           <Route path="reportes-recibo-accion" element={load(RecibosByAccionPage)} />
-          <Route path="reportes-recibo-socio" element={load(ReciboBySocioPage)} />
         </Route>
 
         <Route element={guard(PERMS.INVENTARIO)}>

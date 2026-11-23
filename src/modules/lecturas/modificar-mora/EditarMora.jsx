@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import FormModal from '../../../components/FormModal';
 import ElegantInput from '../../../components/ElegantInput';
+import ModalFooter from '../../../components/ModalFooter';
 import { LecturasServices } from '../services/lecturas.services';
 
 const initialForm = {
@@ -15,25 +17,16 @@ export default function EditarMora({ open, lectura, onClose, onSaved }) {
 
   useEffect(() => {
     if (!open) return;
-    console.log(lectura);
     setForm({
       mora: lectura?.mora ?? '',
       observacion_mora: lectura?.observacion_mora ?? '',
     });
-
     setErrors({});
   }, [open, lectura]);
 
   const change = ({ target: { name, value } }) => {
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
-    setErrors((current) => ({
-      ...current,
-      [name]: '',
-    }));
+    setForm((current) => ({ ...current, [name]: value }));
+    setErrors((current) => ({ ...current, [name]: '' }));
   };
 
   const submit = async (event) => {
@@ -41,9 +34,6 @@ export default function EditarMora({ open, lectura, onClose, onSaved }) {
 
     try {
       setLoading(true);
-
-      // Aquí iría tu servicio
-
       const response = await LecturasServices.updateMora({
         id: lectura.id,
         payload: {
@@ -53,13 +43,14 @@ export default function EditarMora({ open, lectura, onClose, onSaved }) {
       });
 
       if (!response.ok) {
-        throw new Error('No se pudo modificar la mora');
+        if (response.fieldErrors) setErrors(response.fieldErrors);
+        toast.error(response.message || 'No se pudo modificar la mora');
+        return;
       }
 
+      toast.success(response.message || 'Mora actualizada correctamente');
       onSaved?.();
       onClose();
-    } catch (error) {
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -101,24 +92,11 @@ export default function EditarMora({ open, lectura, onClose, onSaved }) {
           />
         </div>
 
-        <div className="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          loading={loading}
+          submitLabel="Guardar cambios"
+        />
       </form>
     </FormModal>
   );

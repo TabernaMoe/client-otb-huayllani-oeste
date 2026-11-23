@@ -3,6 +3,8 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 import { CobrosServices } from '../services/cobros.services';
 import { validatePagoCobro } from '../schema/cobros.schema';
 import SocioSelector from './SocioSelector';
@@ -35,6 +37,7 @@ export default function CobroPendienteView({
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState(null);
   const [qrPago, setQrPago] = useState(null);
+  const [pendingPago, setPendingPago] = useState(null);
 
   const loadSocios = async (value = search) => {
     setLoadingSocios(true);
@@ -77,8 +80,6 @@ export default function CobroPendienteView({
 
     setSelectedSocio({ ...socio, ...response.data });
 
-    //becas
-
     const todosCobros = response.data.cobrosSocio || [];
 
     const cobrosFiltrados = tipoCobro
@@ -115,7 +116,7 @@ export default function CobroPendienteView({
     setMessage(null);
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
     const validation = validatePagoCobro(form);
@@ -124,29 +125,37 @@ export default function CobroPendienteView({
       return;
     }
 
-    if (!window.confirm(`¿Confirmar pago de Bs ${validation.data.monto}?`))
-      return;
+    setPendingPago(validation.data);
+  };
+
+  const confirmPago = async () => {
+    if (!pendingPago) return;
 
     setSaving(true);
-    const response = await CobrosServices.pagar(validation.data);
+    const response = await CobrosServices.pagar(pendingPago);
     setSaving(false);
 
     if (!response.ok) {
+      setPendingPago(null);
       setMessage({ type: 'error', text: response.message });
+      toast.error(response.message);
       return;
     }
 
-    console.log(response);
+    const pagoData = pendingPago;
+    setPendingPago(null);
+
     if (response.data) {
       imprimirRecibo(response.data);
     }
 
-    if (validation.data.metodo_pago === 'QR') {
-      setQrPago({ ...response, monto: validation.data.monto });
+    if (pagoData.metodo_pago === 'QR') {
+      setQrPago({ ...response, monto: pagoData.monto });
       return;
     }
 
     setMessage({ type: 'success', text: response.message });
+    toast.success(response.message);
     await openSocio(selectedSocio);
     await loadSocios();
   };
@@ -209,6 +218,20 @@ export default function CobroPendienteView({
           />
         </div>
       </div>
+
+      <ConfirmModal
+        open={Boolean(pendingPago)}
+        title="Confirmar pago"
+        message={
+          pendingPago
+            ? `¿Confirmar pago de Bs ${pendingPago.monto}?`
+            : ''
+        }
+        confirmText="Confirmar pago"
+        loading={saving}
+        onConfirm={confirmPago}
+        onClose={() => setPendingPago(null)}
+      />
 
       <QrPagoModal pago={qrPago} onClose={() => setQrPago(null)} />
     </div>

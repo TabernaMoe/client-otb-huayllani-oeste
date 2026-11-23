@@ -398,9 +398,8 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
     await ReportesApiService.getRecibos({ page: 1, limit: 10 });
     await ReportesApiService.getRecibosPorFecha({});
 
-    await ReciboServices.getSocios();
-    await ReciboServices.getAccion({ payload: { tipo_servicio: 'AGUA' } });
-    await ReciboServices.getRecibosBySocio({ id: 3 });
+    await ReciboServices.getAll();
+    await ReciboServices.getAccionesByServicio({ tipo_servicio: 'AGUA' });
     await ReciboServices.getRecibosByAccion({ id: 4 });
 
     await SocioPortalServices.getResumen();
@@ -438,9 +437,8 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
         'POST /admin/reportes/cobro/fechas',
         'GET /admin/reportes/recibo',
         'POST /admin/reportes/recibo/fechas',
-        'GET /admin/cobros-generales/recibos/seleccion-socios',
-        'POST /admin/cobros-generales/recibos/seleccion-accion',
-        'GET /admin/cobros-generales/recibos/socio/3',
+        'GET /admin/cobros-generales/recibos',
+        'GET /admin/reportes/recibo/acciones',
         'GET /admin/cobros-generales/recibos/accion/4',
         'GET /socio/me/resumen',
         'GET /socio/me',

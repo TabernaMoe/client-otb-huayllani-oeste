@@ -8,12 +8,12 @@ import {
   DocumentTextIcon,
   FunnelIcon,
   ArrowPathIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { imprimirRecibo } from '../../../cobros/reciboPdf/generarReciboHTML';
 import Select from '../../../../components/Select';
+
+const hasSelection = (val) => val !== '' && val !== null && val !== undefined;
 
 export default function ReciboPage() {
   const [filas, setFilas] = useState([]);
@@ -37,11 +37,8 @@ export default function ReciboPage() {
     const cargarAcciones = async () => {
       try {
         setLoadingAcciones(true);
-
-        const response = await ReciboServices.getAccion({
-          payload: {
-            tipo_servicio: tipoServicio,
-          },
+        const response = await ReciboServices.getAccionesByServicio({
+          tipo_servicio: tipoServicio,
         });
 
         if (!response.ok) {
@@ -63,9 +60,7 @@ export default function ReciboPage() {
           );
         }
       } finally {
-        if (!cancelado) {
-          setLoadingAcciones(false);
-        }
+        if (!cancelado) setLoadingAcciones(false);
       }
     };
 
@@ -76,9 +71,9 @@ export default function ReciboPage() {
     };
   }, [tipoServicio]);
 
-  // Cargar recibos de la acción seleccionada
+  // Cargar recibos de la acción seleccionada (o todos si value === 0)
   useEffect(() => {
-    if (!accion) {
+    if (!hasSelection(accion)) {
       setFilas([]);
       setLoading(false);
       return;
@@ -89,10 +84,10 @@ export default function ReciboPage() {
     const cargarRecibos = async () => {
       try {
         setLoading(true);
-
-        const response = await ReciboServices.getRecibosByAccion({
-          id: accion,
-        });
+        const isTodos = String(accion) === '0';
+        const response = isTodos
+          ? await ReciboServices.getAll()
+          : await ReciboServices.getRecibosByAccion({ id: accion });
 
         if (!response.ok) {
           throw new Error(response.message || 'No se pudo obtener los recibos');
@@ -111,9 +106,7 @@ export default function ReciboPage() {
           );
         }
       } finally {
-        if (!cancelado) {
-          setLoading(false);
-        }
+        if (!cancelado) setLoading(false);
       }
     };
 
@@ -125,14 +118,14 @@ export default function ReciboPage() {
   }, [accion]);
 
   const handleTipoServicioChange = (e) => {
-    setTipoServicio(e.target.value);
+    setTipoServicio(e.target.value || '');
     setAccion('');
     setAcciones([]);
     setFilas([]);
   };
 
   const handleAccionChange = (e) => {
-    setAccion(e.target.value);
+    setAccion(e.target.value ?? '');
     setFilas([]);
   };
 
@@ -146,15 +139,6 @@ export default function ReciboPage() {
   const handleRecibo = useCallback((row) => {
     imprimirRecibo(row);
   }, []);
-
-  // Resumen de recibos
-  const resumen = useMemo(() => {
-    return {
-      total: filas.length,
-      activos: filas.filter((row) => row.estado === true).length,
-      inactivos: filas.filter((row) => row.estado === false).length,
-    };
-  }, [filas]);
 
   const columns = useMemo(
     () => [
@@ -170,6 +154,15 @@ export default function ReciboPage() {
         header: 'NOMBRE DEL SOCIO',
       },
       {
+        accessorKey: 'codigo_interno',
+        header: 'ACCIÓN',
+        cell: ({ getValue }) => (
+          <span className="font-medium text-slate-700">
+            {getValue() || '-'}
+          </span>
+        ),
+      },
+      {
         accessorKey: 'fecha_emision',
         header: 'FECHA DE EMISIÓN',
       },
@@ -178,7 +171,6 @@ export default function ReciboPage() {
         header: 'ESTADO',
         cell: ({ row }) => {
           const activo = row.original.estado;
-
           return (
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
@@ -241,10 +233,11 @@ export default function ReciboPage() {
 
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
-              Gestión de recibos
+              Recibos por acción
             </h1>
             <p className="mt-1 text-sm text-slate-300">
-              Consulta, visualiza y administra los recibos emitidos.
+              Consulta y visualiza los recibos emitidos filtrando por tipo de
+              servicio y acción.
             </p>
           </div>
         </div>
@@ -265,7 +258,7 @@ export default function ReciboPage() {
                 Filtros de búsqueda
               </h2>
               <p className="text-xs text-slate-500">
-                Selecciona un servicio y un socio para consultar.
+                Selecciona un servicio y una acción para consultar.
               </p>
             </div>
           </div>
@@ -281,52 +274,34 @@ export default function ReciboPage() {
         </div>
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Tipo de servicio
-            </label>
+          <Select
+            label="Tipo de servicio"
+            placeholder="Seleccionar servicio..."
+            value={tipoServicio}
+            onChange={handleTipoServicioChange}
+            options={[
+              { value: 'AGUA', label: 'AGUA' },
+              { value: 'ALCANTARILLADO', label: 'ALCANTARILLADO' },
+            ]}
+          />
 
+          <div>
             <Select
-              value={tipoServicio}
-              onChange={handleTipoServicioChange}
-              options={[
-                { value: '', label: 'Seleccionar servicio' },
-                { value: 'AGUA', label: 'AGUA' },
-                {
-                  value: 'ALCANTARILLADO',
-                  label: 'ALCANTARILLADO',
-                },
-              ]}
+              label="Acción"
+              placeholder={
+                loadingAcciones
+                  ? 'Cargando acciones...'
+                  : 'Seleccionar acción...'
+              }
+              value={accion}
+              onChange={handleAccionChange}
+              isDisabled={!tipoServicio || loadingAcciones}
+              options={acciones}
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Socio / Acción
-            </label>
-
-            <fieldset
-              disabled={!tipoServicio || loadingAcciones}
-              className="min-w-0 disabled:opacity-60"
-            >
-              <Select
-                value={accion}
-                onChange={handleAccionChange}
-                options={[
-                  {
-                    value: '',
-                    label: loadingAcciones
-                      ? 'Cargando acciones...'
-                      : 'Seleccionar socio / acción',
-                  },
-                  ...acciones,
-                ]}
-              />
-            </fieldset>
 
             {tipoServicio && loadingAcciones && (
-              <p className="text-xs text-blue-600">
-                Obteniendo socios disponibles...
+              <p className="mt-1 text-xs text-blue-600">
+                Obteniendo acciones disponibles...
               </p>
             )}
           </div>
@@ -346,8 +321,10 @@ export default function ReciboPage() {
                 Listado de recibos
               </h2>
               <p className="text-xs text-slate-500">
-                {accion
-                  ? 'Recibos correspondientes a la acción seleccionada'
+                {hasSelection(accion)
+                  ? String(accion) === '0'
+                    ? 'Mostrando todos los recibos'
+                    : 'Recibos correspondientes a la acción seleccionada'
                   : 'Selecciona una acción para mostrar sus recibos'}
               </p>
             </div>

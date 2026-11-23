@@ -15,7 +15,6 @@ import {
   CurrencyDollarIcon,
   DocumentChartBarIcon,
   DocumentMagnifyingGlassIcon,
-  DocumentTextIcon,
   ExclamationTriangleIcon,
   HomeIcon,
   IdentificationIcon,
@@ -201,13 +200,7 @@ export const AdminNav = [
         permission: PERMS.REPORTES,
       },
       {
-        label: 'Reportes de recibos',
-        to: '/admin/reportes-recibo-socio',
-        icon: DocumentTextIcon,
-        permission: PERMS.REPORTES,
-      },
-      {
-        label: 'Reportes de acción',
+        label: 'Recibos por acción',
         to: '/admin/reportes-recibo-accion',
         icon: ClipboardDocumentCheckIcon,
         permission: PERMS.REPORTES,

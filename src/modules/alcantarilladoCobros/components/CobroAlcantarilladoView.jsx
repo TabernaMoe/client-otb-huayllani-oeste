@@ -13,7 +13,7 @@ import SocioAlcantarilladoSelector from './SocioAlcantarilladoSelector';
 import CobrosPendientes from './CobrosPendientes';
 import ResumenCobro from './ResumenCobro';
 
-import { imprimirRecibo } from '../reciboPdf/generarReciboHTML';
+import { imprimirRecibo } from '../../cobros/reciboPdf/generarReciboHTML';
 
 const initialForm = {
   monto: '',

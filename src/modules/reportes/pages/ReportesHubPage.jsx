@@ -11,6 +11,7 @@ import {
   filtroFechasReciboSchema,
 } from '../schemas/reportes.schema';
 import { ReportesApiService } from '../services/reportes.services';
+import { formatZodErrorMessage } from '../../../services/error';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -78,6 +79,7 @@ export default function ReportesHubPage() {
             fieldErrors[issue.path[0]] = issue.message;
           }
           setErrors(fieldErrors);
+          toast.error(formatZodErrorMessage(parsed.error));
           return;
         }
 

@@ -75,6 +75,7 @@ export default function CobrosAguaPage() {
       setCobros(response.data.cobrosAccionAgua);
       setSelectedCobro(null);
       setForm(INITIAL_FORM);
+      setErrors({});
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -118,6 +119,8 @@ export default function CobrosAguaPage() {
       await selectAccion(detalle);
       await loadAcciones();
     } catch (error) {
+      setConfirmOpen(false);
+      setPago(null);
       toast.error(error.message);
     } finally {
       setSaving(false);
