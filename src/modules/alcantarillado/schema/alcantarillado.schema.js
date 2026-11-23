@@ -1,7 +1,6 @@
 import { z } from 'zod';
-
-const errorsOf = (error) =>
-  Object.fromEntries(error.issues.map(({ path, message }) => [path[0], message]));
+import { zodErrors } from '../../../utils/zodErrors';
+import { formatZodErrorMessage } from '../../../services/error';
 
 const schema = z.object({
   nombre_accion: z.string().trim().min(1, 'Ingrese el nombre'),
@@ -17,7 +16,14 @@ const schema = z.object({
 
 export const validateAlcantarillado = (form) => {
   const result = schema.safeParse(form);
-  return result.success
-    ? { isValid: true, data: result.data, errors: {} }
-    : { isValid: false, data: null, errors: errorsOf(result.error) };
+  if (result.success) {
+    return { isValid: true, data: result.data, errors: {}, message: '' };
+  }
+
+  return {
+    isValid: false,
+    data: null,
+    errors: zodErrors(result.error),
+    message: formatZodErrorMessage(result.error),
+  };
 };

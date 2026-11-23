@@ -1,38 +1,39 @@
 import { useEffect, useState } from 'react';
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 import SelectComponent from '../../../components/Select';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { CobrosServices } from '../../cobros/services/cobros.services';
 import { validateAsignarMulta } from '../schemas/multas.schema';
 
-const initialForm = { accion_id: null, multa_id: null };
+const INITIAL_FORM = { accion_id: null, multa_id: null };
 
 export default function MultarAccionView() {
   const [acciones, setAcciones] = useState([]);
   const [multas, setMultas] = useState([]);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
+  const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
     const loadOptions = async () => {
-      const [accionesResponse, multasResponse] = await Promise.all([
-        CobrosServices.getAcciones({ page: 1, limit: 100 }),
-        CobrosServices.getMultas(),
-      ]);
+      try {
+        const [accionesResponse, multasResponse] = await Promise.all([
+          CobrosServices.getAcciones({ page: 1, limit: 100 }),
+          CobrosServices.getMultas(),
+        ]);
 
-      setAcciones(
-        accionesResponse.data.map((accion) => ({
-          value: Number(accion.id),
-          label: `${accion.codigo_interno} - ${accion.nombre_completo} - Medidor ${accion.nro_medidor}`,
-        })),
-      );
-      setMultas(multasResponse.data);
-      setLoading(false);
+        setAcciones(
+          (accionesResponse?.data ?? []).map((accion) => ({
+            value: Number(accion.id),
+            label: `${accion.codigo_interno} - ${accion.nombre_completo} - Medidor ${accion.nro_medidor || 'S/N'}`,
+          })),
+        );
+        setMultas(multasResponse?.data ?? []);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadOptions();
@@ -40,8 +41,7 @@ export default function MultarAccionView() {
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
-    setMessage(null);
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (event) => {
@@ -50,25 +50,25 @@ export default function MultarAccionView() {
     const validation = validateAsignarMulta(form);
     if (!validation.isValid) {
       setErrors(validation.errors);
+      toast.error(validation.message);
       return;
     }
 
-    setSaving(true);
-    const response = await CobrosServices.asignarMulta(
-      validation.data.accionId,
-      validation.data.payload,
+    await run(
+      () =>
+        CobrosServices.asignarMulta(
+          validation.data.accionId,
+          validation.data.payload,
+        ),
+      {
+        successMessage: (res) => res?.message || 'Multa asignada correctamente',
+        errorMessage: 'No se pudo asignar la multa',
+        onSuccess: () => {
+          setForm(INITIAL_FORM);
+          setErrors({});
+        },
+      },
     );
-    setSaving(false);
-
-    setMessage({
-      type: response.ok ? 'success' : 'error',
-      text: response.message,
-    });
-
-    if (response.ok) {
-      setForm(initialForm);
-      setErrors({});
-    }
   };
 
   return (
@@ -110,26 +110,13 @@ export default function MultarAccionView() {
           />
         </div>
 
-        {message && (
-          <div
-            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium ${
-              message.type === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-red-200 bg-red-50 text-red-700'
-            }`}
-          >
-            {message.type === 'success' && <CheckCircleIcon className="h-5 w-5" />}
-            {message.text}
-          </div>
-        )}
-
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={loading || saving}
+            disabled={loading || submitting}
             className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
           >
-            {saving ? 'Asignando...' : 'Asignar multa'}
+            {submitting ? 'Asignando...' : 'Asignar multa'}
           </button>
         </div>
       </form>

@@ -8,7 +8,12 @@ export class TarifasServices {
 
   static async getById(id) {
     const { data } = await api.get(`/admin/tarifa/${id}`);
-    return data;
+    const tarifa = data?.dato ?? data?.data ?? null;
+    return {
+      ...data,
+      data: tarifa ? { id, ...tarifa } : null,
+      dato: tarifa ? { id, ...tarifa } : null,
+    };
   }
 
   static async create(payload) {

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-
-import FormModal from '../../../components/FormModal';
 import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
+import FormModal from '../../../components/FormModal';
+import ModalFooter from '../../../components/ModalFooter';
 import SelectComponent from '../../../components/Select';
-import { CambioNombreServices } from '../services/cambioNombre.services';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { validateCambioNombre } from '../schema/cambioNombre.schema';
+import { CambioNombreServices } from '../services/cambioNombre.services';
 
-const emptyForm = {
+const EMPTY_FORM = {
   accion_id: null,
   socio_nuevo_id: null,
   tipo: null,
@@ -16,23 +17,23 @@ const emptyForm = {
   monto: '',
 };
 
-const tipos = [
+const TIPOS = [
   { value: 'FAMILIAR', label: 'Familiar' },
   { value: 'AJENO', label: 'Ajeno' },
 ];
 
 export default function CambioNombreModal({ open, onClose, onSaved }) {
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [acciones, setAcciones] = useState([]);
   const [socios, setSocios] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
     if (!open) return;
 
-    setForm(emptyForm);
+    setForm(EMPTY_FORM);
     setErrors({});
     setLoading(true);
 
@@ -47,14 +48,14 @@ export default function CambioNombreModal({ open, onClose, onSaved }) {
         return;
       }
 
-      setAcciones(accionesResponse.data);
-      setSocios(sociosResponse.data);
+      setAcciones(accionesResponse.data ?? []);
+      setSocios(sociosResponse.data ?? []);
     });
   }, [open]);
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((current) => ({ ...current, [name]: value }));
-    setErrors((current) => ({ ...current, [name]: undefined }));
+    setErrors((current) => ({ ...current, [name]: '' }));
   };
 
   const handleSubmit = async (event) => {
@@ -63,21 +64,18 @@ export default function CambioNombreModal({ open, onClose, onSaved }) {
     const validation = validateCambioNombre(form);
     if (!validation.isValid) {
       setErrors(validation.errors);
+      toast.error(validation.message);
       return;
     }
 
-    setSaving(true);
-    const response = await CambioNombreServices.create(validation.data);
-    setSaving(false);
-
-    if (!response.ok) {
-      toast.error(response.message);
-      return;
-    }
-
-    toast.success(response.message);
-    onSaved();
-    onClose();
+    await run(() => CambioNombreServices.create(validation.data), {
+      successMessage: (res) => res?.message || 'Cambio de nombre registrado',
+      errorMessage: 'No se pudo registrar el cambio de nombre',
+      onSuccess: async () => {
+        await onSaved?.();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -114,7 +112,7 @@ export default function CambioNombreModal({ open, onClose, onSaved }) {
             name="tipo"
             value={form.tipo}
             onChange={handleChange}
-            options={tipos}
+            options={TIPOS}
             error={errors.tipo}
           />
 
@@ -140,22 +138,12 @@ export default function CambioNombreModal({ open, onClose, onSaved }) {
           required
         />
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving || loading}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {saving ? 'Procesando...' : 'Registrar cambio'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          saving={submitting || loading}
+          submitLabel="Registrar cambio"
+          savingLabel={loading ? 'Cargando...' : 'Procesando...'}
+        />
       </form>
     </FormModal>
   );

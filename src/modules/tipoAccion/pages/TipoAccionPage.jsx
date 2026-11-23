@@ -1,40 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { PencilSquareIcon, PlusIcon, TagIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
+import { useMemo, useState } from 'react';
+import { PlusIcon, TagIcon } from '@heroicons/react/24/outline';
 import AccionCatalogTabs from '../../../components/AccionCatalogTabs';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
-import TipoAccionModal from './TipoAccionModal';
+import SearchFilterBar from '../../../components/SearchFilterBar';
+import TableActionButtons from '../../../components/TableActionButtons';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { TipoAccionServices } from '../services/tipoAccion.services';
+import TipoAccionModal from './TipoAccionModal';
 
 export default function TipoAccionPage() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [modal, setModal] = useState(null);
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await TipoAccionServices.getAll({ page, limit, search });
-      setData(response.data);
-      setTotal(response.total);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, limit, search]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const list = usePaginatedList(TipoAccionServices.getAll, {
+    initialLimit: 5,
+    errorMessage: 'No se pudieron cargar los tipos de acción',
+  });
 
   const columns = useMemo(
     () => [
@@ -46,7 +27,9 @@ export default function TipoAccionPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
               <TagIcon className="h-5 w-5" />
             </span>
-            <span className="font-semibold text-slate-800">{row.original.nombre_tipo_accion}</span>
+            <span className="font-semibold text-slate-800">
+              {row.original.nombre_tipo_accion}
+            </span>
           </div>
         ),
       },
@@ -54,25 +37,15 @@ export default function TipoAccionPage() {
         id: 'acciones',
         header: 'Acciones',
         cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => setModal(row.original)}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            <PencilSquareIcon className="h-4 w-4" />
-            Editar
-          </button>
+          <TableActionButtons
+            onEdit={() => setModal(row.original)}
+            editTitle="Editar tipo de acción"
+          />
         ),
       },
     ],
     [],
   );
-
-  const submitSearch = (event) => {
-    event.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
-  };
 
   return (
     <section className="space-y-5">
@@ -93,40 +66,31 @@ export default function TipoAccionPage() {
 
       <AccionCatalogTabs />
 
-      <form onSubmit={submitSearch} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Buscar tipo de acción..."
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-emerald-600"
-        />
-        <button className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-          Buscar
-        </button>
-      </form>
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar tipo de acción..."
+      />
 
       <DataTable
-        data={data}
+        data={list.items}
         columns={columns}
-        loading={loading}
-        page={page}
-        limit={limit}
-        totalPages={totalPages}
-        totalItems={total}
-        onPageChange={setPage}
-        onLimitChange={(value) => {
-          setLimit(value);
-          setPage(1);
-        }}
+        loading={list.loading}
+        page={list.page}
+        limit={list.limit}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        onPageChange={list.setPage}
+        onLimitChange={list.setLimit}
       />
 
       <TipoAccionModal
         open={modal !== null}
         data={modal?.id ? modal : null}
         onClose={() => setModal(null)}
-        onSuccess={() => {
+        onSuccess={async () => {
           setModal(null);
-          load();
+          await list.reload();
         }}
       />
     </section>

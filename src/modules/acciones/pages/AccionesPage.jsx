@@ -1,33 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-  ArrowPathIcon,
   CheckCircleIcon,
-  MagnifyingGlassIcon,
+  DocumentTextIcon,
   PlusIcon,
   PowerIcon,
   RectangleStackIcon,
 } from '@heroicons/react/24/outline';
-
-import DataTable from '../../../components/DataTable';
-import SelectComponent from '../../../components/Select';
-import AccionModal from '../components/AccionModal';
-import { AccionesServices as Servs } from '../services/acciones.services';
 import { toast } from 'react-toastify';
+import DataTable from '../../../components/DataTable';
+import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
+import SelectComponent from '../../../components/Select';
+import StatusBadge from '../../../components/StatusBadge';
+import TableActionButtons from '../../../components/TableActionButtons';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
-import DataTableLocal from '../../../components/DataTableLocal';
-import { imprimirReciboAgua } from '../Pruebas/recibo';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { getApiErrorMessage } from '../../../services/error';
+import AccionModal from '../components/AccionModal';
+import { AccionesServices } from '../services/acciones.services';
 
-const estadoOptions = [
+const ESTADO_OPTIONS = [
+  { value: '', label: 'Todos' },
   { value: 'ACTIVO', label: 'Activo' },
   { value: 'PASIVO', label: 'Pasivo' },
   { value: 'ANULADO', label: 'Anulado' },
 ];
-
-const badgeClasses = {
-  ACTIVO: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  PASIVO: 'border-amber-200 bg-amber-50 text-amber-700',
-  ANULADO: 'border-red-200 bg-red-50 text-red-700',
-};
 
 function StatCard({ label, value, icon: Icon, className }) {
   return (
@@ -48,84 +45,36 @@ function StatCard({ label, value, icon: Icon, className }) {
 }
 
 export default function AccionesPage() {
-  const [acciones, setAcciones] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [estado, setEstado] = useState('');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 5,
-    totalItems: 0,
-    totalPages: 1,
-  });
-
   const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
 
-  const cargarAcciones = useCallback(async () => {
-    setLoading(true);
-
-    const respuesta = await Servs.getAll({
-      page: pagination.page,
-      limit: pagination.limit,
-      search,
-      estado: estado || undefined,
-    });
-
-    if (respuesta.ok) {
-      setAcciones(respuesta.data);
-      setPagination((prev) => ({
-        ...prev,
-        page: respuesta.page,
-        limit: respuesta.limit,
-        totalItems: respuesta.total,
-        totalPages: respuesta.totalPages,
-      }));
-    }
-
-    setLoading(false);
-  }, [pagination.page, pagination.limit, search, estado]);
-
-  useEffect(() => {
-    cargarAcciones();
-  }, [cargarAcciones]);
-
-  const handleBuscar = () => {
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    setSearch(searchInput.trim());
-  };
-
-  const handleSaved = async () => {
-    if (pagination.page === 1) await cargarAcciones();
-    else setPagination((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handleUpdate = async (data) => {
-    console.log(data);
-  };
+  const list = usePaginatedList(AccionesServices.getAll, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    extract: (response) => {
+      const items = Array.isArray(response?.data) ? response.data : [];
+      return {
+        items,
+        total: Number(response?.total ?? items.length),
+        totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
+      };
+    },
+    errorMessage: 'No se pudieron cargar las acciones de agua',
+  });
 
   const handlePdfCaratula = useCallback(async (id) => {
     try {
-      const pdfBlob = await Servs.getCaratula(id);
-
+      const pdfBlob = await AccionesServices.getCaratula(id);
       if (!pdfBlob || pdfBlob?.ok === false) {
         throw new Error(pdfBlob?.message || 'No se pudo obtener la carátula');
       }
 
       const url = URL.createObjectURL(
-        new Blob([pdfBlob], {
-          type: 'application/pdf',
-        }),
+        new Blob([pdfBlob], { type: 'application/pdf' }),
       );
-
       window.open(url, '_blank');
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 10000);
-    } catch (e) {
-      toast.error(e.message || 'Algo salió mal');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'No se pudo obtener la carátula'));
     }
   }, []);
 
@@ -152,7 +101,7 @@ export default function AccionesPage() {
               {row.original.nombre_socio}
             </p>
             <p className="text-xs text-slate-400">
-              Medidor: {row.original.nro_medidor}
+              Medidor: {row.original.nro_medidor || 'S/N'}
             </p>
           </div>
         ),
@@ -162,75 +111,56 @@ export default function AccionesPage() {
       {
         accessorKey: 'estado',
         header: 'Estado',
-        cell: ({ row }) => (
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses[row.original.estado]}`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            {row.original.estado}
-          </span>
-        ),
+        cell: ({ getValue }) => <StatusBadge value={getValue()} />,
       },
       {
         id: 'acciones',
         header: 'Acciones',
         cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handlePdfCaratula(row.original.id)}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-            >
-              Obtener carátula
-            </button>
-            <button
-              type="button"
-              onClick={() => openModal(MODALS.EDIT, row.original.id)}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-            >
-              Editar
-            </button>
-          </div>
+          <TableActionButtons
+            onEdit={() => openModal(MODALS.EDIT, row.original.id)}
+            editTitle="Editar acción"
+            extra={
+              <button
+                type="button"
+                onClick={() => handlePdfCaratula(row.original.id)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+                title="Obtener carátula PDF"
+              >
+                <DocumentTextIcon className="h-4 w-4" /> Carátula
+              </button>
+            }
+          />
         ),
       },
     ],
-    [handlePdfCaratula],
+    [handlePdfCaratula, openModal],
   );
 
-  const activas = acciones.filter((item) => item.estado === 'ACTIVO').length;
-  const pasivas = acciones.filter((item) => item.estado === 'PASIVO').length;
+  const activas = list.items.filter((item) => item.estado === 'ACTIVO').length;
+  const pasivas = list.items.filter((item) => item.estado === 'PASIVO').length;
 
   return (
     <section className="space-y-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-            Administración
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Acciones registradas
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Consulta y registra las acciones de los socios.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            openModal(MODALS.CREATE);
-          }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Nueva acción
-        </button>
-      </header>
+      <PageHeader
+        title="Acciones registradas"
+        description="Consulta y registra las acciones de agua de los socios."
+        action={
+          <button
+            type="button"
+            onClick={() => openModal(MODALS.CREATE)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+          >
+            <PlusIcon className="h-5 w-5" />
+            Nueva acción
+          </button>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Total de acciones"
-          value={pagination.totalItems}
+          value={list.total}
           icon={RectangleStackIcon}
           className="bg-slate-100 text-slate-600"
         />
@@ -248,84 +178,43 @@ export default function AccionesPage() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-[1fr_260px_auto] md:items-end">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
-              Buscar acción
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
-                placeholder="Socio, código o medidor..."
-                className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              />
-            </div>
-          </div>
-
-          <SelectComponent
-            label="Estado"
-            placeholder="Todos"
-            name="estado"
-            options={estadoOptions}
-            value={estado}
-            onChange={(e) => {
-              setEstado(e.target.value || '');
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-          />
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleBuscar}
-              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Buscar
-            </button>
-            <button
-              type="button"
-              onClick={cargarAcciones}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-              />
-              Actualizar
-            </button>
-          </div>
-        </div>
-      </div>
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar por socio, código o medidor..."
+      >
+        <SelectComponent
+          label="Estado"
+          name="estado"
+          options={ESTADO_OPTIONS}
+          value={list.filters.estado}
+          onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
+        />
+      </SearchFilterBar>
 
       <DataTable
-        data={acciones}
+        data={list.items}
         columns={columns}
-        loading={loading}
-        page={pagination.page}
-        limit={pagination.limit}
-        totalPages={pagination.totalPages}
-        totalItems={pagination.totalItems}
-        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-        onLimitChange={(limit) =>
-          setPagination((prev) => ({ ...prev, page: 1, limit }))
-        }
+        loading={list.loading}
+        page={list.page}
+        limit={list.limit}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        onPageChange={list.setPage}
+        onLimitChange={list.setLimit}
       />
 
       <AccionModal
         open={isModalOpen(MODALS.CREATE)}
         onClose={closeModal}
-        onCreated={handleSaved}
+        onCreated={list.reload}
       />
 
       <AccionModal
         open={isModalOpen(MODALS.EDIT)}
         onClose={closeModal}
         accionId={modalState.data}
-        onCreated={handleSaved}
+        onCreated={list.reload}
       />
     </section>
   );

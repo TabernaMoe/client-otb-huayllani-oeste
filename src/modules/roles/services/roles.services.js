@@ -3,7 +3,10 @@ import { api } from '../../../services/api';
 export class RolesServices {
   static async getAllPermisos() {
     const { data } = await api.get('/admin/auth/roles/permisos');
-    return data;
+    return {
+      ...data,
+      data: Array.isArray(data?.data) ? data.data : [],
+    };
   }
 
   static async getAllRoles(params = {}) {
@@ -13,7 +16,11 @@ export class RolesServices {
 
   static async getById(id) {
     const { data } = await api.get(`/admin/auth/roles/${id}`);
-    return data;
+    const role = data?.dato ?? data?.data ?? null;
+    return {
+      ...data,
+      data: role ? { id, ...role } : null,
+    };
   }
 
   static async create(payload) {

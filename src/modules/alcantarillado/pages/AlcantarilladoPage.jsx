@@ -1,61 +1,46 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  PowerIcon,
-} from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
-
-import DataTable from '../../../components/DataTable';
+import { useMemo, useState } from 'react';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import ConfirmModal from '../../../components/ConfirmModal';
+import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
+import StatusBadge from '../../../components/StatusBadge';
+import TableActionButtons from '../../../components/TableActionButtons';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import AlcantarilladoModal from '../components/AlcantarilladoModal';
 import { AlcantarilladoServices } from '../services/alcantarillado.services';
 
-const money = (value) => `Bs ${Number(value).toFixed(2)}`;
+const formatMoney = (value) => `Bs ${Number(value).toFixed(2)}`;
 
 export default function AlcantarilladoPage() {
-  const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ open: false, item: null });
   const [confirm, setConfirm] = useState({ open: false, item: null });
 
-  const load = async () => {
-    setLoading(true);
-    const response = await AlcantarilladoServices.getAll({ page, limit, search });
-    setLoading(false);
+  const list = usePaginatedList(AlcantarilladoServices.getAll, {
+    initialLimit: 10,
+    extract: (response) => {
+      const items = Array.isArray(response?.data) ? response.data : [];
+      return {
+        items,
+        total: Number(response?.total ?? items.length),
+        totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
+      };
+    },
+    errorMessage: 'No se pudieron cargar los detalles de alcantarillado',
+  });
+  const { submitting, run } = useAsyncSubmit();
 
-    if (!response.ok) {
-      toast.error(response.message);
-      return;
-    }
-
-    setData(response.data);
-    setTotalPages(response.totalPages);
-    setTotalItems(response.total);
-  };
-
-  useEffect(() => {
-    load();
-  }, [page, limit, search]);
-
-  const changeEstado = async () => {
-    const response = await AlcantarilladoServices.changeEstado(confirm.item.id);
-    if (!response.ok) {
-      toast.error(response.message);
-      return;
-    }
-
-    toast.success(response.message);
-    setConfirm({ open: false, item: null });
-    load();
+  const handleToggleEstado = async () => {
+    if (!confirm.item) return;
+    await run(() => AlcantarilladoServices.changeEstado(confirm.item.id), {
+      successMessage: (res) => res?.message || 'Estado actualizado',
+      errorMessage: 'No se pudo cambiar el estado del detalle',
+      onSuccess: async () => {
+        setConfirm({ open: false, item: null });
+        await list.reload();
+      },
+    });
   };
 
   const columns = useMemo(
@@ -64,7 +49,7 @@ export default function AlcantarilladoPage() {
       {
         accessorKey: 'precio_accion',
         header: 'Precio',
-        cell: ({ row }) => money(row.original.precio_accion),
+        cell: ({ row }) => formatMoney(row.original.precio_accion),
       },
       {
         accessorKey: 'tipo_cobro',
@@ -78,38 +63,18 @@ export default function AlcantarilladoPage() {
       {
         accessorKey: 'estado',
         header: 'Estado',
-        cell: ({ row }) => (
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-              row.original.estado
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {row.original.estado ? 'Activo' : 'Inactivo'}
-          </span>
-        ),
+        cell: ({ getValue }) => <StatusBadge value={Boolean(getValue())} />,
       },
       {
         id: 'acciones',
         header: 'Acciones',
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setModal({ open: true, item: row.original })}
-              className="rounded-lg p-2 text-sky-700 hover:bg-sky-50"
-              title="Editar"
-            >
-              <PencilSquareIcon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setConfirm({ open: true, item: row.original })}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
-              title="Cambiar estado"
-            >
-              <PowerIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <TableActionButtons
+            onEdit={() => setModal({ open: true, item: row.original })}
+            onToggleStatus={() => setConfirm({ open: true, item: row.original })}
+            editTitle="Editar detalle"
+            toggleTitle="Cambiar estado"
+          />
         ),
       },
     ],
@@ -123,8 +88,9 @@ export default function AlcantarilladoPage() {
         description="Administra los conceptos y precios asociados al alcantarillado."
         action={
           <button
+            type="button"
             onClick={() => setModal({ open: true, item: null })}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
           >
             <PlusIcon className="h-5 w-5" />
             Nuevo detalle
@@ -132,48 +98,29 @@ export default function AlcantarilladoPage() {
         }
       />
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          setPage(1);
-          setSearch(searchInput.trim());
-        }}
-        className="flex max-w-xl gap-2"
-      >
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Buscar detalle..."
-            className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-500"
-          />
-        </div>
-        <button className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-          Buscar
-        </button>
-      </form>
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar detalle..."
+      />
 
       <DataTable
-        data={data}
+        data={list.items}
         columns={columns}
-        loading={loading}
-        page={page}
-        limit={limit}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        onLimitChange={(value) => {
-          setPage(1);
-          setLimit(value);
-        }}
+        loading={list.loading}
+        page={list.page}
+        limit={list.limit}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        onPageChange={list.setPage}
+        onLimitChange={list.setLimit}
       />
 
       <AlcantarilladoModal
         open={modal.open}
         item={modal.item}
         onClose={() => setModal({ open: false, item: null })}
-        onSaved={load}
+        onSaved={list.reload}
       />
 
       <ConfirmModal
@@ -181,7 +128,8 @@ export default function AlcantarilladoPage() {
         title="Cambiar estado"
         message={`¿Deseas cambiar el estado de ${confirm.item?.nombre_accion || ''}?`}
         confirmText="Confirmar"
-        onConfirm={changeEstado}
+        loading={submitting}
+        onConfirm={handleToggleEstado}
         onClose={() => setConfirm({ open: false, item: null })}
       />
     </section>

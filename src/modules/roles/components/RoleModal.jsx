@@ -1,18 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import ElegantInput from '../../../components/ElegantInput';
 import FormModal from '../../../components/FormModal';
+import ModalFooter from '../../../components/ModalFooter';
 import { validateRole } from '../schema/roles.schema';
 
-const emptyForm = { nombre_rol: '', permisos: [] };
+const EMPTY_FORM = { nombre_rol: '', permisos: [] };
 
-export default function RoleModal({ open, role, permisos, saving, onClose, onSave }) {
-  const [form, setForm] = useState(emptyForm);
+export default function RoleModal({
+  open,
+  role,
+  permisos,
+  saving,
+  onClose,
+  onSave,
+}) {
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!open) return;
-    setForm(role || emptyForm);
+    setForm(
+      role
+        ? {
+            nombre_rol: role.nombre_rol ?? '',
+            permisos: Array.isArray(role.permisos) ? role.permisos : [],
+          }
+        : EMPTY_FORM,
+    );
     setErrors({});
     setSearch('');
   }, [open, role]);
@@ -20,7 +36,9 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
   const visiblePermissions = useMemo(() => {
     const value = search.trim().toLowerCase();
     if (!value) return permisos;
-    return permisos.filter((item) => `${item.nombre_permiso} ${item.codigo_permiso}`.toLowerCase().includes(value));
+    return permisos.filter((item) =>
+      `${item.nombre_permiso} ${item.codigo_permiso}`.toLowerCase().includes(value),
+    );
   }, [permisos, search]);
 
   const togglePermission = (id) => {
@@ -33,10 +51,14 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
     setErrors((prev) => ({ ...prev, permisos: '' }));
   };
 
-  const submit = (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     const validation = validateRole(form);
-    if (!validation.success) return setErrors(validation.errors);
+    if (!validation.success) {
+      setErrors(validation.errors);
+      toast.error(validation.message);
+      return;
+    }
     onSave(validation.data);
   };
 
@@ -47,7 +69,7 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
       title={role ? 'Editar rol' : 'Nuevo rol'}
       description="Define el nombre del rol y los permisos que tendrá dentro del sistema."
     >
-      <form onSubmit={submit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <ElegantInput
           label="Nombre del rol"
           name="nombre_rol"
@@ -63,7 +85,9 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
             <label className="text-sm font-semibold text-slate-700">Permisos</label>
-            <span className="text-xs text-slate-500">{form.permisos.length} seleccionados</span>
+            <span className="text-xs text-slate-500">
+              {form.permisos.length} seleccionados
+            </span>
           </div>
 
           <input
@@ -75,7 +99,10 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
 
           <div className="grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 p-3 md:grid-cols-2">
             {visiblePermissions.map((permission) => (
-              <label key={permission.id} className="flex cursor-pointer gap-3 rounded-xl p-3 hover:bg-slate-50">
+              <label
+                key={permission.id}
+                className="flex cursor-pointer gap-3 rounded-xl p-3 hover:bg-slate-50"
+              >
                 <input
                   type="checkbox"
                   checked={form.permisos.includes(permission.id)}
@@ -83,24 +110,29 @@ export default function RoleModal({ open, role, permisos, saving, onClose, onSav
                   className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-slate-800">{permission.nombre_permiso}</span>
-                  <span className="block text-xs text-slate-400">{permission.codigo_permiso}</span>
+                  <span className="block text-sm font-medium text-slate-800">
+                    {permission.nombre_permiso}
+                  </span>
+                  <span className="block text-xs text-slate-400">
+                    {permission.codigo_permiso}
+                  </span>
                 </span>
               </label>
             ))}
           </div>
 
-          {errors.permisos && <p className="mt-2 text-sm font-medium text-red-500">{errors.permisos}</p>}
+          {errors.permisos && (
+            <p className="mt-2 text-sm font-medium text-red-500">
+              {errors.permisos}
+            </p>
+          )}
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
-          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-            Cancelar
-          </button>
-          <button type="submit" disabled={saving} className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60">
-            {saving ? 'Guardando...' : role ? 'Guardar cambios' : 'Crear rol'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          saving={saving}
+          submitLabel={role ? 'Guardar cambios' : 'Crear rol'}
+        />
       </form>
     </FormModal>
   );

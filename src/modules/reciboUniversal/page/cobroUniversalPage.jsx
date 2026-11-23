@@ -10,6 +10,8 @@ import { toast } from 'react-toastify';
 import ConfirmModal from '../../../components/ConfirmModal';
 
 import { CobroUniversalSchema } from '../schema';
+import { zodErrors } from '../../../utils/zodErrors';
+import { formatZodErrorMessage } from '../../../services/error';
 
 const INITIAL_FORM = {
   accion_id: '',
@@ -57,9 +59,8 @@ export default function ReciboMadreForm() {
     const result = CobroUniversalSchema.safeParse(form);
 
     if (!result.success) {
-      const { fieldErrors } = result.error.flatten();
-      setErrors(fieldErrors);
-      toast.error('Datos incorrectos');
+      setErrors(zodErrors(result.error));
+      toast.error(formatZodErrorMessage(result.error));
       return;
     }
     setOpenModal(true);

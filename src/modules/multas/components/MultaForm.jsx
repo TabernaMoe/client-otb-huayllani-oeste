@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { BanknotesIcon, TagIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 import ElegantInput from '../../../components/ElegantInput';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { validateMulta } from '../schemas/multas.schema';
 
-const emptyForm = { nombre_multa: '', precio: '' };
+const EMPTY_FORM = { nombre_multa: '', precio: '' };
 
 export default function MultaForm({
-  initialValues = emptyForm,
+  initialValues = EMPTY_FORM,
   submitLabel = 'Guardar multa',
   onSave,
   onSuccess,
@@ -14,13 +16,11 @@ export default function MultaForm({
 }) {
   const [form, setForm] = useState(initialValues);
   const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState('');
-  const [saving, setSaving] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
-    setMessage('');
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (event) => {
@@ -29,22 +29,19 @@ export default function MultaForm({
     const validation = validateMulta(form);
     if (!validation.isValid) {
       setErrors(validation.errors);
+      toast.error(validation.message);
       return;
     }
 
-    setSaving(true);
-    const response = await onSave(validation.data);
-    setSaving(false);
-
-    if (!response.ok) {
-      setMessage(response.message);
-      return;
-    }
-
-    setErrors({});
-    setMessage('');
-    if (resetOnSuccess) setForm(emptyForm);
-    onSuccess?.(response);
+    await run(() => onSave(validation.data), {
+      successMessage: (res) => res?.message || 'Multa guardada correctamente',
+      errorMessage: 'No se pudo guardar la multa',
+      onSuccess: (response) => {
+        setErrors({});
+        if (resetOnSuccess) setForm(EMPTY_FORM);
+        onSuccess?.(response);
+      },
+    });
   };
 
   return (
@@ -72,19 +69,13 @@ export default function MultaForm({
         icon={<BanknotesIcon className="h-5 w-5" />}
       />
 
-      {message && (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {message}
-        </p>
-      )}
-
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={saving}
+          disabled={submitting}
           className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
         >
-          {saving ? 'Guardando...' : submitLabel}
+          {submitting ? 'Guardando...' : submitLabel}
         </button>
       </div>
     </form>

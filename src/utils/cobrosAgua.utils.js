@@ -1,3 +1,5 @@
+import { formatApiErrorPayload, getApiErrorMessage } from '../services/error';
+
 export const formatMoney = (value) =>
   new Intl.NumberFormat('es-BO', {
     style: 'currency',
@@ -49,9 +51,15 @@ export async function normalizeBlobError(error) {
   const data = error.response?.data;
 
   if (data instanceof Blob) {
-    const payload = await parseBlob(data);
-    return new Error(payload?.message || 'No se pudo registrar el pago');
+    try {
+      const payload = await parseBlob(data);
+      return new Error(
+        formatApiErrorPayload(payload, 'No se pudo registrar el pago'),
+      );
+    } catch {
+      return new Error('Error: No se pudo registrar el pago');
+    }
   }
 
-  return new Error(error.response?.data?.message || error.message);
+  return new Error(getApiErrorMessage(error, 'No se pudo registrar el pago'));
 }

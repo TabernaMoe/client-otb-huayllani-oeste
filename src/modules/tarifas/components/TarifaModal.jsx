@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import ElegantInput from '../../../components/ElegantInput';
 import FormModal from '../../../components/FormModal';
-import RangosTarifa from './RangosTarifa';
-import { TarifasServices } from '../services/tarifas.services';
+import ModalFooter from '../../../components/ModalFooter';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { validateTarifa } from '../schema/tarifas.schema';
+import { TarifasServices } from '../services/tarifas.services';
+import RangosTarifa from './RangosTarifa';
 
-const emptyForm = {
+const EMPTY_FORM = {
   nombre_tarifa: '',
   rangosTarifa: [{ consumo_minimo: 0, consumo_maximo: '', precio: '' }],
 };
@@ -17,17 +19,18 @@ const normalizeRanges = (rangos) =>
     const maximoAnterior = rangos[index - 1].consumo_maximo;
     return {
       ...rango,
-      consumo_minimo: maximoAnterior === '' || maximoAnterior === null
-        ? rango.consumo_minimo
-        : Number(maximoAnterior) + 1,
+      consumo_minimo:
+        maximoAnterior === '' || maximoAnterior === null
+          ? rango.consumo_minimo
+          : Number(maximoAnterior) + 1,
     };
   });
 
 export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const isEdit = Boolean(tarifa);
+  const { submitting, run } = useAsyncSubmit();
+  const isEdit = Boolean(tarifa?.id);
 
   useEffect(() => {
     if (!open) return;
@@ -35,14 +38,14 @@ export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
     setForm(
       tarifa
         ? {
-            nombre_tarifa: tarifa.nombre_tarifa,
-            rangosTarifa: tarifa.rangosTarifa.map((rango) => ({
+            nombre_tarifa: tarifa.nombre_tarifa ?? '',
+            rangosTarifa: (tarifa.rangosTarifa ?? []).map((rango) => ({
               consumo_minimo: rango.consumo_minimo,
               consumo_maximo: rango.consumo_maximo ?? '',
               precio: rango.precio,
             })),
           }
-        : emptyForm,
+        : EMPTY_FORM,
     );
   }, [open, tarifa]);
 
@@ -63,7 +66,11 @@ export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
         ...prev,
         rangosTarifa: [
           ...prev.rangosTarifa,
-          { consumo_minimo: Number(ultimo.consumo_maximo) + 1, consumo_maximo: '', precio: '' },
+          {
+            consumo_minimo: Number(ultimo.consumo_maximo) + 1,
+            consumo_maximo: '',
+            precio: '',
+          },
         ],
       };
     });
@@ -72,7 +79,9 @@ export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
   const removeRango = (index) => {
     setForm((prev) => ({
       ...prev,
-      rangosTarifa: normalizeRanges(prev.rangosTarifa.filter((_, current) => current !== index)),
+      rangosTarifa: normalizeRanges(
+        prev.rangosTarifa.filter((_, current) => current !== index),
+      ),
     }));
     setErrors({});
   };
@@ -83,22 +92,25 @@ export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
 
     if (!validation.success) {
       setErrors(validation.errors);
+      toast.error(validation.message);
       return;
     }
 
-    try {
-      setLoading(true);
-      const response = isEdit
-        ? await TarifasServices.update(tarifa.id, validation.data)
-        : await TarifasServices.create(validation.data);
-      toast.success(response.message);
-      onSuccess();
-      onClose();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'No se pudo guardar la tarifa');
-    } finally {
-      setLoading(false);
-    }
+    await run(
+      () =>
+        isEdit
+          ? TarifasServices.update(tarifa.id, validation.data)
+          : TarifasServices.create(validation.data),
+      {
+        successMessage: (res) =>
+          res?.message || (isEdit ? 'Tarifa actualizada' : 'Tarifa creada'),
+        errorMessage: 'No se pudo guardar la tarifa',
+        onSuccess: async () => {
+          await onSuccess?.();
+          onClose();
+        },
+      },
+    );
   };
 
   return (
@@ -129,14 +141,11 @@ export default function TarifaModal({ open, tarifa, onClose, onSuccess }) {
           onRemove={removeRango}
         />
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
-            Cancelar
-          </button>
-          <button disabled={loading} className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60">
-            {loading ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear tarifa'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          saving={submitting}
+          submitLabel={isEdit ? 'Guardar cambios' : 'Crear tarifa'}
+        />
       </form>
     </FormModal>
   );

@@ -8,12 +8,20 @@ export class DetalleAccionServices {
 
   static async getTiposAccion() {
     const { data } = await api.get('/admin/acciones/agua/detalle/tipos-accion');
-    return data;
+    return {
+      ...data,
+      data: Array.isArray(data?.data) ? data.data : [],
+    };
   }
 
   static async getById(id) {
     const { data } = await api.get(`/admin/acciones/agua/detalle/${id}`);
-    return data;
+    const detalle = data?.data ?? data?.dato ?? null;
+    return {
+      ...data,
+      data: detalle ? { id, ...detalle } : null,
+      dato: detalle ? { id, ...detalle } : null,
+    };
   }
 
   static async create(payload) {

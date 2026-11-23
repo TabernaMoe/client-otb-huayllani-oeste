@@ -1,45 +1,47 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-
-import FormModal from '../../../components/FormModal';
 import ElegantInput from '../../../components/ElegantInput';
+import FormModal from '../../../components/FormModal';
+import ModalFooter from '../../../components/ModalFooter';
 import SelectComponent from '../../../components/Select';
-import { AlcantarilladoServices } from '../services/alcantarillado.services';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { validateAlcantarillado } from '../schema/alcantarillado.schema';
+import { AlcantarilladoServices } from '../services/alcantarillado.services';
 
-const emptyForm = {
+const EMPTY_FORM = {
   nombre_accion: '',
   precio_accion: '',
   tipo_cobro: 'UNICO',
 };
 
-const tiposCobro = [
+const TIPOS_COBRO = [
   { value: 'UNICO', label: 'Único' },
   { value: 'MENSUAL', label: 'Mensual' },
 ];
 
 export default function AlcantarilladoModal({ open, item, onClose, onSaved }) {
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
+  const isEdit = Boolean(item?.id);
 
   useEffect(() => {
     if (!open) return;
     setForm(
       item
         ? {
-            nombre_accion: item.nombre_accion,
-            precio_accion: item.precio_accion,
-            tipo_cobro: item.tipo_cobro,
+            nombre_accion: item.nombre_accion ?? '',
+            precio_accion: String(item.precio_accion ?? ''),
+            tipo_cobro: item.tipo_cobro ?? 'UNICO',
           }
-        : emptyForm,
+        : EMPTY_FORM,
     );
     setErrors({});
   }, [open, item]);
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((current) => ({ ...current, [name]: value }));
-    setErrors((current) => ({ ...current, [name]: undefined }));
+    setErrors((current) => ({ ...current, [name]: '' }));
   };
 
   const handleSubmit = async (event) => {
@@ -48,30 +50,32 @@ export default function AlcantarilladoModal({ open, item, onClose, onSaved }) {
     const validation = validateAlcantarillado(form);
     if (!validation.isValid) {
       setErrors(validation.errors);
+      toast.error(validation.message);
       return;
     }
 
-    setSaving(true);
-    const response = item
-      ? await AlcantarilladoServices.update(item.id, validation.data)
-      : await AlcantarilladoServices.create(validation.data);
-    setSaving(false);
-
-    if (!response.ok) {
-      toast.error(response.message);
-      return;
-    }
-
-    toast.success(response.message);
-    onSaved();
-    onClose();
+    await run(
+      () =>
+        isEdit
+          ? AlcantarilladoServices.update(item.id, validation.data)
+          : AlcantarilladoServices.create(validation.data),
+      {
+        successMessage: (res) =>
+          res?.message || (isEdit ? 'Detalle actualizado' : 'Detalle creado'),
+        errorMessage: 'No se pudo guardar el detalle de alcantarillado',
+        onSuccess: async () => {
+          await onSaved?.();
+          onClose();
+        },
+      },
+    );
   };
 
   return (
     <FormModal
       open={open}
       title={
-        item
+        isEdit
           ? 'Editar detalle de alcantarillado'
           : 'Nuevo detalle de alcantarillado'
       }
@@ -105,31 +109,16 @@ export default function AlcantarilladoModal({ open, item, onClose, onSaved }) {
             name="tipo_cobro"
             value={form.tipo_cobro}
             onChange={handleChange}
-            options={tiposCobro}
+            options={TIPOS_COBRO}
             error={errors.tipo_cobro}
           />
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {saving
-              ? 'Guardando...'
-              : item
-                ? 'Guardar cambios'
-                : 'Crear detalle'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          saving={submitting}
+          submitLabel={isEdit ? 'Guardar cambios' : 'Crear detalle'}
+        />
       </form>
     </FormModal>
   );

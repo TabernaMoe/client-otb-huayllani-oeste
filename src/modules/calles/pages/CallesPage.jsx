@@ -1,55 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  MagnifyingGlassIcon,
-  MapPinIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  PowerIcon,
-} from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
-
+import { useMemo, useState } from 'react';
+import { MapPinIcon, PlusIcon } from '@heroicons/react/24/outline';
 import ConfirmModal from '../../../components/ConfirmModal';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
+import SelectComponent from '../../../components/Select';
+import StatusBadge from '../../../components/StatusBadge';
+import TableActionButtons from '../../../components/TableActionButtons';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import CalleModal from '../components/CalleModal';
 import { CallesServices } from '../services/calles.services';
 
+const ESTADOS = [
+  { value: '', label: 'Todas' },
+  { value: 'true', label: 'Activas' },
+  { value: 'false', label: 'Inactivas' },
+];
+
 export default function CallesPage() {
-  const [calles, setCalles] = useState([]);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [estado, setEstado] = useState('');
-  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
-  const [changingStatus, setChangingStatus] = useState(false);
 
-  const fetchCalles = async () => {
-    try {
-      setLoading(true);
-
-      const params = { page, limit, search };
-      if (estado !== '') params.estado = estado === 'true';
-
-      const response = await CallesServices.getAll(params);
-
-      setCalles(response.data);
-      setTotal(response.total);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCalles();
-  }, [page, limit, search, estado]);
+  const list = usePaginatedList(
+    (params) => {
+      const query = { ...params };
+      if (query.estado !== undefined) query.estado = query.estado === 'true';
+      return CallesServices.getAll(query);
+    },
+    {
+      initialLimit: 5,
+      initialFilters: { estado: '' },
+      errorMessage: 'No se pudieron cargar las calles',
+    },
+  );
+  const { submitting, run } = useAsyncSubmit();
 
   const openCreate = () => {
     setSelected(null);
@@ -62,17 +48,15 @@ export default function CallesPage() {
   };
 
   const handleToggleStatus = async () => {
-    try {
-      setChangingStatus(true);
-      await CallesServices.toggleStatus(statusTarget.id);
-      toast.success('Estado actualizado correctamente');
-      setStatusTarget(null);
-      fetchCalles();
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setChangingStatus(false);
-    }
+    if (!statusTarget) return;
+    await run(() => CallesServices.toggleStatus(statusTarget.id), {
+      successMessage: 'Estado actualizado correctamente',
+      errorMessage: 'No se pudo cambiar el estado de la calle',
+      onSuccess: async () => {
+        setStatusTarget(null);
+        await list.reload();
+      },
+    });
   };
 
   const columns = useMemo(
@@ -85,47 +69,33 @@ export default function CallesPage() {
             <div className="rounded-xl bg-emerald-50 p-2 text-emerald-700">
               <MapPinIcon className="h-5 w-5" />
             </div>
-            <span className="font-semibold text-slate-800">{row.original.nombre_calle}</span>
+            <span className="font-semibold text-slate-800">
+              {row.original.nombre_calle}
+            </span>
           </div>
         ),
       },
       {
         header: 'Estado',
         accessorKey: 'estado',
-        cell: ({ row }) => (
-          <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-              row.original.estado
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {row.original.estado ? 'Activa' : 'Inactiva'}
-          </span>
+        cell: ({ getValue }) => (
+          <StatusBadge
+            value={Boolean(getValue())}
+            activeLabel="Activa"
+            inactiveLabel="Inactiva"
+          />
         ),
       },
       {
         header: 'Acciones',
         id: 'acciones',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => openEdit(row.original)}
-              title="Editar"
-              className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
-            >
-              <PencilSquareIcon className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusTarget(row.original)}
-              title={row.original.estado ? 'Deshabilitar' : 'Habilitar'}
-              className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
-            >
-              <PowerIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <TableActionButtons
+            onEdit={() => openEdit(row.original)}
+            onToggleStatus={() => setStatusTarget(row.original)}
+            editTitle="Editar calle"
+            toggleTitle={row.original.estado ? 'Deshabilitar' : 'Habilitar'}
+          />
         ),
       },
     ],
@@ -149,56 +119,39 @@ export default function CallesPage() {
         }
       />
 
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_190px]">
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Buscar calle..."
-            className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-500"
-          />
-        </div>
-
-        <select
-          value={estado}
-          onChange={(event) => {
-            setEstado(event.target.value);
-            setPage(1);
-          }}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-emerald-500"
-        >
-          <option value="">Todas</option>
-          <option value="true">Activas</option>
-          <option value="false">Inactivas</option>
-        </select>
-      </div>
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar calle..."
+      >
+        <SelectComponent
+          label="Estado"
+          name="estado"
+          value={list.filters.estado}
+          options={ESTADOS}
+          onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
+        />
+      </SearchFilterBar>
 
       <DataTable
-        data={calles}
+        data={list.items}
         columns={columns}
-        loading={loading}
-        page={page}
-        limit={limit}
-        totalPages={totalPages}
-        totalItems={total}
-        onPageChange={setPage}
-        onLimitChange={(value) => {
-          setLimit(value);
-          setPage(1);
-        }}
+        loading={list.loading}
+        page={list.page}
+        limit={list.limit}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        onPageChange={list.setPage}
+        onLimitChange={list.setLimit}
       />
 
       <CalleModal
         open={modalOpen}
         calle={selected}
         onClose={() => setModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={async () => {
           setModalOpen(false);
-          fetchCalles();
+          await list.reload();
         }}
       />
 
@@ -207,7 +160,7 @@ export default function CallesPage() {
         title={statusTarget?.estado ? 'Deshabilitar calle' : 'Habilitar calle'}
         message={`¿Deseas ${statusTarget?.estado ? 'deshabilitar' : 'habilitar'} la calle “${statusTarget?.nombre_calle ?? ''}”?`}
         confirmText="Confirmar"
-        loading={changingStatus}
+        loading={submitting}
         onConfirm={handleToggleStatus}
         onClose={() => setStatusTarget(null)}
       />

@@ -3,13 +3,17 @@ import { CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import ElegantInput from '../../../components/ElegantInput';
 import FormModal from '../../../components/FormModal';
-import { GestionesServices } from '../services/gestiones.services';
+import ModalFooter from '../../../components/ModalFooter';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { formatZodErrorMessage } from '../../../services/error';
+import { zodErrors } from '../../../utils/zodErrors';
 import { gestionSchema } from '../schema/gestiones.schema';
+import { GestionesServices } from '../services/gestiones.services';
 
 export default function GestionModal({ open, onClose, onSuccess }) {
   const [anio, setAnio] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
     if (!open) return;
@@ -22,25 +26,19 @@ export default function GestionModal({ open, onClose, onSuccess }) {
     const validation = gestionSchema.safeParse({ anio });
 
     if (!validation.success) {
-      setError(validation.error.flatten().fieldErrors.anio?.[0]);
+      setError(zodErrors(validation.error).anio || '');
+      toast.error(formatZodErrorMessage(validation.error));
       return;
     }
 
-    try {
-      setLoading(true);
-      const response = await GestionesServices.create(validation.data);
-      if (!response.ok) {
-        toast.error(response.message);
-        return;
-      }
-      toast.success(response.message);
-      onSuccess();
-      onClose();
-    } catch (requestError) {
-      toast.error(requestError.response?.data?.message || 'No se pudo crear la gestión');
-    } finally {
-      setLoading(false);
-    }
+    await run(() => GestionesServices.create(validation.data), {
+      successMessage: (res) => res?.message || 'Gestión creada correctamente',
+      errorMessage: 'No se pudo crear la gestión',
+      onSuccess: async () => {
+        await onSuccess?.();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -66,22 +64,12 @@ export default function GestionModal({ open, onClose, onSuccess }) {
           required
         />
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-          >
-            Cancelar
-          </button>
-          <button
-            disabled={loading}
-            className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
-          >
-            {loading ? 'Creando...' : 'Crear gestión'}
-          </button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          saving={submitting}
+          submitLabel="Crear gestión"
+          savingLabel="Creando..."
+        />
       </form>
     </FormModal>
   );

@@ -1,7 +1,7 @@
 import { api } from '../../../services/api';
 import { toServiceError } from '../../../services/error';
 
-export class AlcantarilladoServices {
+export class AccionesAlcantarilladoServices {
   static async getAll(params = {}) {
     try {
       const { data } = await api.get('/admin/acciones/alcantarillado', {
@@ -74,15 +74,7 @@ export class AlcantarilladoServices {
       return toServiceError(error);
     }
   }
-
-  static async changeEstado({ id }) {
-    try {
-      const { data } = await api.patch(
-        `/admin/acciones/alcantarillado/change-status/${id}`,
-      );
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
 }
+
+// Alias de compatibilidad para importaciones existentes
+export { AccionesAlcantarilladoServices as AlcantarilladoServices };

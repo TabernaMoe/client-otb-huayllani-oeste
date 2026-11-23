@@ -1,41 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowRightIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
-
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import CambioNombreModal from '../components/CambioNombreModal';
 import { CambioNombreServices } from '../services/cambioNombre.services';
 
-const money = (value) => `Bs ${Number(value).toFixed(2)}`;
+const formatMoney = (value) => `Bs ${Number(value).toFixed(2)}`;
 
 export default function CambioNombrePage() {
-  const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    const response = await CambioNombreServices.getAll({ page, limit });
-    setLoading(false);
-
-    if (!response.ok) {
-      toast.error(response.message);
-      return;
-    }
-
-    setData(response.data);
-    setTotalPages(response.totalPages);
-    setTotalItems(response.total);
-  };
-
-  useEffect(() => {
-    load();
-  }, [page, limit]);
+  const list = usePaginatedList(CambioNombreServices.getAll, {
+    initialLimit: 10,
+    errorMessage: 'No se pudo cargar el historial de cambios de nombre',
+  });
 
   const columns = useMemo(
     () => [
@@ -71,7 +50,7 @@ export default function CambioNombrePage() {
       {
         accessorKey: 'monto',
         header: 'Monto',
-        cell: ({ row }) => money(row.original.monto),
+        cell: ({ row }) => formatMoney(row.original.monto),
       },
       { accessorKey: 'observacion', header: 'Observación' },
     ],
@@ -85,8 +64,9 @@ export default function CambioNombrePage() {
         description="Registra transferencias de acciones y consulta su historial."
         action={
           <button
+            type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
           >
             <PlusIcon className="h-5 w-5" />
             Nuevo cambio
@@ -95,24 +75,21 @@ export default function CambioNombrePage() {
       />
 
       <DataTable
-        data={data}
+        data={list.items}
         columns={columns}
-        loading={loading}
-        page={page}
-        limit={limit}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        onLimitChange={(value) => {
-          setPage(1);
-          setLimit(value);
-        }}
+        loading={list.loading}
+        page={list.page}
+        limit={list.limit}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        onPageChange={list.setPage}
+        onLimitChange={list.setLimit}
       />
 
       <CambioNombreModal
         open={open}
         onClose={() => setOpen(false)}
-        onSaved={load}
+        onSaved={list.reload}
       />
     </section>
   );

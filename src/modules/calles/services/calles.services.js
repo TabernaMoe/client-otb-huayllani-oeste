@@ -6,11 +6,6 @@ export class CallesServices {
     return data;
   }
 
-  static async getById(id) {
-    const { data } = await api.get(`/admin/calle/${id}`);
-    return data;
-  }
-
   static async create(payload) {
     const { data } = await api.post('/admin/calle', payload);
     return data;

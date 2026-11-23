@@ -6,11 +6,6 @@ export class SocioServices {
     return data;
   }
 
-  static async getById(id) {
-    const { data } = await api.get(`/admin/socio/${id}`);
-    return data;
-  }
-
   static async getDetalle(id) {
     const { data } = await api.get(`/admin/socio/detalle/${id}`);
     return data;

@@ -19,25 +19,30 @@ function inferAccountType(usuario, role) {
     : 'ADMIN';
 }
 
+function normalizeUserPayload(usuario = {}, fallback = {}) {
+  const rol = normalizeRole(usuario.rol ?? fallback.rol);
+  const permisos = usuario.permisos ?? fallback.permisos ?? [];
+
+  return {
+    id: usuario.id ?? usuario.user_id ?? null,
+    nombre_usuario: usuario.nombre_usuario ?? fallback.nombre_usuario ?? '',
+    nombre: usuario.nombre ?? usuario.nombre_completo ?? null,
+    rol,
+    tipo_usuario: inferAccountType(usuario, rol),
+    socio_id: usuario.socio_id ?? null,
+    permisos,
+    debe_cambiar_password: Boolean(usuario.debe_cambiar_password),
+  };
+}
+
 function normalizeLoginResponse(data) {
   const usuario = data?.usuario ?? data ?? {};
-  const rol = normalizeRole(usuario.rol ?? data?.rol);
-  const permisos = usuario.permisos ?? data?.permisos ?? [];
 
   return {
     ok: data?.ok ?? true,
     message: data?.message ?? 'Inicio de sesión correcto',
     token: data?.token,
-    user: {
-      id: usuario.id ?? null,
-      nombre_usuario: usuario.nombre_usuario ?? data?.nombre_usuario ?? '',
-      nombre: usuario.nombre ?? usuario.nombre_completo ?? null,
-      rol,
-      tipo_usuario: inferAccountType(usuario, rol),
-      socio_id: usuario.socio_id ?? null,
-      permisos,
-      debe_cambiar_password: Boolean(usuario.debe_cambiar_password),
-    },
+    user: normalizeUserPayload(usuario, data),
   };
 }
 
@@ -49,6 +54,16 @@ export const AuthService = {
     });
 
     return normalizeLoginResponse(data);
+  },
+
+  async getMe() {
+    const { data } = await api.get('/login/me');
+    const usuario = data?.data ?? data?.usuario ?? {};
+    return {
+      ok: data?.ok ?? true,
+      message: data?.message ?? '',
+      user: normalizeUserPayload(usuario, data),
+    };
   },
 
   saveSession(session) {
@@ -77,7 +92,13 @@ export const AuthService = {
 
   getUser() {
     const value = localStorage.getItem(SESSION_KEY);
-    return value ? JSON.parse(value) : null;
+    if (!value) return null;
+    try {
+      return JSON.parse(value);
+    } catch {
+      this.logout();
+      return null;
+    }
   },
 
   getRole() {

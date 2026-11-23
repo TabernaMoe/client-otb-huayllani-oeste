@@ -3,7 +3,6 @@ import {
   ArchiveBoxIcon,
   ArrowTrendingDownIcon,
   BanknotesIcon,
-  BeakerIcon,
   CalendarDaysIcon,
   ChartBarIcon,
   ChartBarSquareIcon,
@@ -28,7 +27,6 @@ import {
   ScaleIcon,
   ShieldCheckIcon,
   Squares2X2Icon,
-  UserCircleIcon,
   UserGroupIcon,
   UsersIcon,
   WalletIcon,
@@ -47,144 +45,12 @@ export const AdminNav = [
     ],
   },
   {
-    id: 'socios',
-    title: 'Socios',
-    icon: UserGroupIcon,
-    items: [
-      {
-        label: 'Administrar socios',
-        to: '/admin/socios',
-        icon: IdentificationIcon,
-        permission: PERMS.SOCIOS,
-      },
-    ],
-  },
-  {
-    id: 'acciones-agua',
-    title: 'Acciones de agua',
-    icon: BeakerIcon,
-    items: [
-      {
-        label: 'Acciones',
-        to: '/admin/acciones',
-        icon: ClipboardDocumentListIcon,
-        permission: PERMS.ACCIONES,
-      },
-      {
-        label: 'Detalle de acción',
-        to: '/admin/detalle-pago-accion',
-        icon: DocumentChartBarIcon,
-        permission: PERMS.DETALLE_ACCION,
-      },
-      {
-        label: 'Tipo Acción',
-        to: '/admin/tipo-accion',
-        icon: RectangleStackIcon,
-        permission: PERMS.ACCIONES,
-      },
-      {
-        label: 'Cambio de nombre',
-        to: '/admin/cambio-nombre',
-        icon: PencilSquareIcon,
-        permission: PERMS.ACCIONES,
-      },
-    ],
-  },
-  {
-    id: 'acciones-alcantarillado',
-    title: 'Acciones de alcantarillado',
-    icon: WrenchScrewdriverIcon,
-    items: [
-      {
-        label: 'Acciones Alcantarillado',
-        to: '/admin/alcantarillado/acciones',
-        icon: CircleStackIcon,
-        permission: PERMS.ACCIONES,
-      },
-      {
-        label: 'Alcantarillado',
-        to: '/admin/alcantarillado',
-        icon: WrenchIcon,
-        permission: PERMS.ACCIONES,
-      },
-    ],
-  },
-  {
-    id: 'cobros',
-    title: 'Cobros y pagos',
-    icon: BanknotesIcon,
-    items: [
-      {
-        label: 'Cobros Generales',
-        to: '/admin/cobros',
-        icon: CreditCardIcon,
-        permission: PERMS.COBROS,
-      },
-      {
-        label: 'Recibo universal',
-        to: '/admin/recibo-universal',
-        icon: ReceiptPercentIcon,
-        permission: PERMS.COBROS,
-      },
-      {
-        label: 'Cobro universal',
-        to: '/admin/cobro-universal-dos',
-        icon: CurrencyDollarIcon,
-        permission: PERMS.COBROS,
-      },
-    ],
-  },
-  {
-    id: 'lecturas-agua',
-    title: 'Lecturas',
-    icon: DocumentMagnifyingGlassIcon,
-    items: [
-      {
-        label: 'Lecturas',
-        to: '/admin/lecturas',
-        icon: ClipboardDocumentListIcon,
-        permission: PERMS.LECTURAS,
-      },
-      {
-        label: 'Mora',
-        to: '/admin/lectura-mora',
-        icon: ExclamationTriangleIcon,
-        permission: PERMS.LECTURAS,
-      },
-    ],
-  },
-  {
-    id: 'reportes',
-    title: 'Reportes',
-    icon: ChartBarIcon,
-    items: [
-      {
-        label: 'Gestión de recibos',
-        to: '/admin/reportes-recibo',
-        icon: DocumentTextIcon,
-        permission: PERMS.REPORTES,
-      },
-      {
-        label: 'Recibos por acción',
-        to: '/admin/reportes-recibo-accion',
-        icon: ClipboardDocumentCheckIcon,
-        permission: PERMS.REPORTES,
-      },
-      {
-        label: 'Recibos por socio',
-        to: '/admin/reportes-recibo-socio',
-        icon: UserCircleIcon,
-        permission: PERMS.REPORTES,
-      },
-    ],
-  },
-  {
-    id: 'operaciones',
+    id: 'administracion',
     title: 'Administración',
     icon: Cog6ToothIcon,
     items: [
       {
-        label: 'Gestiones',
+        label: 'Gestión',
         to: '/admin/gestiones',
         icon: CalendarDaysIcon,
         permission: PERMS.GESTIONES,
@@ -229,26 +95,121 @@ export const AdminNav = [
     ],
   },
   {
+    id: 'socios-acciones',
+    title: 'Socios y Acciones',
+    icon: UserGroupIcon,
+    items: [
+      {
+        label: 'Gestión de socios',
+        to: '/admin/socios',
+        icon: IdentificationIcon,
+        permission: PERMS.SOCIOS,
+      },
+      {
+        label: 'Gestión de acciones',
+        to: '/admin/acciones',
+        icon: ClipboardDocumentListIcon,
+        permission: PERMS.ACCIONES,
+      },
+      {
+        label: 'Cambio de nombre',
+        to: '/admin/cambio-nombre',
+        icon: PencilSquareIcon,
+        permission: PERMS.ACCIONES,
+      },
+    ],
+  },
+  {
+    id: 'caja',
+    title: 'Caja',
+    icon: BanknotesIcon,
+    items: [
+      {
+        label: 'Cobros generales',
+        to: '/admin/cobros',
+        icon: CreditCardIcon,
+        permission: PERMS.COBROS,
+      },
+      {
+        label: 'Cobro universal',
+        to: '/admin/cobro-universal-dos',
+        icon: CurrencyDollarIcon,
+        permission: PERMS.COBROS,
+      },
+      {
+        label: 'Recibo universal',
+        to: '/admin/recibo-universal',
+        icon: ReceiptPercentIcon,
+        permission: PERMS.COBROS,
+      },
+    ],
+  },
+  {
+    id: 'multas',
+    title: 'Multas',
+    icon: ExclamationTriangleIcon,
+    items: [
+      {
+        label: 'Multas',
+        to: '/admin/multas',
+        icon: ReceiptPercentIcon,
+        permission: PERMS.MULTAS,
+      },
+    ],
+  },
+  {
+    id: 'lecturas-agua',
+    title: 'Lecturas',
+    icon: DocumentMagnifyingGlassIcon,
+    items: [
+      {
+        label: 'Lecturas',
+        to: '/admin/lecturas',
+        icon: ClipboardDocumentListIcon,
+        permission: PERMS.LECTURAS,
+      },
+      {
+        label: 'Mora',
+        to: '/admin/lectura-mora',
+        icon: ExclamationTriangleIcon,
+        permission: PERMS.LECTURAS,
+      },
+    ],
+  },
+  {
     id: 'asambleas',
-    title: 'Asambleas y Multas',
+    title: 'Asambleas',
     icon: ScaleIcon,
     items: [
       {
         label: 'Asambleas',
         to: '/admin/asambleas',
-        icon: ExclamationTriangleIcon,
+        icon: CalendarDaysIcon,
         permission: PERMS.ASAMBLEAS,
       },
-      {
-        label: 'Otras multas',
-        to: '/admin/multas',
-        icon: ReceiptPercentIcon,
-        permission: PERMS.MULTAS,
-      },
+    ],
+  },
+  {
+    id: 'reportes',
+    title: 'Reportes',
+    icon: ChartBarIcon,
+    items: [
       {
         label: 'Reportes generales',
         to: '/admin/reportes',
         icon: ChartBarSquareIcon,
+        permission: PERMS.REPORTES,
+      },
+      {
+        label: 'Reportes de recibos',
+        to: '/admin/reportes-recibo-socio',
+        icon: DocumentTextIcon,
+        permission: PERMS.REPORTES,
+      },
+      {
+        label: 'Reportes de acción',
+        to: '/admin/reportes-recibo-accion',
+        icon: ClipboardDocumentCheckIcon,
         permission: PERMS.REPORTES,
       },
     ],
@@ -259,7 +220,7 @@ export const AdminNav = [
     icon: ArrowTrendingDownIcon,
     items: [
       {
-        label: 'Gestión de egresos',
+        label: 'Egresos',
         to: '/admin/egresos',
         icon: WalletIcon,
         permission: PERMS.EGRESOS,
@@ -267,15 +228,53 @@ export const AdminNav = [
     ],
   },
   {
-    id: 'funciones_extras',
-    title: 'Funciones',
-    icon: Squares2X2Icon,
+    id: 'inventario',
+    title: 'Inventario',
+    icon: ArchiveBoxIcon,
     items: [
       {
         label: 'Inventario',
         to: '/admin/inventario',
         icon: ArchiveBoxIcon,
         permission: PERMS.INVENTARIO,
+      },
+    ],
+  },
+  {
+    id: 'administracion-acciones',
+    title: 'Administración de Acciones',
+    icon: RectangleStackIcon,
+    items: [
+      {
+        label: 'Tipo de acción',
+        to: '/admin/tipo-accion',
+        icon: RectangleStackIcon,
+        permission: PERMS.ACCIONES,
+      },
+      {
+        label: 'Detalle de acción',
+        to: '/admin/detalle-pago-accion',
+        icon: DocumentChartBarIcon,
+        permission: PERMS.DETALLE_ACCION,
+      },
+    ],
+  },
+  {
+    id: 'acciones-alcantarillado',
+    title: 'Acciones de Alcantarillado',
+    icon: WrenchScrewdriverIcon,
+    items: [
+      {
+        label: 'Acción de alcantarillado',
+        to: '/admin/alcantarillado/acciones',
+        icon: CircleStackIcon,
+        permission: PERMS.ACCIONES,
+      },
+      {
+        label: 'Alcantarillado detalle',
+        to: '/admin/alcantarillado',
+        icon: WrenchIcon,
+        permission: PERMS.ACCIONES,
       },
     ],
   },

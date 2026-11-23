@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { zodErrors } from '../../../utils/zodErrors';
+import { formatZodErrorMessage } from '../../../services/error';
 
 const roleSchema = z.object({
   nombre_rol: z.string().trim().min(1, 'El nombre del rol es obligatorio'),
@@ -7,11 +9,14 @@ const roleSchema = z.object({
 
 export function validateRole(form) {
   const result = roleSchema.safeParse(form);
-  if (result.success) return { success: true, data: result.data, errors: {} };
+  if (result.success) {
+    return { success: true, data: result.data, errors: {}, message: '' };
+  }
 
-  const errors = Object.fromEntries(
-    Object.entries(result.error.flatten().fieldErrors).map(([key, value]) => [key, value[0]]),
-  );
-
-  return { success: false, data: null, errors };
+  return {
+    success: false,
+    data: null,
+    errors: zodErrors(result.error),
+    message: formatZodErrorMessage(result.error),
+  };
 }
