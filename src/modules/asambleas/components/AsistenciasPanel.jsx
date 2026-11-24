@@ -31,8 +31,8 @@ export default function AsistenciasPanel({ asamblea, data, loading, onClose, onE
       </div>
 
       <div className="p-5">
-        <div className="relative max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <div className="relative flex max-w-md items-center">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 h-5 w-5 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por socio, CI o acción" className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50" />
         </div>
 

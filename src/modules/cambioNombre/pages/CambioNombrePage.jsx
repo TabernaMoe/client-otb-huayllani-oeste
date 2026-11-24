@@ -1,96 +1,170 @@
-import { useMemo, useState } from 'react';
-import { ArrowRightIcon, PlusIcon } from '@heroicons/react/24/outline';
-import DataTable from '../../../components/DataTable';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import ElegantInput from '../../../components/ElegantInput';
+import ElegantTextarea from '../../../components/ElegantTextarea';
 import PageHeader from '../../../components/PageHeader';
-import { usePaginatedList } from '../../../hooks/usePaginatedList';
-import CambioNombreModal from '../components/CambioNombreModal';
+import SelectComponent from '../../../components/Select';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { validateCambioNombre } from '../schema/cambioNombre.schema';
 import { CambioNombreServices } from '../services/cambioNombre.services';
 
-const formatMoney = (value) => `Bs ${Number(value).toFixed(2)}`;
+const EMPTY_FORM = {
+  accion_id: null,
+  socio_nuevo_id: null,
+  tipo: null,
+  observacion: '',
+  monto: '',
+};
+
+const SERVICIOS = [
+  { value: 'AGUA', label: 'Agua' },
+  { value: 'ALCANTARILLADO', label: 'Alcantarillado' },
+];
+
+const TIPOS = [
+  { value: 'FAMILIAR', label: 'Familiar' },
+  { value: 'AJENO', label: 'Ajeno' },
+];
 
 export default function CambioNombrePage() {
-  const [open, setOpen] = useState(false);
+  const [tipoServicio, setTipoServicio] = useState('AGUA');
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
+  const [acciones, setAcciones] = useState([]);
+  const [socios, setSocios] = useState([]);
+  const [loadingAcciones, setLoadingAcciones] = useState(false);
+  const [loadingSocios, setLoadingSocios] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
 
-  const list = usePaginatedList(CambioNombreServices.getAll, {
-    initialLimit: 10,
-    errorMessage: 'No se pudo cargar el historial de cambios de nombre',
-  });
+  useEffect(() => {
+    setLoadingSocios(true);
+    CambioNombreServices.getSocios().then((res) => {
+      setLoadingSocios(false);
+      if (!res.ok) return toast.error(res.message);
+      setSocios(res.data ?? []);
+    });
+  }, []);
 
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: 'accion_id',
-        header: 'Acción',
-        cell: ({ row }) => `#${row.original.accion_id}`,
+  useEffect(() => {
+    setLoadingAcciones(true);
+    setForm((current) => ({ ...current, accion_id: null }));
+    CambioNombreServices.getAcciones(tipoServicio).then((res) => {
+      setLoadingAcciones(false);
+      if (!res.ok) return toast.error(res.message);
+      setAcciones(res.data ?? []);
+    });
+  }, [tipoServicio]);
+
+  const handleChange = ({ target: { name, value } }) => {
+    setForm((current) => ({ ...current, [name]: value }));
+    setErrors((current) => ({ ...current, [name]: '' }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const validation = validateCambioNombre(form);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      toast.error(validation.message);
+      return;
+    }
+
+    await run(() => CambioNombreServices.create(validation.data, tipoServicio), {
+      successMessage: (res) => res?.message || 'Cambio de nombre registrado',
+      errorMessage: 'No se pudo registrar el cambio de nombre',
+      onSuccess: () => {
+        setForm(EMPTY_FORM);
+        setErrors({});
       },
-      {
-        id: 'cambio',
-        header: 'Cambio de socio',
-        cell: ({ row }) => (
-          <div className="flex min-w-[430px] items-center gap-3">
-            <span className="max-w-[190px] truncate text-slate-600">
-              {row.original.socio_antiguo_snapshot}
-            </span>
-            <ArrowRightIcon className="h-4 w-4 shrink-0 text-slate-400" />
-            <span className="max-w-[190px] truncate font-semibold text-slate-800">
-              {row.original.socio_nuevo_snapshot}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'tipo',
-        header: 'Tipo',
-        cell: ({ row }) => (
-          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
-            {row.original.tipo}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'monto',
-        header: 'Monto',
-        cell: ({ row }) => formatMoney(row.original.monto),
-      },
-      { accessorKey: 'observacion', header: 'Observación' },
-    ],
-    [],
-  );
+    });
+  };
 
   return (
     <section className="space-y-6">
       <PageHeader
         title="Cambio de nombre"
-        description="Registra transferencias de acciones y consulta su historial."
-        action={
+        description="Transfiere una acción de agua o alcantarillado a un nuevo socio."
+      />
+
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-3xl space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <SelectComponent
+            label="Tipo de servicio"
+            name="tipo_servicio"
+            value={tipoServicio}
+            onChange={({ target }) => setTipoServicio(target.value || 'AGUA')}
+            options={SERVICIOS}
+          />
+
+          <SelectComponent
+            label="Acción"
+            name="accion_id"
+            value={form.accion_id}
+            onChange={handleChange}
+            options={acciones}
+            error={errors.accion_id}
+            isDisabled={loadingAcciones}
+          />
+        </div>
+
+        <SelectComponent
+          label="Nuevo socio"
+          name="socio_nuevo_id"
+          value={form.socio_nuevo_id}
+          onChange={handleChange}
+          options={socios}
+          error={errors.socio_nuevo_id}
+          isDisabled={loadingSocios}
+        />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <SelectComponent
+            label="Tipo"
+            name="tipo"
+            value={form.tipo}
+            onChange={handleChange}
+            options={TIPOS}
+            error={errors.tipo}
+          />
+
+          <ElegantInput
+            label="Monto"
+            name="monto"
+            type="number"
+            step="0.01"
+            value={form.monto}
+            onChange={handleChange}
+            error={errors.monto}
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        <ElegantTextarea
+          label="Observación"
+          name="observacion"
+          value={form.observacion}
+          onChange={handleChange}
+          error={errors.observacion}
+          rows={3}
+          placeholder="Motivo del cambio de nombre"
+          required
+        />
+
+        <div className="flex justify-end border-t border-slate-200 pt-4">
           <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+            type="submit"
+            disabled={submitting || loadingAcciones || loadingSocios}
+            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <PlusIcon className="h-5 w-5" />
-            Nuevo cambio
+            {submitting ? 'Procesando...' : 'Registrar cambio'}
           </button>
-        }
-      />
-
-      <DataTable
-        data={list.items}
-        columns={columns}
-        loading={list.loading}
-        page={list.page}
-        limit={list.limit}
-        totalPages={list.totalPages}
-        totalItems={list.total}
-        onPageChange={list.setPage}
-        onLimitChange={list.setLimit}
-      />
-
-      <CambioNombreModal
-        open={open}
-        onClose={() => setOpen(false)}
-        onSaved={list.reload}
-      />
+        </div>
+      </form>
     </section>
   );
 }

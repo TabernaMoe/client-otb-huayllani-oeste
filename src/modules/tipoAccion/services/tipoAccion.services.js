@@ -1,18 +1,39 @@
 import { api } from '../../../services/api';
+import { toServiceError } from '../../../services/error';
 
 export class TipoAccionServices {
   static async getAll(params = {}) {
-    const { data } = await api.get('/admin/accion/tipo-accion', { params });
-    return data;
+    try {
+      const { data } = await api.get('/admin/acciones/agua/tipo-accion', {
+        params,
+      });
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 
   static async create(payload) {
-    const { data } = await api.post('/admin/accion/tipo-accion', payload);
-    return data;
+    try {
+      const { data } = await api.post(
+        '/admin/acciones/agua/tipo-accion',
+        payload,
+      );
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 
   static async update(id, payload) {
-    const { data } = await api.patch(`/admin/accion/tipo-accion/${id}`, payload);
-    return data;
+    try {
+      const { data } = await api.put(
+        `/admin/acciones/agua/tipo-accion/${id}`,
+        payload,
+      );
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
   }
 }

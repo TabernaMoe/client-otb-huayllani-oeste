@@ -17,10 +17,8 @@ import { DetalleAccionServices } from '../src/modules/detalleAccion/services/det
 import { TipoAccionServices } from '../src/modules/tipoAccion/services/tipoAccion.services.js';
 import { AlcantarilladoServices as AccionesAlcantarilladoServices } from '../src/modules/alcantarillado/services/accionesAlcantarillado.services.js';
 import { AlcantarilladoServices as DetalleAlcantarilladoServices } from '../src/modules/alcantarillado/services/alcantarillado.services.js';
-import { CobrosAlcantarilladoServices } from '../src/modules/alcantarilladoCobros/services/cobrosAlcantarillado.services.js';
 import { CambioNombreServices } from '../src/modules/cambioNombre/services/cambioNombre.services.js';
 import { CobrosServices } from '../src/modules/cobros/services/cobros.services.js';
-import { CobrosAguaServices } from '../src/modules/cobrosAgua/services/cobrosAgua.services.js';
 import { ReciboMadreSerivices } from '../src/modules/reciboUniversal/services.js';
 import { LecturasServices } from '../src/modules/lecturas/services/lecturas.services.js';
 import { AsambleasServices } from '../src/modules/asambleas/services/asambleas.services.js';
@@ -212,7 +210,6 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
     await AccionesServices.create({});
     await AccionesServices.update(10, {});
     await AccionesServices.getHistorialAccion(10);
-    await AccionesServices.getCaratula(10);
 
     await AdelantoPagosServices.getAccionesPasivas({ page: 1, limit: 10 });
 
@@ -240,22 +237,21 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
         'POST /admin/acciones/agua',
         'PATCH /admin/acciones/agua/10',
         'GET /admin/cobro/accion-historial/10',
-        'GET /admin/accion/caratula/10',
-        'GET /admin/accion',
+        'GET /admin/cobro/acciones-pasivas',
         'GET /admin/acciones/agua/detalle',
         'GET /admin/acciones/agua/detalle/tipos-accion',
         'GET /admin/acciones/agua/detalle/3',
         'POST /admin/acciones/agua/detalle',
         'PATCH /admin/acciones/agua/detalle/3',
         'PATCH /admin/acciones/agua/detalle/change-status/3',
-        'GET /admin/accion/tipo-accion',
-        'POST /admin/accion/tipo-accion',
-        'PATCH /admin/accion/tipo-accion/1',
+        'GET /admin/acciones/agua/tipo-accion',
+        'POST /admin/acciones/agua/tipo-accion',
+        'PUT /admin/acciones/agua/tipo-accion/1',
       ],
     );
   });
 
-  it('alcantarillado, alcantarilladoCobros y cambioNombre: endpoints activos', async () => {
+  it('alcantarillado y cambioNombre: endpoints activos', async () => {
     const calls = spyApi({ ok: true, data: [] });
 
     await AccionesAlcantarilladoServices.getAll({});
@@ -271,14 +267,10 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
     await DetalleAlcantarilladoServices.update(2, {});
     await DetalleAlcantarilladoServices.changeEstado(2);
 
-    await CobrosAlcantarilladoServices.getSocios();
-    await CobrosAlcantarilladoServices.getPendientesSocio(3);
-    await CobrosAlcantarilladoServices.pagar({});
-
-    await CambioNombreServices.getAll({});
-    await CambioNombreServices.getAcciones();
+    await CambioNombreServices.getAcciones('AGUA');
     await CambioNombreServices.getSocios();
-    await CambioNombreServices.create({});
+    await CambioNombreServices.create({}, 'AGUA');
+    await CambioNombreServices.create({}, 'ALCANTARILLADO');
 
     assert.deepEqual(
       calls.map((c) => `${c.method} ${c.url}`),
@@ -294,23 +286,16 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
         'POST /admin/acciones/alcantarillado/detalle',
         'PATCH /admin/acciones/alcantarillado/detalle/2',
         'PATCH /admin/acciones/alcantarillado/detalle/change-status/2',
-        'GET /admin/alcantarillado/cobros/socios',
-        'GET /admin/alcantarillado/cobros/pendientes-socio/3',
-        'POST /admin/alcantarillado/cobros/pagar',
-        'GET /admin/cambio-nombre',
-        'GET /admin/cambio-nombre/acciones',
-        'GET /admin/cambio-nombre/socios',
-        'POST /admin/cambio-nombre',
+        'GET /admin/reportes/recibo/acciones',
+        'GET /admin/acciones/agua/socios',
+        'POST /admin/acciones/agua/cambiar-nombre',
+        'POST /admin/acciones/alcantarillado/cambiar-nombre',
       ],
     );
   });
 
-  it('cobros, cobrosAgua, reciboUniversal y lecturas: endpoints activos', async () => {
-    const calls = spyApi((method, url) =>
-      url === '/admin/pago-agua/pagar/9'
-        ? new Blob([JSON.stringify({ ok: true })], { type: 'application/json' })
-        : { ok: true, data: [] },
-    );
+  it('cobros, cobroUniversal y lecturas: endpoints activos', async () => {
+    const calls = spyApi({ ok: true, data: [] });
 
     await CobrosServices.getSocios({});
     await CobrosServices.getSocioCobros(4);
@@ -319,12 +304,6 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
     await CobrosServices.getMultas();
     await CobrosServices.asignarMulta(9, { multa_id: 1 });
 
-    await CobrosAguaServices.getAll({});
-    await CobrosAguaServices.getByAccionId(9);
-    await CobrosAguaServices.getHistorial(9);
-    await CobrosAguaServices.pagar(9, { cobro_agua_id: 1, monto: 50, metodo_pago: 'EFECTIVO' });
-
-    await ReciboMadreSerivices.create({ payload: {} });
     await ReciboMadreSerivices.getSelectAccion();
     await ReciboMadreSerivices.createCobro({ payload: {} });
 
@@ -347,12 +326,7 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
         'GET /admin/cobro/acciones',
         'GET /admin/cobro/multas',
         'POST /admin/cobro/multas/9',
-        'GET /admin/pago-agua',
-        'GET /admin/pago-agua/9',
-        'GET /admin/pago-agua/historial/9',
-        'PATCH /admin/pago-agua/pagar/9',
-        'POST /admin/recibo-universal',
-        'GET /admin/recibo-universal/accion',
+        'GET /admin/reportes/recibo/acciones',
         'POST /admin/cobro/crear-cobro',
         'GET /admin/lectura',
         'GET /admin/lectura/9',

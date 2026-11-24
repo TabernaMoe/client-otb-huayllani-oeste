@@ -23,11 +23,9 @@ const DetalleAccionPage = lazy(() => import('../modules/detalleAccion/pages/Deta
 const CobrosPage = lazy(() => import('../modules/cobros/pages/CobrosPage'));
 const AlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/AlcantarilladoPage'));
 const AccionesAlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/AccionesAlcantarilladoPage'));
-const CobroAlcantarilladoPage = lazy(() => import('../modules/alcantarilladoCobros/pages/CobroAlcantarilladoPage'));
 const CambioNombrePage = lazy(() => import('../modules/cambioNombre/pages/CambioNombrePage'));
 const LecturasPage = lazy(() => import('../modules/lecturas/pages/LecturasPage'));
 const ModificarMora = lazy(() => import('../modules/lecturas/modificar-mora/ModificarMora'));
-const CobrosAguaPage = lazy(() => import('../modules/cobrosAgua/pages/CobrosAguaPage'));
 const TarifasPage = lazy(() => import('../modules/tarifas/pages/TarifasPage'));
 const CallesPage = lazy(() => import('../modules/calles/pages/CallesPage'));
 const AsambleasPage = lazy(() => import('../modules/asambleas/pages/AsambleasPage'));
@@ -36,7 +34,6 @@ const InventarioPage = lazy(() => import('../modules/inventario/pages/Inventario
 const MultasPage = lazy(() => import('../modules/multas/pages/MultasPage'));
 const AdelantoPagosPage = lazy(() => import('../modules/adelantoPagos/pages/AdelantoPagosPage'));
 const EgresosPage = lazy(() => import('../modules/egresos/pages/EgresosPage'));
-const ReciboUniversaPage = lazy(() => import('../modules/reciboUniversal/page/ReciboUniversaPage'));
 const CobroUniversalDosPage = lazy(() => import('../modules/reciboUniversal/page/cobroUniversalPage'));
 const RecibosByAccionPage = lazy(() => import('../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage'));
 
@@ -84,7 +81,6 @@ export const privateRoutes = (
           <Route path="acciones" element={load(AccionesPage)} />
           <Route path="acciones/adelantos" element={load(AdelantoPagosPage)} />
           <Route path="alcantarillado" element={load(AlcantarilladoPage)} />
-          <Route path="alcantarillado-cobros" element={load(CobroAlcantarilladoPage)} />
           <Route path="alcantarillado/acciones" element={load(AccionesAlcantarilladoPage)} />
           <Route path="cambio-nombre" element={load(CambioNombrePage)} />
           <Route path="tipo-accion" element={load(TipoAccionPage)} />
@@ -112,12 +108,7 @@ export const privateRoutes = (
 
         <Route element={guard(PERMS.COBROS)}>
           <Route path="cobros" element={load(CobrosPage)} />
-          <Route path="recibo-universal" element={load(ReciboUniversaPage)} />
           <Route path="cobro-universal-dos" element={load(CobroUniversalDosPage)} />
-        </Route>
-
-        <Route element={guard(PERMS.COBROS_AGUA)}>
-          <Route path="cobros-agua" element={load(CobrosAguaPage)} />
         </Route>
 
         <Route element={guard(PERMS.LECTURAS)}>

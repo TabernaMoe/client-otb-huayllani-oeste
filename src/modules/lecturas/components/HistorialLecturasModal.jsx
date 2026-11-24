@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  ClockIcon,
   PencilSquareIcon,
   LockClosedIcon,
   DocumentTextIcon,
   ExclamationCircleIcon,
   ArrowPathIcon,
-  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 import FormModal from '../../../components/FormModal';

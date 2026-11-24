@@ -71,7 +71,6 @@ export default function AdminSidebarContent({
                   <div className="ml-3 border-l border-slate-200 pl-3">
                     {group.items.map((item) => {
                       const ItemIcon = item.icon;
-                      const active = pathname.startsWith(item.to);
 
                       return (
                         <NavLink
@@ -88,13 +87,17 @@ export default function AdminSidebarContent({
                             )
                           }
                         >
-                          <ItemIcon
-                            className={cx(
-                              'h-5 w-5 shrink-0',
-                              active ? 'text-white' : 'text-slate-500',
-                            )}
-                          />
-                          <span className="truncate">{item.label}</span>
+                          {({ isActive }) => (
+                            <>
+                              <ItemIcon
+                                className={cx(
+                                  'h-5 w-5 shrink-0',
+                                  isActive ? 'text-white' : 'text-slate-500',
+                                )}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </>
+                          )}
                         </NavLink>
                       );
                     })}

@@ -151,8 +151,8 @@ export default function InventarioPage() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="relative max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <div className="relative flex max-w-md items-center">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 h-5 w-5 text-slate-400" />
           <input
             value={search}
             onChange={(event) => {

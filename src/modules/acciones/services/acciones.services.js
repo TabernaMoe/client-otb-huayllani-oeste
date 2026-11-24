@@ -95,15 +95,4 @@ export class AccionesServices {
       return toServiceError(error);
     }
   }
-
-  static async getCaratula(id) {
-    try {
-      const response = await api.get(`/admin/accion/caratula/${id}`, {
-        responseType: 'blob',
-      });
-      return response.data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
 }

@@ -18,8 +18,8 @@ export default function SocioSelector({
     <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-4">
         <h3 className="font-bold text-slate-900">1. Seleccionar socio</h3>
-        <div className="relative mt-4">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <div className="relative mt-4 flex items-center">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 h-5 w-5 text-slate-400" />
           <input
             type="search"
             value={search}

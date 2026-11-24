@@ -1,12 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   CheckCircleIcon,
-  DocumentTextIcon,
   PlusIcon,
   PowerIcon,
   RectangleStackIcon,
 } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
 import SearchFilterBar from '../../../components/SearchFilterBar';
@@ -15,7 +13,6 @@ import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
-import { getApiErrorMessage } from '../../../services/error';
 import AccionModal from '../components/AccionModal';
 import { AccionesServices } from '../services/acciones.services';
 
@@ -61,23 +58,6 @@ export default function AccionesPage() {
     errorMessage: 'No se pudieron cargar las acciones de agua',
   });
 
-  const handlePdfCaratula = useCallback(async (id) => {
-    try {
-      const pdfBlob = await AccionesServices.getCaratula(id);
-      if (!pdfBlob || pdfBlob?.ok === false) {
-        throw new Error(pdfBlob?.message || 'No se pudo obtener la carátula');
-      }
-
-      const url = URL.createObjectURL(
-        new Blob([pdfBlob], { type: 'application/pdf' }),
-      );
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'No se pudo obtener la carátula'));
-    }
-  }, []);
-
   const columns = useMemo(
     () => [
       {
@@ -120,21 +100,11 @@ export default function AccionesPage() {
           <TableActionButtons
             onEdit={() => openModal(MODALS.EDIT, row.original.id)}
             editTitle="Editar acción"
-            extra={
-              <button
-                type="button"
-                onClick={() => handlePdfCaratula(row.original.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
-                title="Obtener carátula PDF"
-              >
-                <DocumentTextIcon className="h-4 w-4" /> Carátula
-              </button>
-            }
           />
         ),
       },
     ],
-    [handlePdfCaratula, openModal],
+    [openModal],
   );
 
   const activas = list.items.filter((item) => item.estado === 'ACTIVO').length;

@@ -135,12 +135,6 @@ export const AdminNav = [
         icon: CurrencyDollarIcon,
         permission: PERMS.COBROS,
       },
-      {
-        label: 'Recibo universal',
-        to: '/admin/recibo-universal',
-        icon: ReceiptPercentIcon,
-        permission: PERMS.COBROS,
-      },
     ],
   },
   {

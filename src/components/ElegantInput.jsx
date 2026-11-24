@@ -27,7 +27,7 @@ export default function ElegantInput({
 
       <div className="relative">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
             {icon}
           </div>
         )}
@@ -42,10 +42,10 @@ export default function ElegantInput({
           disabled={disabled}
           autoComplete={autoComplete}
           className={clsx(
-            'w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-200',
+            'w-full rounded-2xl border bg-white py-3 text-sm text-slate-700 outline-none transition-all duration-200',
             'placeholder:text-slate-400',
             'focus:ring-4',
-            icon ? 'pl-12' : 'pl-4',
+            icon ? 'pl-12 pr-4' : 'px-4',
             error
               ? 'border-red-400 focus:border-sky-500 focus:ring-sky-100'
               : 'border-slate-300 focus:border-blue-500 focus:ring-blue-100',

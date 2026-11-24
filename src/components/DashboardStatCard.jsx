@@ -19,7 +19,7 @@ export default function DashboardStatCard({
         </div>
 
         {Icon && (
-          <div className={`rounded-2xl p-3 ${iconClass}`}>
+          <div className={`shrink-0 rounded-2xl p-3 ${iconClass}`}>
             <Icon className="h-6 w-6" />
           </div>
         )}

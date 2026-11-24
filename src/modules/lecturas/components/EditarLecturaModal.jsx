@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   PencilSquareIcon,
-  InformationCircleIcon,
-  CalculatorIcon,
   ExclamationCircleIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
