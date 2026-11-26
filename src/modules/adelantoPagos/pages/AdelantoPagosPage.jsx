@@ -45,7 +45,7 @@ export default function AdelantoPagosPage() {
       {
         accessorKey: 'estado',
         header: 'Estado',
-        cell: () => <StatusBadge value="PASIVO" />,
+        cell: ({ getValue }) => <StatusBadge value={getValue() || 'PASIVO'} />,
       },
     ],
     [],

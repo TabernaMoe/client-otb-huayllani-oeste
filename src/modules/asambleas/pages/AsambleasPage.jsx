@@ -10,24 +10,20 @@ import {
 import { toast } from 'react-toastify';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
 import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { getApiErrorMessage } from '../../../services/error';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 import AsambleaModal from '../components/AsambleaModal';
 import AsistenciaModal from '../components/AsistenciaModal';
 import AsistenciasPanel from '../components/AsistenciasPanel';
 import { AsambleasServices } from '../services/asambleas.services';
 
-const formatDate = (value) =>
-  value
-    ? new Intl.DateTimeFormat('es-BO', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(new Date(`${value}T00:00:00`))
-    : '—';
+const formatAsambleaDate = (value) =>
+  formatDate(value && !String(value).includes('T') ? `${value}T00:00:00` : value);
 
 export default function AsambleasPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -138,7 +134,7 @@ export default function AsambleasPage() {
           <div className="space-y-1 text-slate-600">
             <div className="flex items-center gap-1.5">
               <CalendarDaysIcon className="h-4 w-4" />
-              {formatDate(row.original.fecha)}
+              {formatAsambleaDate(row.original.fecha)}
             </div>
             <div className="flex items-center gap-1.5 text-xs">
               <ClockIcon className="h-4 w-4" /> {row.original.hora_inicio}
@@ -151,7 +147,7 @@ export default function AsambleasPage() {
         header: 'Multa falta',
         cell: ({ row }) => (
           <span className="font-semibold text-slate-700">
-            Bs {Number(row.original.monto_multa).toFixed(2)}
+            {formatCurrency(row.original.monto_multa)}
           </span>
         ),
       },
@@ -160,7 +156,7 @@ export default function AsambleasPage() {
         header: 'Multa retraso',
         cell: ({ row }) => (
           <span className="font-semibold text-amber-700">
-            Bs {Number(row.original.monto_retraso).toFixed(2)}
+            {formatCurrency(row.original.monto_retraso)}
           </span>
         ),
       },
@@ -222,6 +218,12 @@ export default function AsambleasPage() {
             <PlusIcon className="h-5 w-5" /> Nueva asamblea
           </button>
         }
+      />
+
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar asamblea por título o lugar..."
       />
 
       <DataTable

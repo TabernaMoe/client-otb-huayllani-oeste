@@ -33,7 +33,7 @@ const InventarioPage = lazy(() => import('../modules/inventario/pages/Inventario
 const MultasPage = lazy(() => import('../modules/multas/pages/MultasPage'));
 const AdelantoPagosPage = lazy(() => import('../modules/adelantoPagos/pages/AdelantoPagosPage'));
 const EgresosPage = lazy(() => import('../modules/egresos/pages/EgresosPage'));
-const CobroUniversalDosPage = lazy(() => import('../modules/reciboUniversal/page/cobroUniversalPage'));
+const CobroUniversalDosPage = lazy(() => import('../modules/reciboUniversal/pages/CobroUniversalPage'));
 const RecibosByAccionPage = lazy(() => import('../modules/reportes/recibos/recibosByAccion/RecibosByAccionPage'));
 
 // Socio portal pages (lazy)

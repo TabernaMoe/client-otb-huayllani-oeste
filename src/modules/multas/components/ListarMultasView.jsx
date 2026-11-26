@@ -7,31 +7,25 @@ import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { formatCurrency } from '../../../utils/formatters';
+import {
+  ESTADO_FILTER_OPTIONS_FEM,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import { MultasServices } from '../services/multas.services';
 import MultaModal from './MultaModal';
 
-const ESTADO_OPTIONS = [
-  { value: '', label: 'Todas' },
-  { value: 'true', label: 'Activas' },
-  { value: 'false', label: 'Inactivas' },
-];
+const fetchMultas = withBooleanEstado(MultasServices.getAll);
 
 export default function ListarMultasView() {
   const [selectedMulta, setSelectedMulta] = useState(null);
   const [confirmMulta, setConfirmMulta] = useState(null);
 
-  const list = usePaginatedList(
-    (params) => {
-      const query = { ...params };
-      if (query.estado !== undefined) query.estado = query.estado === 'true';
-      return MultasServices.getAll(query);
-    },
-    {
-      initialLimit: 5,
-      initialFilters: { estado: '' },
-      errorMessage: 'No se pudieron cargar las multas',
-    },
-  );
+  const list = usePaginatedList(fetchMultas, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    errorMessage: 'No se pudieron cargar las multas',
+  });
   const { submitting, run } = useAsyncSubmit();
 
   const handleToggleEstado = async () => {
@@ -65,7 +59,7 @@ export default function ListarMultasView() {
         header: 'Precio',
         cell: ({ row }) => (
           <span className="font-semibold text-slate-700">
-            Bs {Number(row.original.precio).toFixed(2)}
+            {formatCurrency(row.original.precio)}
           </span>
         ),
       },
@@ -118,7 +112,7 @@ export default function ListarMultasView() {
         <SelectComponent
           label="Estado"
           name="estado"
-          options={ESTADO_OPTIONS}
+          options={ESTADO_FILTER_OPTIONS_FEM}
           value={list.filters.estado}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />

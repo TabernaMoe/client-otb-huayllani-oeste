@@ -9,7 +9,9 @@ import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
 import PageHeader from '../../../components/PageHeader';
 import Select from '../../../components/Select';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { formatZodErrorMessage } from '../../../services/error';
+import { formatCurrency } from '../../../utils/formatters';
 import { zodErrors } from '../../../utils/zodErrors';
 import { CobroUniversalSchema } from '../schema';
 import { ReciboMadreSerivices as Servs } from '../services';
@@ -35,8 +37,8 @@ export default function UniversalFormView({
   const [acciones, setAcciones] = useState([]);
   const [errors, setErrors] = useState({});
   const [loadingAcciones, setLoadingAcciones] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
+  const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,27 +69,29 @@ export default function UniversalFormView({
       toast.error(formatZodErrorMessage(result.error));
       return;
     }
-    setOpenModal(true);
+    setPendingData(result.data);
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      const response = await onSubmitPayload({ payload: form });
-      if (!response.ok) {
-        if (response.fieldErrors) setErrors(response.fieldErrors);
-        toast.error(response?.message || 'No se pudo guardar el registro');
-        setOpenModal(false);
-        return;
-      }
-      toast.success(response.message);
-      setForm(INITIAL_FORM);
-      setErrors({});
-      setOpenModal(false);
-    } finally {
-      setSaving(false);
-    }
+    if (!pendingData) return;
+
+    await run(() => onSubmitPayload({ payload: pendingData }), {
+      successMessage: (res) => res?.message || 'Cobro registrado correctamente',
+      errorMessage: 'No se pudo guardar el registro',
+      onError: (response) => {
+        if (response?.fieldErrors) setErrors(response.fieldErrors);
+        setPendingData(null);
+      },
+      onSuccess: () => {
+        setForm(INITIAL_FORM);
+        setErrors({});
+        setPendingData(null);
+      },
+    });
   };
+
+  const selectedAccionLabel =
+    acciones.find((item) => item.value === pendingData?.accion_id)?.label || '';
 
   return (
     <>
@@ -149,25 +153,29 @@ export default function UniversalFormView({
           <footer className="mt-6 flex justify-end border-t border-slate-200 pt-5">
             <button
               type="button"
-              disabled={saving}
+              disabled={submitting}
               onClick={handleOpenConfirm}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <BookmarkSquareIcon className="size-4" />
-              {saving ? 'Guardando...' : submitLabel}
+              {submitting ? 'Guardando...' : submitLabel}
             </button>
           </footer>
         </div>
       </section>
 
       <ConfirmModal
-        open={openModal}
+        open={Boolean(pendingData)}
         title={confirmTitle}
-        message={confirmMessage}
+        message={
+          pendingData
+            ? `${confirmMessage} Acción: "${selectedAccionLabel}" · Monto: ${formatCurrency(pendingData.monto)}.`
+            : confirmMessage
+        }
         confirmText="Confirmar"
-        onClose={() => setOpenModal(false)}
+        onClose={() => setPendingData(null)}
         onConfirm={handleSave}
-        loading={saving}
+        loading={submitting}
       />
     </>
   );

@@ -4,14 +4,23 @@ import { toast } from 'react-toastify';
 import DataTableLocal from '../../../components/DataTableLocal';
 import PageHeader from '../../../components/PageHeader';
 import SearchFilterBar from '../../../components/SearchFilterBar';
+import SelectComponent from '../../../components/Select';
 import StatusBadge from '../../../components/StatusBadge';
+import { formatCurrency } from '../../../utils/formatters';
 import LecturaModal from '../components/LecturaModal';
 import { LecturasServices } from '../services/lecturas.services';
+
+const FILTRO_LECTURA_OPTIONS = [
+  { value: '', label: 'Todas' },
+  { value: 'pendiente', label: 'Sin lectura registrada' },
+  { value: 'registrada', label: 'Con lectura registrada' },
+];
 
 export default function LecturasPage() {
   const [acciones, setAcciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [estadoLectura, setEstadoLectura] = useState('');
   const [modal, setModal] = useState({ open: false, accion: null });
 
   const loadLecturas = useCallback(async () => {
@@ -34,9 +43,12 @@ export default function LecturasPage() {
 
   const filtradas = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return acciones;
-    return acciones.filter((row) =>
-      [
+    return acciones.filter((row) => {
+      const tieneLectura = Boolean(row.lecturas?.[0]);
+      if (estadoLectura === 'pendiente' && tieneLectura) return false;
+      if (estadoLectura === 'registrada' && !tieneLectura) return false;
+      if (!term) return true;
+      return [
         row.codigo_interno,
         row.nombre_completo,
         row.nro_medidor,
@@ -44,9 +56,9 @@ export default function LecturasPage() {
         row.nombre_tarifa,
       ]
         .filter(Boolean)
-        .some((val) => String(val).toLowerCase().includes(term)),
-    );
-  }, [acciones, search]);
+        .some((val) => String(val).toLowerCase().includes(term));
+    });
+  }, [acciones, search, estadoLectura]);
 
   const columns = useMemo(
     () => [
@@ -105,7 +117,7 @@ export default function LecturasPage() {
                 {lectura.consumo_m3} m³
               </p>
               <p className="text-xs text-emerald-700">
-                Bs {Number(lectura.precio || 0).toFixed(2)}
+                {formatCurrency(lectura.precio)}
               </p>
             </div>
           );
@@ -151,7 +163,15 @@ export default function LecturasPage() {
         search={search}
         onSearchChange={setSearch}
         placeholder="Buscar socio, medidor, calle o acción..."
-      />
+      >
+        <SelectComponent
+          label="Lectura"
+          name="estado_lectura"
+          value={estadoLectura}
+          options={FILTRO_LECTURA_OPTIONS}
+          onChange={(e) => setEstadoLectura(e.target.value ?? '')}
+        />
+      </SearchFilterBar>
 
       <DataTableLocal
         data={filtradas}
