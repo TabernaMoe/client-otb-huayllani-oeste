@@ -1,9 +1,4 @@
-const formatFecha = (value) => {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString('es-BO');
-};
-
-const formatBs = (value) => `Bs ${Number(value || 0).toFixed(2)}`;
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 
 export const cobrosColumns = [
   {
@@ -40,13 +35,13 @@ export const cobrosColumns = [
   {
     accessorKey: 'fecha_emision',
     header: 'Emisión',
-    cell: ({ getValue }) => formatFecha(getValue()),
+    cell: ({ getValue }) => formatDate(getValue()),
   },
   {
     accessorKey: 'monto_pagar',
     header: 'Monto',
     cell: ({ getValue }) => (
-      <span className="font-semibold text-blue-800">{formatBs(getValue())}</span>
+      <span className="font-semibold text-blue-800">{formatCurrency(getValue())}</span>
     ),
   },
 ];
@@ -87,13 +82,13 @@ export const recibosColumns = [
   {
     accessorKey: 'fecha_emision',
     header: 'Fecha',
-    cell: ({ getValue }) => formatFecha(getValue()),
+    cell: ({ getValue }) => formatDate(getValue()),
   },
   {
     accessorKey: 'monto_pagado',
     header: 'Pagado',
     cell: ({ getValue }) => (
-      <span className="font-semibold text-emerald-700">{formatBs(getValue())}</span>
+      <span className="font-semibold text-emerald-700">{formatCurrency(getValue())}</span>
     ),
   },
 ];

@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ReciboServices } from '../services/services';
 import DataTableLocal from '../../../../components/DataTableLocal';
+import PageHeader from '../../../../components/PageHeader';
+import StatusBadge from '../../../../components/StatusBadge';
 import { toast } from 'react-toastify';
 import {
-  NoSymbolIcon,
   EyeIcon,
-  DocumentTextIcon,
   FunnelIcon,
   ArrowPathIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { imprimirRecibo } from '../../../cobros/reciboPdf/generarReciboHTML';
 import Select from '../../../../components/Select';
+import { formatDate } from '../../../../utils/formatters';
 
 const hasSelection = (val) => val !== '' && val !== null && val !== undefined;
 
@@ -165,57 +166,26 @@ export default function ReciboPage() {
       {
         accessorKey: 'fecha_emision',
         header: 'FECHA DE EMISIÓN',
+        cell: ({ getValue }) => formatDate(getValue()),
       },
       {
         accessorKey: 'estado',
         header: 'ESTADO',
-        cell: ({ row }) => {
-          const activo = row.original.estado;
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                activo
-                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                  : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  activo ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-              {activo ? 'Activo' : 'Inactivo'}
-            </span>
-          );
-        },
+        cell: ({ getValue }) => <StatusBadge value={Boolean(getValue())} />,
       },
       {
         id: 'acciones',
         header: 'ACCIONES',
         cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleRecibo(row.original)}
-              title="Ver recibo"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-all hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95"
-            >
-              <EyeIcon className="h-4 w-4" />
-              Ver recibo
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                toast.info('La anulación aún no está implementada')
-              }
-              title="Anular recibo"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 active:scale-95"
-            >
-              <NoSymbolIcon className="h-4 w-4" />
-              Anular
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleRecibo(row.original)}
+            title="Ver recibo"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-all hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95"
+          >
+            <EyeIcon className="h-4 w-4" />
+            Ver recibo
+          </button>
         ),
       },
     ],
@@ -224,26 +194,10 @@ export default function ReciboPage() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6 pb-8">
-      {/* ENCABEZADO */}
-      <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 p-6 shadow-lg sm:p-8">
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
-            <DocumentTextIcon className="h-8 w-8 text-white" />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
-              Recibos por acción
-            </h1>
-            <p className="mt-1 text-sm text-slate-300">
-              Consulta y visualiza los recibos emitidos filtrando por tipo de
-              servicio y acción.
-            </p>
-          </div>
-        </div>
-
-        <div className="pointer-events-none absolute -right-12 -top-20 h-60 w-60 rounded-full bg-blue-400/10 blur-3xl" />
-      </header>
+      <PageHeader
+        title="Recibos por acción"
+        description="Consulta y visualiza los recibos emitidos filtrando por tipo de servicio y acción."
+      />
 
       {/* FILTROS */}
       <div className="relative z-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

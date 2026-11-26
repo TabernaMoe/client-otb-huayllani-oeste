@@ -10,10 +10,11 @@ import {
   ReceiptPercentIcon,
 } from '@heroicons/react/24/solid';
 
-import { AuthService } from '../../auth/services/auth.services';
+import { useAuth } from '../../auth/context/AuthContext';
 import { SocioPortalServices } from '../services/socioPortal.services';
 import DashboardStatCard from '../../../components/DashboardStatCard';
 import { PortalError } from '../components/PortalFeedback';
+import { getApiErrorMessage } from '../../../services/error';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 
 const initialResumen = {
@@ -59,16 +60,24 @@ const quickLinks = [
 ];
 
 export default function SocioDashboardPage() {
-  const user = AuthService.getUser();
+  const { user } = useAuth();
   const [data, setData] = useState(initialResumen);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     SocioPortalServices.getResumen()
-      .then((response) => setData({ ...initialResumen, ...(response?.data ?? response) }))
+      .then((response) => {
+        const merged = { ...initialResumen, ...(response?.data ?? response) };
+        setData({
+          ...merged,
+          proximos_cobros: Array.isArray(merged.proximos_cobros)
+            ? merged.proximos_cobros
+            : [],
+        });
+      })
       .catch((err) =>
-        setError(err.response?.data?.message || 'No se pudo cargar el resumen'),
+        setError(getApiErrorMessage(err, 'No se pudo cargar el resumen')),
       )
       .finally(() => setLoading(false));
   }, []);

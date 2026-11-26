@@ -1,28 +1,12 @@
-export const formatMoney = (value) => {
-  const numeric = Number(value ?? 0);
-  return new Intl.NumberFormat('es-BO', {
-    style: 'currency',
-    currency: 'BOB',
-    minimumFractionDigits: 2,
-  }).format(Number.isFinite(numeric) ? numeric : 0);
-};
+import {
+  formatCurrency,
+  formatDate as sharedFormatDate,
+  formatFullName,
+} from '../../../utils/formatters';
 
-export const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString('es-BO') : '—';
-
-export const getSocioDisplayName = (socio) => {
-  if (!socio) return '';
-  if (socio.nombre_completo) return String(socio.nombre_completo).trim();
-  const fullName = [
-    socio.nombres,
-    socio.primer_apellido,
-    socio.segundo_apellido,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  return fullName || 'Sin nombre';
-};
+export const formatMoney = formatCurrency;
+export const formatDate = sharedFormatDate;
+export const getSocioDisplayName = (socio) => (socio ? formatFullName(socio) : '');
 
 export const getSocioInitials = (nombreCompleto = '') => {
   const initials = String(nombreCompleto || '')

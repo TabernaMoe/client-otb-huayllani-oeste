@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PlusCircleIcon, TagIcon } from '@heroicons/react/24/outline';
 import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { EgresosServices } from '../services/egresos.services';
 import { validateCategoriaEgreso } from '../schema/egresos.schema';
 
@@ -13,10 +14,9 @@ const initialForm = {
 export default function CategoriasEgresoView() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [categorias, setCategorias] = useState([]);
+  const { submitting, run } = useAsyncSubmit();
 
   const cargarCategorias = useCallback(async () => {
     setLoading(true);
@@ -32,7 +32,6 @@ export default function CategoriasEgresoView() {
   const handleChange = ({ target: { name, value } }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
-    setMessage(null);
   };
 
   const handleSubmit = async (event) => {
@@ -44,19 +43,15 @@ export default function CategoriasEgresoView() {
       return;
     }
 
-    setSaving(true);
-    const response = await EgresosServices.createCategoria(validation.data);
-    setSaving(false);
-
-    if (!response?.ok) {
-      setMessage({ type: 'error', text: response?.message || 'No se pudo crear la categoría' });
-      return;
-    }
-
-    setForm(initialForm);
-    setErrors({});
-    setMessage({ type: 'success', text: response.message || 'Categoría creada correctamente' });
-    await cargarCategorias();
+    await run(() => EgresosServices.createCategoria(validation.data), {
+      successMessage: (res) => res?.message || 'Categoría creada correctamente',
+      errorMessage: 'No se pudo crear la categoría',
+      onSuccess: async () => {
+        setForm(initialForm);
+        setErrors({});
+        await cargarCategorias();
+      },
+    });
   };
 
   return (
@@ -97,25 +92,13 @@ export default function CategoriasEgresoView() {
             rows={4}
           />
 
-          {message && (
-            <div
-              className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-                message.type === 'success'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
-
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={saving}
+              disabled={submitting}
               className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Crear tipo de egreso'}
+              {submitting ? 'Guardando...' : 'Crear tipo de egreso'}
             </button>
           </div>
         </form>

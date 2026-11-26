@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import { KeyIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { getApiErrorMessage } from '../../../services/error';
+import { formatFullName } from '../../../utils/formatters';
+import { zodErrors } from '../../../utils/zodErrors';
 import PortalPageHeader from '../components/PortalPageHeader';
 import { PortalError, PortalLoading } from '../components/PortalFeedback';
 import { editarPerfilSchema } from '../schemas/socioPortal.schema';
@@ -13,8 +16,8 @@ export default function MiPerfilPage() {
   const [form, setForm] = useState({ numero_celular: '', direccion: '' });
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
     SocioPortalServices.getPerfil()
@@ -27,7 +30,7 @@ export default function MiPerfilPage() {
         });
       })
       .catch((err) =>
-        setError(err.response?.data?.message || 'No se pudo cargar tu perfil'),
+        setError(getApiErrorMessage(err, 'No se pudo cargar tu perfil')),
       )
       .finally(() => setLoading(false));
   }, []);
@@ -39,32 +42,24 @@ export default function MiPerfilPage() {
 
     const parsed = editarPerfilSchema.safeParse(form);
     if (!parsed.success) {
-      const nextErrors = {};
-      for (const issue of parsed.error.issues) {
-        nextErrors[issue.path[0]] = issue.message;
-      }
-      setFieldErrors(nextErrors);
+      setFieldErrors(zodErrors(parsed.error));
       return;
     }
 
-    try {
-      setSaving(true);
-      const response = await SocioPortalServices.updatePerfil(parsed.data);
-      const updated = response?.data ?? { ...perfil, ...parsed.data };
-      setPerfil(updated);
-      toast.success('Datos de contacto actualizados');
-    } catch (err) {
-      setError(
-        err.response?.data?.message || 'No se pudieron guardar los cambios',
-      );
-    } finally {
-      setSaving(false);
-    }
+    await run(() => SocioPortalServices.updatePerfil(parsed.data), {
+      successMessage: 'Datos de contacto actualizados',
+      errorMessage: 'No se pudieron guardar los cambios',
+      onError: (res) => {
+        setError(res?.message || 'No se pudieron guardar los cambios');
+      },
+      onSuccess: (response) => {
+        const updated = response?.data ?? { ...perfil, ...parsed.data };
+        setPerfil(updated);
+      },
+    });
   };
 
-  const nombreCompleto = perfil
-    ? `${perfil.nombres || ''} ${perfil.primer_apellido || ''} ${perfil.segundo_apellido || ''}`.trim()
-    : '';
+  const nombreCompleto = perfil ? formatFullName(perfil) : '';
 
   return (
     <section className="space-y-6">
@@ -174,10 +169,10 @@ export default function MiPerfilPage() {
 
               <button
                 type="submit"
-                disabled={saving}
+                disabled={submitting}
                 className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:opacity-60"
               >
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+                {submitting ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </form>
           </div>

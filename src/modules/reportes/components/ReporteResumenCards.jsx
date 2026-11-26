@@ -1,8 +1,4 @@
-const formatBs = (value) =>
-  `Bs ${Number(value || 0).toLocaleString('es-BO', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+import { formatCurrency } from '../../../utils/formatters';
 
 export default function ReporteResumenCards({ rows = [], mode = 'cobros', totalItems = 0 }) {
   const totalMonto = rows.reduce(
@@ -18,12 +14,12 @@ export default function ReporteResumenCards({ rows = [], mode = 'cobros', totalI
     mode === 'cobros'
       ? [
           { label: 'Registros encontrados', value: totalItems, accent: 'text-slate-900' },
-          { label: 'Total cobros (vista)', value: formatBs(totalMonto), accent: 'text-blue-700' },
+          { label: 'Total cobros (vista)', value: formatCurrency(totalMonto), accent: 'text-blue-700' },
         ]
       : [
           { label: 'Recibos encontrados', value: totalItems, accent: 'text-slate-900' },
-          { label: 'Total recaudado (vista)', value: formatBs(totalPagado), accent: 'text-emerald-700' },
-          { label: 'Total emitido (vista)', value: formatBs(totalMonto), accent: 'text-blue-700' },
+          { label: 'Total recaudado (vista)', value: formatCurrency(totalPagado), accent: 'text-emerald-700' },
+          { label: 'Total emitido (vista)', value: formatCurrency(totalMonto), accent: 'text-blue-700' },
         ];
 
   return (

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
-import { AuthService } from '../../auth/services/auth.services';
+import { useAuth } from '../../auth/context/AuthContext';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { zodErrors } from '../../../utils/zodErrors';
 import { PortalError } from '../components/PortalFeedback';
 import { cambiarContrasenaSchema } from '../schemas/socioPortal.schema';
 import { SocioPortalServices } from '../services/socioPortal.services';
@@ -16,6 +17,7 @@ const FIELDS = [
 
 export default function CambiarContrasenaPage() {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [form, setForm] = useState({
     contrasenia_actual: '',
     contrasenia_nueva: '',
@@ -24,7 +26,7 @@ export default function CambiarContrasenaPage() {
   const [visible, setVisible] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { submitting, run } = useAsyncSubmit();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -33,30 +35,28 @@ export default function CambiarContrasenaPage() {
 
     const parsed = cambiarContrasenaSchema.safeParse(form);
     if (!parsed.success) {
-      const nextErrors = {};
-      for (const issue of parsed.error.issues) {
-        nextErrors[issue.path[0]] = issue.message;
-      }
-      setFieldErrors(nextErrors);
+      setFieldErrors(zodErrors(parsed.error));
       return;
     }
 
-    try {
-      setLoading(true);
-      await SocioPortalServices.cambiarPassword({
-        contrasenia_actual: parsed.data.contrasenia_actual,
-        contrasenia_nueva: parsed.data.contrasenia_nueva,
-      });
-      AuthService.updateSession({ debe_cambiar_password: false });
-      toast.success('Contraseña actualizada correctamente');
-      navigate('/socio/inicio', { replace: true });
-    } catch (err) {
-      setError(
-        err.response?.data?.message || 'No se pudo cambiar la contraseña',
-      );
-    } finally {
-      setLoading(false);
-    }
+    await run(
+      () =>
+        SocioPortalServices.cambiarPassword({
+          contrasenia_actual: parsed.data.contrasenia_actual,
+          contrasenia_nueva: parsed.data.contrasenia_nueva,
+        }),
+      {
+        successMessage: 'Contraseña actualizada correctamente',
+        errorMessage: 'No se pudo cambiar la contraseña',
+        onError: (res) => {
+          setError(res?.message || 'No se pudo cambiar la contraseña');
+        },
+        onSuccess: () => {
+          updateUser({ debe_cambiar_password: false });
+          navigate('/socio/inicio', { replace: true });
+        },
+      },
+    );
   };
 
   return (
@@ -123,10 +123,10 @@ export default function CambiarContrasenaPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={submitting}
           className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:opacity-60"
         >
-          {loading ? 'Guardando...' : 'Actualizar contraseña'}
+          {submitting ? 'Guardando...' : 'Actualizar contraseña'}
         </button>
       </form>
     </section>

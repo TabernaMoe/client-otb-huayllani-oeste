@@ -5,12 +5,12 @@ import {
   IdentificationIcon,
   PlusCircleIcon,
   ReceiptPercentIcon,
-  PencilSquareIcon,
-  NoSymbolIcon,
 } from '@heroicons/react/24/outline';
 import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
 import SelectComponent from '../../../components/Select';
+import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { EgresosServices } from '../services/egresos.services';
 import { validateEgreso } from '../schema/egresos.schema';
 
@@ -29,20 +29,16 @@ const createInitialForm = () => ({
   observaciones: '',
 });
 
-function formatDate(value) {
-  if (!value) return '-';
-  const [year, month, day] = String(value).slice(0, 10).split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}
+const formatEgresoDate = (value) =>
+  formatDate(value && !String(value).includes('T') ? `${value}T00:00:00` : value);
 
 export default function RegistrarEgresoView() {
   const [form, setForm] = useState(createInitialForm);
   const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [egresos, setEgresos] = useState([]);
+  const { submitting, run } = useAsyncSubmit();
 
   const cargarDatos = useCallback(async () => {
     setLoading(true);
@@ -82,10 +78,14 @@ export default function RegistrarEgresoView() {
     [categorias],
   );
 
+  const totalEgresos = useMemo(
+    () => egresos.reduce((acc, item) => acc + Number(item.monto || 0), 0),
+    [egresos],
+  );
+
   const handleChange = ({ target: { name, value } }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
-    setMessage(null);
   };
 
   const handleSubmit = async (event) => {
@@ -97,25 +97,16 @@ export default function RegistrarEgresoView() {
       return;
     }
 
-    setSaving(true);
-    const response = await EgresosServices.create(validation.data);
-    setSaving(false);
-
-    if (!response?.ok) {
-      setMessage({
-        type: 'error',
-        text: response?.message || 'No se pudo registrar el egreso',
-      });
-      return;
-    }
-
-    setForm(createInitialForm());
-    setErrors({});
-    setMessage({
-      type: 'success',
-      text: response.message || 'Egreso registrado correctamente',
+    await run(() => EgresosServices.create(validation.data), {
+      successMessage: (res) =>
+        res?.message || 'Egreso registrado correctamente',
+      errorMessage: 'No se pudo registrar el egreso',
+      onSuccess: async () => {
+        setForm(createInitialForm());
+        setErrors({});
+        await cargarDatos();
+      },
     });
-    await cargarDatos();
   };
 
   return (
@@ -192,8 +183,6 @@ export default function RegistrarEgresoView() {
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2"></div>
-
           <ElegantTextarea
             label="Observaciones"
             name="observaciones"
@@ -205,36 +194,29 @@ export default function RegistrarEgresoView() {
             rows={4}
           />
 
-          {message && (
-            <div
-              className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-                message.type === 'success'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
-
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={saving || categorias.length === 0}
+              disabled={submitting || categorias.length === 0}
               className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? 'Registrando...' : 'Registrar egreso'}
+              {submitting ? 'Registrando...' : 'Registrar egreso'}
             </button>
           </div>
         </form>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <h2 className="font-bold text-slate-900">Egresos registrados</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Historial de gastos registrados en el sistema.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <h2 className="font-bold text-slate-900">Egresos registrados</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Historial de gastos registrados en el sistema.
+            </p>
+          </div>
+          <span className="rounded-full bg-emerald-50 px-3.5 py-1.5 text-sm font-bold text-emerald-700">
+            Total: {formatCurrency(totalEgresos)}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -281,7 +263,7 @@ export default function RegistrarEgresoView() {
                 egresos.map((egreso) => (
                   <tr key={egreso.id} className="hover:bg-slate-50">
                     <td className="whitespace-nowrap px-6 py-4 text-slate-600">
-                      {formatDate(egreso.fecha)}
+                      {formatEgresoDate(egreso.fecha)}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -296,48 +278,7 @@ export default function RegistrarEgresoView() {
                       {egreso.beneficiario}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right font-bold text-slate-800">
-                      Bs {Number(egreso.monto || 0).toFixed(2)}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* EDITAR */}
-                        <button
-                          type="button"
-                          onClick={() => {}}
-                          className="
-            inline-flex items-center gap-1.5
-            rounded-lg border border-blue-200
-            bg-blue-50 px-3 py-2
-            text-xs font-semibold text-blue-700
-            transition-all duration-200
-            hover:border-blue-300 hover:bg-blue-100
-            focus-visible:outline-none
-            focus-visible:ring-2 focus-visible:ring-blue-400
-          "
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                          Editar
-                        </button>
-
-                        {/* ANULAR */}
-                        <button
-                          type="button"
-                          onClick={() => {}}
-                          className="
-            inline-flex items-center gap-1.5
-            rounded-lg border border-red-200
-            bg-red-50 px-3 py-2
-            text-xs font-semibold text-red-700
-            transition-all duration-200
-            hover:border-red-300 hover:bg-red-100
-            focus-visible:outline-none
-            focus-visible:ring-2 focus-visible:ring-red-400
-          "
-                        >
-                          <NoSymbolIcon className="h-4 w-4" />
-                          Anular
-                        </button>
-                      </div>
+                      {formatCurrency(egreso.monto)}
                     </td>
                   </tr>
                 ))

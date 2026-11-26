@@ -11,6 +11,7 @@ import {
 } from '../components/PortalFeedback';
 import { useSocioAcciones } from '../hooks/useSocioAcciones';
 import { SocioPortalServices } from '../services/socioPortal.services';
+import { getApiErrorMessage } from '../../../services/error';
 import { formatCurrency } from '../../../utils/formatters';
 
 const ESTADOS = ['TODOS', 'PENDIENTE', 'PARCIAL', 'PAGADO'];
@@ -42,10 +43,11 @@ export default function MisCobrosPage() {
         setLoadingCobros(true);
         setErrorCobros('');
         const response = await SocioPortalServices.getCobros(accionSeleccionada);
-        setCobros(response?.data ?? response ?? []);
+        const raw = response?.data ?? response;
+        setCobros(Array.isArray(raw) ? raw : []);
       } catch (error) {
         setErrorCobros(
-          error.response?.data?.message || 'No se pudieron cargar los cobros',
+          getApiErrorMessage(error, 'No se pudieron cargar los cobros'),
         );
       } finally {
         setLoadingCobros(false);

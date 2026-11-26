@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { AuthService } from '../../auth/services/auth.services';
+import { useAuth } from '../../auth/context/AuthContext';
 import AccionSelector from '../components/AccionSelector';
 import PortalPageHeader from '../components/PortalPageHeader';
 import PortalStatGrid from '../components/PortalStatGrid';
@@ -13,12 +13,13 @@ import {
 } from '../components/PortalFeedback';
 import { useSocioAcciones } from '../hooks/useSocioAcciones';
 import { SocioPortalServices } from '../services/socioPortal.services';
+import { getApiErrorMessage } from '../../../services/error';
 import { formatCurrency } from '../../../utils/formatters';
 
 const ORIGENES = ['TODOS', 'GENERAL', 'AGUA'];
 
 export default function MisRecibosPage() {
-  const user = AuthService.getUser();
+  const { user } = useAuth();
   const socioName = user?.nombre || user?.nombre_usuario || 'Socio';
 
   const {
@@ -47,10 +48,11 @@ export default function MisRecibosPage() {
         setLoadingRecibos(true);
         setErrorRecibos('');
         const response = await SocioPortalServices.getRecibos(accionSeleccionada);
-        setRecibos(response?.data ?? response ?? []);
+        const raw = response?.data ?? response;
+        setRecibos(Array.isArray(raw) ? raw : []);
       } catch (error) {
         setErrorRecibos(
-          error.response?.data?.message || 'No se pudieron cargar los recibos',
+          getApiErrorMessage(error, 'No se pudieron cargar los recibos'),
         );
       } finally {
         setLoadingRecibos(false);

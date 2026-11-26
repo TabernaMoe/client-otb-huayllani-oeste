@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageHeader from '../../../components/PageHeader';
 import EgresosTabs from '../components/EgresosTabs';
 import CategoriasEgresoView from '../components/CategoriasEgresoView';
 import RegistrarEgresoView from '../components/RegistrarEgresoView';
@@ -10,24 +11,14 @@ const views = {
 
 export default function EgresosPage() {
   const [activeView, setActiveView] = useState('categorias');
-  const ActiveView = views[activeView];
+  const ActiveView = views[activeView] || CategoriasEgresoView;
 
   return (
     <section className="space-y-5">
-      <header>
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-          <span>Inicio</span>
-          <span>/</span>
-          <span className="text-emerald-700">Egresos</span>
-        </div>
-
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Gestión de egresos
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Administra los tipos de egreso y registra los gastos de la OTB.
-        </p>
-      </header>
+      <PageHeader
+        title="Gestión de egresos"
+        description="Administra los tipos de egreso y registra los gastos de la OTB."
+      />
 
       <EgresosTabs activeView={activeView} onChange={setActiveView} />
       <ActiveView />
