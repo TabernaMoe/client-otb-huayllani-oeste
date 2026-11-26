@@ -4,16 +4,17 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 
 import LogoOtb from '/logo-otb.webp';
 import { AdminNav } from './Nav';
-import { AuthService } from '../modules/auth/services/auth.services';
+import { useAuth } from '../modules/auth/context/AuthContext';
+import ErrorBoundary from '../components/ErrorBoundary';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebarContent from './components/AdminSidebarContent';
 
-function filterSidebarByPermissions(nav) {
+function filterSidebarByPermissions(nav, hasPermission) {
   return nav
     .map((group) => ({
       ...group,
       items: group.items.filter(
-        (item) => !item.permission || AuthService.hasPermission(item.permission),
+        (item) => !item.permission || hasPermission(item.permission),
       ),
     }))
     .filter((group) => group.items.length > 0);
@@ -33,10 +34,12 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const user = AuthService.getUser();
-  const userKey = user?.id ?? user?.nombre_usuario ?? '';
+  const { user, hasPermission, logout } = useAuth();
 
-  const sidebar = useMemo(() => filterSidebarByPermissions(AdminNav), [userKey]);
+  const sidebar = useMemo(
+    () => filterSidebarByPermissions(AdminNav, hasPermission),
+    [hasPermission],
+  );
 
   const activeGroup = useMemo(
     () => findGroupFromPath(location.pathname, sidebar),
@@ -63,7 +66,7 @@ export default function AdminLayout() {
   }, [mobileOpen]);
 
   const handleLogout = () => {
-    AuthService.logout();
+    logout();
     navigate('/login', { replace: true });
   };
 
@@ -156,7 +159,12 @@ export default function AdminLayout() {
         </aside>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet />
+          <ErrorBoundary
+            resetKey={location.pathname}
+            homePath="/admin/dashboard"
+          >
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -1,7 +1,6 @@
 import { api } from '../../../services/api';
-
-const SESSION_KEY = 'user';
-const TOKEN_KEY = 'token';
+import { sessionStorageAdapter } from '../../../core/storage/sessionStorage';
+import { authEvents } from '../../../core/auth/authEvents';
 
 function normalizeRole(role) {
   if (!role) return null;
@@ -67,38 +66,40 @@ export const AuthService = {
   },
 
   saveSession(session) {
-    localStorage.setItem(TOKEN_KEY, session.token);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session.user));
+    sessionStorageAdapter.save({
+      token: session.token,
+      user: session.user,
+    });
+    authEvents.emit('sessionChanged', {
+      token: session.token,
+      user: session.user,
+    });
   },
 
   updateSession(patch) {
     const current = this.getUser();
-    if (!current) return;
+    if (!current) return null;
 
-    localStorage.setItem(
-      SESSION_KEY,
-      JSON.stringify({ ...current, ...patch }),
-    );
+    const updated = { ...current, ...patch };
+    sessionStorageAdapter.setUser(updated);
+    authEvents.emit('sessionChanged', {
+      token: this.getToken(),
+      user: updated,
+    });
+    return updated;
   },
 
   logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorageAdapter.clear();
+    authEvents.emit('sessionChanged', { token: null, user: null });
   },
 
   getToken() {
-    return localStorage.getItem(TOKEN_KEY);
+    return sessionStorageAdapter.getToken();
   },
 
   getUser() {
-    const value = localStorage.getItem(SESSION_KEY);
-    if (!value) return null;
-    try {
-      return JSON.parse(value);
-    } catch {
-      this.logout();
-      return null;
-    }
+    return sessionStorageAdapter.getUser();
   },
 
   getRole() {
@@ -117,11 +118,13 @@ export const AuthService = {
     return this.getUser()?.permisos ?? [];
   },
 
-  hasPermission(permission) {
-    if (this.getRole() === 'super_admin') return true;
+  hasPermission(permission, user = this.getUser()) {
+    if (!user) return false;
+    if (user.rol === 'super_admin') return true;
+    if (!permission) return true;
 
     const required = Array.isArray(permission) ? permission : [permission];
-    const permissions = this.getPermissions();
+    const permissions = Array.isArray(user.permisos) ? user.permisos : [];
 
     return required.some((code) => permissions.includes(code));
   },

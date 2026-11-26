@@ -4,7 +4,7 @@ import ElegantInput from '../../../components/ElegantInput';
 import FormModal from '../../../components/FormModal';
 import ModalFooter from '../../../components/ModalFooter';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
-import { validateTipoAccion } from '../schema/tipoaccion.schema';
+import { validateTipoAccion } from '../schema/tipoAccion.schema';
 import { TipoAccionServices } from '../services/tipoAccion.services';
 
 export default function TipoAccionModal({ open, data, onClose, onSuccess }) {

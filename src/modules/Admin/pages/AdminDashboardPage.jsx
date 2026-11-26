@@ -4,18 +4,14 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import DashboardStatCard from '../../../components/DashboardStatCard';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
 import StatusBadge from '../../../components/StatusBadge';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { getApiErrorMessage } from '../../../services/error';
-import DashboardCard from '../components/DashboardCard';
+import { formatFullName } from '../../../utils/formatters';
 import { DashboardServices } from '../services/dashboard.services';
-
-const formatNombreCompleto = (socio) =>
-  [socio.nombres, socio.primer_apellido, socio.segundo_apellido]
-    .filter(Boolean)
-    .join(' ');
 
 export default function AdminDashboardPage() {
   const [totalAcciones, setTotalAcciones] = useState(0);
@@ -52,7 +48,7 @@ export default function AdminDashboardPage() {
         cell: ({ row }) => (
           <div>
             <p className="font-semibold text-slate-900">
-              {formatNombreCompleto(row.original)}
+              {formatFullName(row.original)}
             </p>
             <p className="text-xs text-slate-500">
               CI {row.original.ci_socio} {row.original.ci_expedido}
@@ -79,13 +75,13 @@ export default function AdminDashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DashboardCard
+        <DashboardStatCard
           title="Socios"
           value={list.total}
           description="Socios registrados"
           icon={UserGroupIcon}
         />
-        <DashboardCard
+        <DashboardStatCard
           title="Acciones"
           value={totalAcciones}
           description="Acciones registradas"

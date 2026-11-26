@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import ConfirmModal from '../../../components/ConfirmModal';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
 import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import UsuariosRolesTabs from '../../../components/UsuariosRolesTabs';
@@ -130,6 +131,12 @@ export default function AdminPage() {
       />
 
       <UsuariosRolesTabs />
+
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar por nombre, CI o cargo..."
+      />
 
       <DataTable
         data={list.items}

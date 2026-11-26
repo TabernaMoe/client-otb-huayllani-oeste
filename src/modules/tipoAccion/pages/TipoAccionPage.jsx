@@ -7,7 +7,7 @@ import SearchFilterBar from '../../../components/SearchFilterBar';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { TipoAccionServices } from '../services/tipoAccion.services';
-import TipoAccionModal from './TipoAccionModal';
+import TipoAccionModal from '../components/TipoAccionModal';
 
 export default function TipoAccionPage() {
   const [modal, setModal] = useState(null);

@@ -8,7 +8,8 @@ import {
 
 import LogoOtb from '/logo-otb.webp';
 import { SocioNav } from './SocioNav';
-import { AuthService } from '../modules/auth/services/auth.services';
+import { useAuth } from '../modules/auth/context/AuthContext';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 function getInitials(name = '') {
   return (
@@ -97,7 +98,7 @@ function SocioSidebar({ open, onClose, onLogout, displayName }) {
 export default function SocioLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = AuthService.getUser();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
   const displayName = user?.nombre || user?.nombre_usuario || 'Socio';
@@ -116,7 +117,7 @@ export default function SocioLayout() {
   }, [open]);
 
   const handleLogout = () => {
-    AuthService.logout();
+    logout();
     navigate('/login', { replace: true });
   };
 
@@ -154,7 +155,9 @@ export default function SocioLayout() {
         </header>
 
         <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          <ErrorBoundary resetKey={location.pathname} homePath="/socio/inicio">
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

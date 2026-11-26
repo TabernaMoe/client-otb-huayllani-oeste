@@ -1,12 +1,14 @@
 import { Route } from 'react-router-dom';
 
-import LoginPage from '../modules/auth/page/LoginPage';
-import InicioLayout from '../layouts/InicioLayout'
+import GuestRoute from './guards/GuestRoute';
+import LoginPage from '../modules/auth/pages/LoginPage';
+import InicioLayout from '../layouts/InicioLayout';
 
 export const publicRoutes = (
   <>
-     <Route path='/' element={<InicioLayout/>}/>
-    <Route path="login" element={<LoginPage />} />
-
+    <Route path="/" element={<InicioLayout />} />
+    <Route element={<GuestRoute />}>
+      <Route path="login" element={<LoginPage />} />
+    </Route>
   </>
 );

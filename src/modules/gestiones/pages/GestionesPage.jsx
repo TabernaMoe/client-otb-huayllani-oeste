@@ -6,11 +6,9 @@ import PageHeader from '../../../components/PageHeader';
 import SearchFilterBar from '../../../components/SearchFilterBar';
 import StatusBadge from '../../../components/StatusBadge';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { formatDate } from '../../../utils/formatters';
 import GestionModal from '../components/GestionModal';
 import { GestionesServices } from '../services/gestiones.services';
-
-const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString('es-BO') : '—';
 
 export default function GestionesPage() {
   const [modalOpen, setModalOpen] = useState(false);

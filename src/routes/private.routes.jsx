@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 
-import ProtectedRoute from './ProtectedRoute';
-import PermissionRoute from './PermissionRoute';
-import AccountTypeRoute from './AccountTypeRoute';
+import ProtectedRoute from './guards/ProtectedRoute';
+import PermissionRoute from './guards/PermissionRoute';
+import AccountTypeRoute from './guards/AccountTypeRoute';
 import { PERMS } from './permissions';
 import PageLoader from '../components/PageLoader';
 

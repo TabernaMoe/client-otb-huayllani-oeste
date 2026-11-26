@@ -9,32 +9,25 @@ import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import {
+  ESTADO_FILTER_OPTIONS_FEM,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import CalleModal from '../components/CalleModal';
 import { CallesServices } from '../services/calles.services';
 
-const ESTADOS = [
-  { value: '', label: 'Todas' },
-  { value: 'true', label: 'Activas' },
-  { value: 'false', label: 'Inactivas' },
-];
+const fetchCalles = withBooleanEstado(CallesServices.getAll);
 
 export default function CallesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
 
-  const list = usePaginatedList(
-    (params) => {
-      const query = { ...params };
-      if (query.estado !== undefined) query.estado = query.estado === 'true';
-      return CallesServices.getAll(query);
-    },
-    {
-      initialLimit: 5,
-      initialFilters: { estado: '' },
-      errorMessage: 'No se pudieron cargar las calles',
-    },
-  );
+  const list = usePaginatedList(fetchCalles, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    errorMessage: 'No se pudieron cargar las calles',
+  });
   const { submitting, run } = useAsyncSubmit();
 
   const openCreate = () => {
@@ -128,7 +121,7 @@ export default function CallesPage() {
           label="Estado"
           name="estado"
           value={list.filters.estado}
-          options={ESTADOS}
+          options={ESTADO_FILTER_OPTIONS_FEM}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />
       </SearchFilterBar>

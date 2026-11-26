@@ -1,15 +1,19 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import InputField from '../../../components/InputField';
 import PasswordField from '../../../components/PasswordField';
 import Logo from '/logo-otb.webp';
-import { AuthService } from '../services/auth.services';
+import { useAuth } from '../context/AuthContext';
 import { validateLoginForm } from '../schema/auth.schema';
 import { getHomeRoute } from '../utils/authRedirect';
+import { getApiErrorMessage } from '../../../services/error';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
   const [form, setForm] = useState({ user: '', password: '' });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
@@ -35,21 +39,23 @@ export default function LoginPage() {
       setLoading(true);
       setGeneralError('');
 
-      const session = await AuthService.login({
-        user: form.user.trim(),
-        password: form.password.trim(),
-      });
+      const session = await login(validation.data);
 
-      if (!session.ok || !session.token) {
-        setGeneralError(session.message || 'No se pudo iniciar sesión');
+      if (!session?.ok || !session?.token) {
+        setGeneralError(session?.message || 'No se pudo iniciar sesión');
         return;
       }
 
-      AuthService.saveSession(session);
-      navigate(getHomeRoute(session.user), { replace: true });
+      const redirectTo =
+        location.state?.from?.pathname &&
+        location.state.from.pathname !== '/login'
+          ? location.state.from.pathname
+          : getHomeRoute(session.user);
+
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       setGeneralError(
-        error.response?.data?.message || 'No se pudo iniciar sesión',
+        getApiErrorMessage(error, 'No se pudo iniciar sesión'),
       );
     } finally {
       setLoading(false);

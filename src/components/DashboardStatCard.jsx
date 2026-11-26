@@ -1,6 +1,7 @@
 export default function DashboardStatCard({
   title,
   value,
+  description,
   icon: Icon,
   iconClass = 'bg-emerald-50 text-emerald-700',
   valueClass = 'text-slate-900',
@@ -16,6 +17,10 @@ export default function DashboardStatCard({
           <p className={`mt-2 text-2xl font-black ${valueClass}`}>
             {value}
           </p>
+
+          {description && (
+            <p className="mt-1 text-xs text-slate-400">{description}</p>
+          )}
         </div>
 
         {Icon && (

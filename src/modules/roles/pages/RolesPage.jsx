@@ -3,6 +3,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
+import SearchFilterBar from '../../../components/SearchFilterBar';
 import TableActionButtons from '../../../components/TableActionButtons';
 import UsuariosRolesTabs from '../../../components/UsuariosRolesTabs';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
@@ -118,6 +119,12 @@ export default function RolesPage() {
       />
 
       <UsuariosRolesTabs />
+
+      <SearchFilterBar
+        search={list.search}
+        onSearchChange={list.setSearch}
+        placeholder="Buscar rol..."
+      />
 
       <DataTable
         data={list.items}

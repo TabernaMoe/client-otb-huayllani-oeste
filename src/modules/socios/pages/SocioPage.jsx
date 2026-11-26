@@ -9,20 +9,16 @@ import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { formatFullName } from '../../../utils/formatters';
+import {
+  ESTADO_FILTER_OPTIONS_MASC,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import SocioDetalleModal from '../components/SocioDetalleModal';
 import SocioModal from '../components/SocioModal';
 import { SocioServices } from '../services/socio.services';
 
-const ESTADOS = [
-  { value: '', label: 'Todos' },
-  { value: 'true', label: 'Activos' },
-  { value: 'false', label: 'Inactivos' },
-];
-
-const formatNombreCompleto = (socio) =>
-  [socio.nombres, socio.primer_apellido, socio.segundo_apellido]
-    .filter(Boolean)
-    .join(' ');
+const fetchSocios = withBooleanEstado(SocioServices.getAll);
 
 export default function SocioPage() {
   const [formSocio, setFormSocio] = useState(null);
@@ -30,18 +26,11 @@ export default function SocioPage() {
   const [detalleId, setDetalleId] = useState(null);
   const [confirmSocio, setConfirmSocio] = useState(null);
 
-  const list = usePaginatedList(
-    (params) => {
-      const query = { ...params };
-      if (query.estado !== undefined) query.estado = query.estado === 'true';
-      return SocioServices.getAll(query);
-    },
-    {
-      initialLimit: 5,
-      initialFilters: { estado: '' },
-      errorMessage: 'No se pudieron cargar los socios',
-    },
-  );
+  const list = usePaginatedList(fetchSocios, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    errorMessage: 'No se pudieron cargar los socios',
+  });
   const { submitting, run } = useAsyncSubmit();
 
   const handleToggleEstado = async () => {
@@ -68,7 +57,7 @@ export default function SocioPage() {
             </span>
             <div>
               <p className="font-bold text-slate-900">
-                {formatNombreCompleto(row.original)}
+                {formatFullName(row.original)}
               </p>
               <p className="text-xs text-slate-500">
                 CI {row.original.ci_socio} {row.original.ci_expedido}
@@ -133,7 +122,7 @@ export default function SocioPage() {
           label="Estado"
           name="estado"
           value={list.filters.estado}
-          options={ESTADOS}
+          options={ESTADO_FILTER_OPTIONS_MASC}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />
       </SearchFilterBar>
@@ -167,7 +156,7 @@ export default function SocioPage() {
         open={Boolean(confirmSocio)}
         title={confirmSocio?.estado ? 'Deshabilitar socio' : 'Habilitar socio'}
         message={`¿Deseas ${confirmSocio?.estado ? 'deshabilitar' : 'habilitar'} a ${
-          confirmSocio ? formatNombreCompleto(confirmSocio) : ''
+          confirmSocio ? formatFullName(confirmSocio) : ''
         }?`}
         confirmText="Confirmar"
         loading={submitting}

@@ -1,16 +1,27 @@
-export const validateLoginForm = (form) => {
+import { z } from 'zod';
+
+export const loginSchema = z.object({
+  user: z.string().trim().min(1, 'Debe ingresar el usuario'),
+  password: z.string().trim().min(1, 'Debe ingresar la contraseña'),
+});
+
+export const validateLoginForm = (form = {}) => {
+  const result = loginSchema.safeParse({
+    user: form.user ?? '',
+    password: form.password ?? '',
+  });
+
+  if (result.success) {
+    return { isValid: true, errors: {}, data: result.data };
+  }
+
   const errors = {};
-
-  if (!form.user?.trim()) {
-    errors.user = 'Debe ingresar el usuario';
+  for (const issue of result.error.issues) {
+    const key = issue.path[0];
+    if (key && !errors[key]) {
+      errors[key] = issue.message;
+    }
   }
 
-  if (!form.password?.trim()) {
-    errors.password = 'Debe ingresar la contraseña';
-  }
-
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors,
-  };
+  return { isValid: false, errors };
 };

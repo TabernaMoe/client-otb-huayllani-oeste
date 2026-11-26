@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { normalizeApiError } from './error';
+import { sessionStorageAdapter } from '../core/storage/sessionStorage';
+import { authEvents } from '../core/auth/authEvents';
 
 export const api = axios.create({
   baseURL: import.meta.env?.VITE_API_URL || '',
@@ -7,7 +9,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorageAdapter.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -34,12 +36,11 @@ api.interceptors.response.use(
     }
 
     if (error?.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      if (window.location.pathname !== '/login') {
-        window.location.replace('/login');
-      }
+      sessionStorageAdapter.clear();
+      authEvents.emit('unauthorized', {
+        url: error?.config?.url || '',
+        status: 401,
+      });
     }
 
     return Promise.reject(error);

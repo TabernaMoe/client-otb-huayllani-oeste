@@ -11,34 +11,26 @@ import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { getApiErrorMessage } from '../../../services/error';
+import { formatCurrency } from '../../../utils/formatters';
+import {
+  ESTADO_FILTER_OPTIONS_FEM,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import TarifaModal from '../components/TarifaModal';
 import { TarifasServices } from '../services/tarifas.services';
 
-const ESTADOS = [
-  { value: '', label: 'Todas' },
-  { value: 'true', label: 'Activas' },
-  { value: 'false', label: 'Inactivas' },
-];
-
-const formatMoney = (value) => `Bs ${Number(value).toFixed(2)}`;
+const fetchTarifas = withBooleanEstado(TarifasServices.getAll);
 
 export default function TarifasPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [confirmTarifa, setConfirmTarifa] = useState(null);
 
-  const list = usePaginatedList(
-    (params) => {
-      const query = { ...params };
-      if (query.estado !== undefined) query.estado = query.estado === 'true';
-      return TarifasServices.getAll(query);
-    },
-    {
-      initialLimit: 5,
-      initialFilters: { estado: '' },
-      errorMessage: 'No se pudieron cargar las tarifas',
-    },
-  );
+  const list = usePaginatedList(fetchTarifas, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    errorMessage: 'No se pudieron cargar las tarifas',
+  });
   const { submitting, run } = useAsyncSubmit();
 
   const openCreate = () => {
@@ -105,7 +97,7 @@ export default function TarifasPage() {
                 className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
               >
                 {rango.consumo_minimo}–{rango.consumo_maximo ?? '∞'} m³ ·{' '}
-                {formatMoney(rango.precio)}
+                {formatCurrency(rango.precio)}
               </span>
             ))}
           </div>
@@ -163,7 +155,7 @@ export default function TarifasPage() {
           label="Estado"
           name="estado"
           value={list.filters.estado}
-          options={ESTADOS}
+          options={ESTADO_FILTER_OPTIONS_FEM}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />
       </SearchFilterBar>
