@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 import ElegantInput from '../../../components/ElegantInput';
 import ElegantTextarea from '../../../components/ElegantTextarea';
 import PageHeader from '../../../components/PageHeader';
 import SelectComponent from '../../../components/Select';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
+import { formatCurrency } from '../../../utils/formatters';
 import { validateCambioNombre } from '../schema/cambioNombre.schema';
 import { CambioNombreServices } from '../services/cambioNombre.services';
 
@@ -34,6 +36,7 @@ export default function CambioNombrePage() {
   const [socios, setSocios] = useState([]);
   const [loadingAcciones, setLoadingAcciones] = useState(false);
   const [loadingSocios, setLoadingSocios] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState(null);
   const { submitting, run } = useAsyncSubmit();
 
   useEffect(() => {
@@ -45,22 +48,28 @@ export default function CambioNombrePage() {
     });
   }, []);
 
-  useEffect(() => {
+  const loadAcciones = useCallback(async (servicio) => {
     setLoadingAcciones(true);
+    const res = await CambioNombreServices.getAcciones(servicio);
+    setLoadingAcciones(false);
+    if (!res.ok) {
+      toast.error(res.message);
+      return;
+    }
+    setAcciones(res.data ?? []);
+  }, []);
+
+  useEffect(() => {
     setForm((current) => ({ ...current, accion_id: null }));
-    CambioNombreServices.getAcciones(tipoServicio).then((res) => {
-      setLoadingAcciones(false);
-      if (!res.ok) return toast.error(res.message);
-      setAcciones(res.data ?? []);
-    });
-  }, [tipoServicio]);
+    loadAcciones(tipoServicio);
+  }, [tipoServicio, loadAcciones]);
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: '' }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
     const validation = validateCambioNombre(form);
@@ -70,15 +79,32 @@ export default function CambioNombrePage() {
       return;
     }
 
-    await run(() => CambioNombreServices.create(validation.data, tipoServicio), {
-      successMessage: (res) => res?.message || 'Cambio de nombre registrado',
-      errorMessage: 'No se pudo registrar el cambio de nombre',
-      onSuccess: () => {
-        setForm(EMPTY_FORM);
-        setErrors({});
-      },
-    });
+    setPendingPayload(validation.data);
   };
+
+  const handleConfirm = async () => {
+    if (!pendingPayload) return;
+
+    await run(
+      () => CambioNombreServices.create(pendingPayload, tipoServicio),
+      {
+        successMessage: (res) =>
+          res?.message || 'Cambio de nombre registrado',
+        errorMessage: 'No se pudo registrar el cambio de nombre',
+        onSuccess: async () => {
+          setPendingPayload(null);
+          setForm(EMPTY_FORM);
+          setErrors({});
+          await loadAcciones(tipoServicio);
+        },
+      },
+    );
+  };
+
+  const selectedAccionLabel =
+    acciones.find((a) => a.value === pendingPayload?.accion_id)?.label || '';
+  const selectedSocioLabel =
+    socios.find((s) => s.value === pendingPayload?.socio_nuevo_id)?.label || '';
 
   return (
     <section className="space-y-6">
@@ -165,6 +191,20 @@ export default function CambioNombrePage() {
           </button>
         </div>
       </form>
+
+      <ConfirmModal
+        open={Boolean(pendingPayload)}
+        title="Confirmar cambio de nombre"
+        message={
+          pendingPayload
+            ? `¿Confirmas transferir la acción "${selectedAccionLabel}" (${tipoServicio}) a "${selectedSocioLabel}" por ${formatCurrency(pendingPayload.monto)}?`
+            : ''
+        }
+        confirmText="Confirmar traspaso"
+        loading={submitting}
+        onConfirm={handleConfirm}
+        onClose={() => setPendingPayload(null)}
+      />
     </section>
   );
 }

@@ -14,14 +14,6 @@ export default function AccionesAlcantarilladoPage() {
 
   const list = usePaginatedList(AccionesAlcantarilladoServices.getAll, {
     initialLimit: 5,
-    extract: (response) => {
-      const items = Array.isArray(response?.data) ? response.data : [];
-      return {
-        items,
-        total: Number(response?.total ?? items.length),
-        totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
-      };
-    },
     errorMessage: 'No se pudieron cargar las acciones de alcantarillado',
   });
 

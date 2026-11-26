@@ -7,10 +7,11 @@ const defaultExtract = (response) => {
     response?.data && !Array.isArray(response.data) && Array.isArray(response.data.data)
       ? response.data
       : response;
+  const items = Array.isArray(container?.data) ? container.data : [];
 
   return {
-    items: Array.isArray(container?.data) ? container.data : [],
-    total: Number(container?.total ?? 0),
+    items,
+    total: Number(container?.total ?? items.length),
     totalPages: Math.max(1, Number(container?.totalPages ?? 1)),
   };
 };

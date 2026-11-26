@@ -17,6 +17,13 @@ export const PERIODO_ESTADO_OPTIONS = [
   { value: 'PENDIENTE', label: 'Pendiente' },
 ];
 
+export const ESTADO_ACCION_OPTIONS = [
+  { value: '', label: 'Todos' },
+  { value: 'ACTIVO', label: 'Activo' },
+  { value: 'PASIVO', label: 'Pasivo' },
+  { value: 'ANULADO', label: 'Anulado' },
+];
+
 export function withBooleanEstado(fetcher) {
   return (params = {}) => {
     const query = { ...params };

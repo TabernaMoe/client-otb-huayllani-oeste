@@ -4,29 +4,28 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
 import SearchFilterBar from '../../../components/SearchFilterBar';
+import SelectComponent from '../../../components/Select';
 import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
+import {
+  ESTADO_FILTER_OPTIONS_MASC,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { formatCurrency } from '../../../utils/formatters';
 import AlcantarilladoModal from '../components/AlcantarilladoModal';
 import { AlcantarilladoServices } from '../services/alcantarillado.services';
 
-const formatMoney = (value) => `Bs ${Number(value).toFixed(2)}`;
+const fetchAlcantarillado = withBooleanEstado(AlcantarilladoServices.getAll);
 
 export default function AlcantarilladoPage() {
   const [modal, setModal] = useState({ open: false, item: null });
   const [confirm, setConfirm] = useState({ open: false, item: null });
 
-  const list = usePaginatedList(AlcantarilladoServices.getAll, {
+  const list = usePaginatedList(fetchAlcantarillado, {
     initialLimit: 10,
-    extract: (response) => {
-      const items = Array.isArray(response?.data) ? response.data : [];
-      return {
-        items,
-        total: Number(response?.total ?? items.length),
-        totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
-      };
-    },
+    initialFilters: { estado: '' },
     errorMessage: 'No se pudieron cargar los detalles de alcantarillado',
   });
   const { submitting, run } = useAsyncSubmit();
@@ -49,7 +48,7 @@ export default function AlcantarilladoPage() {
       {
         accessorKey: 'precio_accion',
         header: 'Precio',
-        cell: ({ row }) => formatMoney(row.original.precio_accion),
+        cell: ({ row }) => formatCurrency(row.original.precio_accion),
       },
       {
         accessorKey: 'tipo_cobro',
@@ -102,7 +101,15 @@ export default function AlcantarilladoPage() {
         search={list.search}
         onSearchChange={list.setSearch}
         placeholder="Buscar detalle..."
-      />
+      >
+        <SelectComponent
+          label="Estado"
+          name="estado"
+          value={list.filters.estado}
+          options={ESTADO_FILTER_OPTIONS_MASC}
+          onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
+        />
+      </SearchFilterBar>
 
       <DataTable
         data={list.items}

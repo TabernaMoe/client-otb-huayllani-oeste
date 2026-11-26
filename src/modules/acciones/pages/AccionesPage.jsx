@@ -5,41 +5,18 @@ import {
   PowerIcon,
   RectangleStackIcon,
 } from '@heroicons/react/24/outline';
+import DashboardStatCard from '../../../components/DashboardStatCard';
 import DataTable from '../../../components/DataTable';
 import PageHeader from '../../../components/PageHeader';
 import SearchFilterBar from '../../../components/SearchFilterBar';
 import SelectComponent from '../../../components/Select';
 import StatusBadge from '../../../components/StatusBadge';
 import TableActionButtons from '../../../components/TableActionButtons';
+import { ESTADO_ACCION_OPTIONS } from '../../../core/constants/catalogFilters';
 import { MODALS, useModalManager } from '../../../hooks/useModalManager';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import AccionModal from '../components/AccionModal';
 import { AccionesServices } from '../services/acciones.services';
-
-const ESTADO_OPTIONS = [
-  { value: '', label: 'Todos' },
-  { value: 'ACTIVO', label: 'Activo' },
-  { value: 'PASIVO', label: 'Pasivo' },
-  { value: 'ANULADO', label: 'Anulado' },
-];
-
-function StatCard({ label, value, icon: Icon, className }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-        </div>
-        <span className={`rounded-2xl p-3 ${className}`}>
-          <Icon className="h-6 w-6" />
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default function AccionesPage() {
   const { closeModal, isModalOpen, modalState, openModal } = useModalManager();
@@ -47,14 +24,6 @@ export default function AccionesPage() {
   const list = usePaginatedList(AccionesServices.getAll, {
     initialLimit: 5,
     initialFilters: { estado: '' },
-    extract: (response) => {
-      const items = Array.isArray(response?.data) ? response.data : [];
-      return {
-        items,
-        total: Number(response?.total ?? items.length),
-        totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
-      };
-    },
     errorMessage: 'No se pudieron cargar las acciones de agua',
   });
 
@@ -128,23 +97,23 @@ export default function AccionesPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Total de acciones"
+        <DashboardStatCard
+          title="Total de acciones"
           value={list.total}
           icon={RectangleStackIcon}
-          className="bg-slate-100 text-slate-600"
+          iconClass="bg-slate-100 text-slate-600"
         />
-        <StatCard
-          label="Activas en página"
+        <DashboardStatCard
+          title="Activas en página"
           value={activas}
           icon={CheckCircleIcon}
-          className="bg-emerald-50 text-emerald-600"
+          iconClass="bg-emerald-50 text-emerald-600"
         />
-        <StatCard
-          label="Pasivas en página"
+        <DashboardStatCard
+          title="Pasivas en página"
           value={pasivas}
           icon={PowerIcon}
-          className="bg-amber-50 text-amber-600"
+          iconClass="bg-amber-50 text-amber-600"
         />
       </div>
 
@@ -156,7 +125,7 @@ export default function AccionesPage() {
         <SelectComponent
           label="Estado"
           name="estado"
-          options={ESTADO_OPTIONS}
+          options={ESTADO_ACCION_OPTIONS}
           value={list.filters.estado}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />

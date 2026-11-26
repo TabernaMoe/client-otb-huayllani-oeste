@@ -12,39 +12,25 @@ import TableActionButtons from '../../../components/TableActionButtons';
 import { useAsyncSubmit } from '../../../hooks/useAsyncSubmit';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { getApiErrorMessage } from '../../../services/error';
+import { formatCurrency } from '../../../utils/formatters';
+import {
+  ESTADO_FILTER_OPTIONS_MASC,
+  withBooleanEstado,
+} from '../../../core/constants/catalogFilters';
 import DetalleAccionModal from '../components/DetalleAccionModal';
 import { DetalleAccionServices } from '../services/detalleAccion.services';
 
-const ESTADOS = [
-  { value: '', label: 'Todos' },
-  { value: 'true', label: 'Activos' },
-  { value: 'false', label: 'Inactivos' },
-];
+const fetchDetallesAccion = withBooleanEstado(DetalleAccionServices.getAll);
 
 export default function DetalleAccionPage() {
   const [modal, setModal] = useState(null);
   const [confirm, setConfirm] = useState(null);
 
-  const list = usePaginatedList(
-    (params) => {
-      const query = { ...params };
-      if (query.estado !== undefined) query.estado = query.estado === 'true';
-      return DetalleAccionServices.getAll(query);
-    },
-    {
-      initialLimit: 5,
-      initialFilters: { estado: '' },
-      extract: (response) => {
-        const items = Array.isArray(response?.data) ? response.data : [];
-        return {
-          items,
-          total: Number(response?.total ?? items.length),
-          totalPages: Math.max(1, Number(response?.totalPages ?? 1)),
-        };
-      },
-      errorMessage: 'No se pudieron cargar los detalles de acción',
-    },
-  );
+  const list = usePaginatedList(fetchDetallesAccion, {
+    initialLimit: 5,
+    initialFilters: { estado: '' },
+    errorMessage: 'No se pudieron cargar los detalles de acción',
+  });
   const { submitting, run } = useAsyncSubmit();
 
   const handleEdit = useCallback(async (id) => {
@@ -88,7 +74,7 @@ export default function DetalleAccionPage() {
         accessorKey: 'precio_accion',
         header: 'Precio',
         cell: ({ row }) => (
-          <span>Bs {Number(row.original.precio_accion).toFixed(2)}</span>
+          <span>{formatCurrency(row.original.precio_accion)}</span>
         ),
       },
       {
@@ -149,7 +135,7 @@ export default function DetalleAccionPage() {
           label="Estado"
           name="estado"
           value={list.filters.estado}
-          options={ESTADOS}
+          options={ESTADO_FILTER_OPTIONS_MASC}
           onChange={(e) => list.setFilter('estado', e.target.value ?? '')}
         />
       </SearchFilterBar>
