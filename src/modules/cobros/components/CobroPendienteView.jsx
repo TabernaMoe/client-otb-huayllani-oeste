@@ -54,7 +54,7 @@ export default function CobroPendienteView({
       return;
     }
 
-    setSocios(response.data);
+    setSocios(Array.isArray(response.data) ? response.data : []);
   };
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function CobroPendienteView({
     setForm({ ...initialForm, socio_id: socio.id });
     setLoadingCobros(true);
 
-    const response = await CobrosServices.getSocioCobros(socio.id);
+    const response = await CobrosServices.getCobrosBySocio(socio.id);
     setLoadingCobros(false);
 
     if (!response.ok) {
@@ -78,9 +78,7 @@ export default function CobroPendienteView({
       return;
     }
 
-    setSelectedSocio({ ...socio, ...response.data });
-
-    const todosCobros = response.data.cobrosSocio || [];
+    const todosCobros = Array.isArray(response.data) ? response.data : [];
 
     const cobrosFiltrados = tipoCobro
       ? todosCobros.filter((cobro) => cobro.tipo_cobro === tipoCobro)

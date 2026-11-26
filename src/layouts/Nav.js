@@ -161,12 +161,6 @@ export const AdminNav = [
         icon: ClipboardDocumentListIcon,
         permission: PERMS.LECTURAS,
       },
-      {
-        label: 'Mora',
-        to: '/admin/lectura-mora',
-        icon: ExclamationTriangleIcon,
-        permission: PERMS.LECTURAS,
-      },
     ],
   },
   {

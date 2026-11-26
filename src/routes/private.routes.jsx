@@ -25,7 +25,6 @@ const AlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/Al
 const AccionesAlcantarilladoPage = lazy(() => import('../modules/alcantarillado/pages/AccionesAlcantarilladoPage'));
 const CambioNombrePage = lazy(() => import('../modules/cambioNombre/pages/CambioNombrePage'));
 const LecturasPage = lazy(() => import('../modules/lecturas/pages/LecturasPage'));
-const ModificarMora = lazy(() => import('../modules/lecturas/modificar-mora/ModificarMora'));
 const TarifasPage = lazy(() => import('../modules/tarifas/pages/TarifasPage'));
 const CallesPage = lazy(() => import('../modules/calles/pages/CallesPage'));
 const AsambleasPage = lazy(() => import('../modules/asambleas/pages/AsambleasPage'));
@@ -113,7 +112,6 @@ export const privateRoutes = (
 
         <Route element={guard(PERMS.LECTURAS)}>
           <Route path="lecturas" element={load(LecturasPage)} />
-          <Route path="lectura-mora" element={load(ModificarMora)} />
         </Route>
 
         <Route element={guard(PERMS.ASAMBLEAS)}>

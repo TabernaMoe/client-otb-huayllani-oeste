@@ -4,16 +4,45 @@ import { toServiceError } from '../../../services/error';
 export class CobrosServices {
   static async getSocios(params = {}) {
     try {
-      const { data } = await api.get('/admin/cobro', { params });
+      const { data } = await api.get('/admin/socio', { params });
       return data;
     } catch (error) {
       return toServiceError(error);
     }
   }
 
-  static async getSocioCobros(socioId) {
+  static async getAccionesByServicio(tipo_servicio = 'AGUA') {
     try {
-      const { data } = await api.get(`/admin/cobro/${socioId}`);
+      const { data } = await api.get('/admin/reportes/recibo/acciones', {
+        params: { tipo_servicio },
+      });
+      const list = Array.isArray(data?.data)
+        ? data.data.filter((item) => Number(item.value) !== 0)
+        : [];
+      return { ...data, data: list };
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async getCobrosBySocio(socioId, tipo_cobro = 'TODOS') {
+    try {
+      const { data } = await api.get(
+        `/admin/cobros-generales/cobros/socios/${socioId}`,
+        { params: { tipo_cobro } },
+      );
+      return data;
+    } catch (error) {
+      return toServiceError(error);
+    }
+  }
+
+  static async getCobrosByAccion(accionId, tipo_cobro = 'TODOS') {
+    try {
+      const { data } = await api.get(
+        `/admin/cobros-generales/cobros/accion/${accionId}`,
+        { params: { tipo_cobro } },
+      );
       return data;
     } catch (error) {
       return toServiceError(error);
@@ -22,43 +51,10 @@ export class CobrosServices {
 
   static async pagar(payload) {
     try {
-      const { data } = await api.post('/admin/cobro', payload);
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async getHistorial(params = {}) {
-    try {
-      const { data } = await api.get('/admin/cobro/historial', { params });
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async getAcciones(params = {}) {
-    try {
-      const { data } = await api.get('/admin/cobro/acciones', { params });
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async getMultas(params = {}) {
-    try {
-      const { data } = await api.get('/admin/cobro/multas', { params });
-      return data;
-    } catch (error) {
-      return toServiceError(error);
-    }
-  }
-
-  static async asignarMulta(accionId, body) {
-    try {
-      const { data } = await api.post(`/admin/cobro/multas/${accionId}`, body);
+      const { data } = await api.post(
+        '/admin/cobros-generales/cobros/pagar',
+        payload,
+      );
       return data;
     } catch (error) {
       return toServiceError(error);

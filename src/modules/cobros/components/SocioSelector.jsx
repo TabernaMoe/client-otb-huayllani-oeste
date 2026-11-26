@@ -4,7 +4,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { getSocioInitials } from '../utils/cobros.utils';
+import { getSocioDisplayName, getSocioInitials } from '../utils/cobros.utils';
 
 export default function SocioSelector({
   socios,
@@ -14,6 +14,7 @@ export default function SocioSelector({
   onSearchChange,
   onSelect,
 }) {
+  const listaSocios = Array.isArray(socios) ? socios : [];
   return (
     <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-4">
@@ -42,14 +43,16 @@ export default function SocioSelector({
       <div className="max-h-[560px] space-y-2 overflow-y-auto p-3">
         {loading ? (
           <div className="py-10 text-center text-sm text-slate-500">Cargando socios...</div>
-        ) : socios.length === 0 ? (
+        ) : listaSocios.length === 0 ? (
           <div className="py-10 text-center text-sm text-slate-500">
             <UserGroupIcon className="mx-auto mb-2 h-8 w-8 text-slate-300" />
             No se encontraron socios.
           </div>
         ) : (
-          socios.map((socio) => {
+          listaSocios.map((socio) => {
             const active = selectedSocio?.id === socio.id;
+            const displayName = getSocioDisplayName(socio);
+            const ci = socio.ci ?? socio.ci_socio ?? '—';
 
             return (
               <button
@@ -64,15 +67,23 @@ export default function SocioSelector({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
-                    {getSocioInitials(socio.nombre_completo)}
+                    {getSocioInitials(displayName)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{socio.nombre_completo}</p>
+                    <p className="truncate text-sm font-bold text-slate-900">{displayName}</p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                       <IdentificationIcon className="h-3.5 w-3.5" />
-                      CI: {socio.ci}
+                      CI: {ci}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">{socio.acciones.length} acciones</p>
+                    {Array.isArray(socio.acciones) ? (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {socio.acciones.length} acciones
+                      </p>
+                    ) : socio.numero_celular ? (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Cel: {socio.numero_celular}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </button>

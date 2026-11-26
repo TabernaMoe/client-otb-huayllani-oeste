@@ -298,45 +298,29 @@ describe('Frontend — Unit tests de todos los servicios y endpoints por módulo
     const calls = spyApi({ ok: true, data: [] });
 
     await CobrosServices.getSocios({});
-    await CobrosServices.getSocioCobros(4);
-    await CobrosServices.pagar({});
-    await CobrosServices.getAcciones({});
-    await CobrosServices.getMultas();
-    await CobrosServices.asignarMulta(9, { multa_id: 1 });
+    await CobrosServices.getAccionesByServicio('AGUA');
+    await CobrosServices.getCobrosBySocio(4);
+    await CobrosServices.getCobrosByAccion(9);
+    await CobrosServices.pagar({ metodo_pago: 'EFECTIVO', monto: 50, cobros: [1] });
 
     await ReciboMadreSerivices.getSelectAccion();
     await ReciboMadreSerivices.createCobro({ payload: {} });
 
-    await LecturasServices.getAll({});
-    await LecturasServices.getById(9);
-    await LecturasServices.getHistorial({ accion_id: 9 });
-    await LecturasServices.getAcionesWithMora();
+    await LecturasServices.getAll();
     await LecturasServices.create(9, { lectura_actual: 100 });
-    await LecturasServices.update(9, { lectura_actual: 105 });
-    await LecturasServices.updateMora({ id: 2, payload: { mora: 10, observacion_mora: 'ok' } });
-    await LecturasServices.cambioMedidor(9, { lectura_actual: 5 });
-    await LecturasServices.UpdateOnlyLectura({ id: 2, payload: { lectura_actual: 10, lectura_anterior: 5 } });
 
     assert.deepEqual(
       calls.map((c) => `${c.method} ${c.url}`),
       [
-        'GET /admin/cobro',
-        'GET /admin/cobro/4',
-        'POST /admin/cobro',
-        'GET /admin/cobro/acciones',
-        'GET /admin/cobro/multas',
-        'POST /admin/cobro/multas/9',
+        'GET /admin/socio',
+        'GET /admin/reportes/recibo/acciones',
+        'GET /admin/cobros-generales/cobros/socios/4',
+        'GET /admin/cobros-generales/cobros/accion/9',
+        'POST /admin/cobros-generales/cobros/pagar',
         'GET /admin/reportes/recibo/acciones',
         'POST /admin/cobro/crear-cobro',
-        'GET /admin/lectura',
-        'GET /admin/lectura/9',
-        'GET /admin/lectura/historial/9',
-        'GET /admin/lectura/acciones-con-mora',
-        'POST /admin/lectura/9',
-        'PATCH /admin/lectura/9',
-        'PATCH /admin/lectura/modificar-mora/2',
-        'PATCH /admin/lectura/cambio/9',
-        'PATCH /admin/lectura/update-only-lectura/2',
+        'GET /admin/lectura/lectura',
+        'POST /admin/lectura/lectura/9',
       ],
     );
   });

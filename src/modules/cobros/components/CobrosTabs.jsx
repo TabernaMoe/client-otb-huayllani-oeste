@@ -1,18 +1,15 @@
-import {
-  ExclamationTriangleIcon,
-  ListBulletIcon,
-} from '@heroicons/react/24/outline';
+import { HomeModernIcon, UserIcon } from '@heroicons/react/24/outline';
 
 const tabs = [
   {
-    value: 'cobros_generales',
-    label: 'Cobros generales',
-    icon: ListBulletIcon,
+    value: 'por_socio',
+    label: 'Cobrar por socio',
+    icon: UserIcon,
   },
   {
-    value: 'multas',
-    label: 'Cobrar multas',
-    icon: ExclamationTriangleIcon,
+    value: 'por_accion',
+    label: 'Cobrar por acción',
+    icon: HomeModernIcon,
   },
 ];
 
@@ -30,7 +27,7 @@ export default function CobrosTabs({ activeView, onChange }) {
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }`}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5 w-5 shrink-0" />
           {label}
         </button>
       ))}

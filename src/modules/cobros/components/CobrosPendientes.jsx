@@ -1,5 +1,5 @@
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import { formatMoney } from '../utils/cobros.utils';
+import { formatMoney, getSocioDisplayName } from '../utils/cobros.utils';
 
 export default function CobrosPendientes({
   socio,
@@ -9,12 +9,14 @@ export default function CobrosPendientes({
   error,
   onToggle,
 }) {
+  const listaCobros = Array.isArray(cobros) ? cobros : [];
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-5">
         <h3 className="font-bold text-slate-900">2. Seleccionar conceptos</h3>
         <p className="mt-1 text-sm text-slate-500">
-          {socio ? socio.nombre_completo : 'Selecciona primero un socio.'}
+          {socio ? getSocioDisplayName(socio) : 'Selecciona primero un socio.'}
         </p>
       </div>
 
@@ -26,11 +28,11 @@ export default function CobrosPendientes({
           </div>
         ) : loading ? (
           <div className="py-16 text-center text-sm text-slate-500">Cargando cobros...</div>
-        ) : cobros.length === 0 ? (
+        ) : listaCobros.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-500">No hay cobros pendientes.</div>
         ) : (
           <div className="space-y-3">
-            {cobros.map((cobro) => {
+            {listaCobros.map((cobro) => {
               const checked = selectedIds.includes(cobro.id);
 
               return (
@@ -50,14 +52,22 @@ export default function CobrosPendientes({
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-semibold text-slate-900">{cobro.concepto}</p>
-                        <p className="mt-1 text-sm text-slate-500">{cobro.descripcion}</p>
+                        {cobro.descripcion && (
+                          <p className="mt-1 text-sm text-slate-500">{cobro.descripcion}</p>
+                        )}
                       </div>
                       <p className="font-bold text-emerald-700">{formatMoney(cobro.saldo)}</p>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span>Total: {formatMoney(cobro.monto_total)}</span>
-                      <span>Pagado: {formatMoney(cobro.monto_pagado)}</span>
-                      <span>{cobro.estado}</span>
+                      {cobro.mes && <span>Mes: {cobro.mes}</span>}
+                      {cobro.tipo_cobro && <span>Tipo: {cobro.tipo_cobro}</span>}
+                      {cobro.monto_total != null && (
+                        <span>Total: {formatMoney(cobro.monto_total)}</span>
+                      )}
+                      {cobro.monto_pagado != null && (
+                        <span>Pagado: {formatMoney(cobro.monto_pagado)}</span>
+                      )}
+                      {cobro.estado && <span>{cobro.estado}</span>}
                     </div>
                   </div>
                 </label>
